@@ -1,0 +1,44 @@
+"""Burndown chart tool for Agile MCP Server."""
+
+from .base import AgileTool, ToolError
+from ..services.sprint_service import SprintService
+from ..storage.filesystem import AgileProjectManager
+
+class GetSprintBurndownChartTool(AgileTool):
+    """Get a burndown chart for a specific sprint."""
+
+    def apply(self, sprint_id: str) -> str:
+        """Get a burndown chart for a specific sprint.
+
+        Args:
+            sprint_id: The ID of the sprint to get the burndown chart for (required)
+
+        Returns:
+            A string representation of the burndown chart
+        """
+        self._check_project_initialized()
+
+        sprint_service = SprintService(self.agent.project_manager)
+        burndown_data = sprint_service.get_sprint_burndown_data(sprint_id)
+
+        if not burndown_data:
+            raise ToolError(f"Could not generate burndown chart for sprint with ID {sprint_id}")
+
+        return self._generate_chart(burndown_data)
+
+    def _generate_chart(self, data: dict) -> str:
+        """Generates a textual burndown chart."""
+        chart = []
+        chart.append(f"Burndown Chart for Sprint: {data['sprint_name']}\n")
+        chart.append(f"Ideal Burn: {data['ideal_burn_per_day']:.2f} points/day\n")
+        chart.append("Date        | Remaining Points | Ideal Burn")
+        chart.append("------------|------------------|-----------")
+
+        for entry in data['burndown']:
+            date = entry['date']
+            remaining = entry['remaining_points']
+            ideal = entry['ideal_points']
+            chart.append(f"{date} | {remaining:<16} | {ideal:.2f}")
+
+        return "\n".join(chart)
+

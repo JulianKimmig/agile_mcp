@@ -265,8 +265,7 @@ class GetProductBacklogTool(AgileTool):
         self._check_project_initialized()
         
         # Get all stories not assigned to sprints
-        all_stories = self.agent.story_service.list_stories()
-        backlog_stories = [story for story in all_stories if not story.sprint_id]
+        backlog_stories = self.agent.story_service.list_stories(_filter_no_sprint=True)
         
         # Apply filters
         if priority:

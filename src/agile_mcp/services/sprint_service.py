@@ -393,6 +393,62 @@ class SprintService:
     
 
     
+    def get_sprint_burndown_data(self, sprint_id: str) -> Dict[str, Any]:
+        """Get the data required to generate a burndown chart for a sprint.
+
+        Args:
+            sprint_id: ID of the sprint
+
+        Returns:
+            Dictionary with burndown chart data
+        """
+        sprint = self.get_sprint(sprint_id)
+        if not sprint or not sprint.start_date or not sprint.end_date:
+            return {}
+
+        total_points = 0
+        for story_id in sprint.story_ids:
+            story = self.project_manager.get_story(story_id)
+            if story and story.points:
+                total_points += story.points
+
+        sprint_duration = (sprint.end_date - sprint.start_date).days
+        if sprint_duration <= 0:
+            return {}
+
+        ideal_burn_per_day = total_points / sprint_duration
+        
+        burndown_data = {
+            "sprint_name": sprint.name,
+            "total_points": total_points,
+            "sprint_duration_days": sprint_duration,
+            "ideal_burn_per_day": ideal_burn_per_day,
+            "burndown": []
+        }
+
+        for day in range(sprint_duration + 1):
+            current_date = sprint.start_date + timedelta(days=day)
+            remaining_points = total_points
+            
+            # This is a simplified calculation. A real implementation would need to
+            # track story completion dates.
+            for story_id in sprint.story_ids:
+                story = self.project_manager.get_story(story_id)
+                if story and story.points and story.status.value == "done":
+                    # Assuming story was completed on its update date for this example
+                    if story.updated_at <= current_date:
+                        remaining_points -= story.points
+            
+            ideal_points = total_points - (day * ideal_burn_per_day)
+            
+            burndown_data["burndown"].append({
+                "date": current_date.strftime("%Y-%m-%d"),
+                "remaining_points": remaining_points,
+                "ideal_points": max(0, ideal_points)
+            })
+            
+        return burndown_data
+
     def _validate_story_references(self, sprint: Sprint) -> Sprint:
         """Validate story references and remove broken ones.
         

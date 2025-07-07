@@ -314,7 +314,9 @@ def status(project: Path | None) -> None:
         print(f"Total Stories:     {stories_data['total']}")
         print(f"Todo:              {story_counts['todo']}")
         print(f"In Progress:       {story_counts['in_progress']}")
+        print(f"In Review:         {story_counts['in_review']}")
         print(f"Done:              {story_counts['done']}")
+        print(f"Blocked:           {story_counts['blocked']}")
         print(f"Cancelled:         {story_counts['cancelled']}")
         print(f"Total Points:      {stories_data['total_points']}")
         
@@ -331,6 +333,7 @@ def status(project: Path | None) -> None:
         print(f"Todo:              {task_counts['todo']}")
         print(f"In Progress:       {task_counts['in_progress']}")
         print(f"Done:              {task_counts['done']}")
+        print(f"Blocked:           {task_counts['blocked']}")
         print(f"Cancelled:         {task_counts['cancelled']}")
         
         # Epic Statistics
@@ -362,7 +365,7 @@ def status(project: Path | None) -> None:
         for sprint_info in sprints_data["active_sprints"]:
             if sprint_info["available"]:
                 progress = sprint_info["progress"]
-                print(f"\nActive Sprint: {sprint_info['name']}")
+                print(f"\nActive Sprint: {sprint_info['name']} ({sprint_info['start_date']} - {sprint_info['end_date']})")
                 print(f"  Progress:        {progress['completion_percentage']:.1f}%")
                 print(f"  Stories:         {progress['completed_stories']}/{progress['total_stories']}")
                 print(f"  Points:          {progress['completed_points']}/{progress['total_points']}")

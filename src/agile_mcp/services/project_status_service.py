@@ -93,7 +93,14 @@ class ProjectStatusService:
             if stories is None:
                 stories = []
             
-            story_counts = {"todo": 0, "in_progress": 0, "done": 0, "cancelled": 0, "in_review": 0, "blocked": 0}
+            story_counts = {
+                "todo": 0, 
+                "in_progress": 0, 
+                "in_review": 0, 
+                "done": 0, 
+                "blocked": 0,
+                "cancelled": 0
+            }
             total_points = 0
             
             for story in stories:
@@ -124,7 +131,13 @@ class ProjectStatusService:
             if tasks is None:
                 tasks = []
             
-            task_counts = {"todo": 0, "in_progress": 0, "done": 0, "cancelled": 0, "in_review": 0, "blocked": 0}
+            task_counts = {
+                "todo": 0, 
+                "in_progress": 0, 
+                "done": 0, 
+                "blocked": 0,
+                "cancelled": 0
+            }
             
             for task in tasks:
                 status_key = task.status.value
@@ -186,6 +199,8 @@ class ProjectStatusService:
                     active_sprint_details.append({
                         "name": sprint.name,
                         "id": sprint.id,
+                        "start_date": sprint.start_date.strftime('%Y-%m-%d') if sprint.start_date else 'N/A',
+                        "end_date": sprint.end_date.strftime('%Y-%m-%d') if sprint.end_date else 'N/A',
                         "progress": progress,
                         "available": True
                     })

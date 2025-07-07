@@ -57,6 +57,9 @@ from .tools.project_tools import (
 from .tools.documentation_tools import (
     GetAgileDocumentationTool
 )
+from .tools.burndown_chart_tool import (
+    GetSprintBurndownChartTool
+)
 
 # Configure logging for MCP
 logging.basicConfig(
@@ -202,6 +205,7 @@ class AgileMCPServer:
             ManageSprintStoriesTool(self),
             GetSprintProgressTool(self),
             GetActiveSprintTool(self),
+            GetSprintBurndownChartTool(self),
         ]
         
         all_tools = project_tools + documentation_tools + agile_tools
