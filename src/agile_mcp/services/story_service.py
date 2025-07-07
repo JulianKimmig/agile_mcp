@@ -1,12 +1,13 @@
 """Service layer for user story management."""
 
-import uuid
+import sys
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 import yaml
 
 from ..models.story import UserStory, StoryStatus, Priority
 from ..storage.filesystem import AgileProjectManager
+from ..utils.id_generator import generate_story_id
 
 
 class StoryService:
@@ -58,7 +59,7 @@ class StoryService:
             raise ValueError(f"Story points must be a Fibonacci number: {self.VALID_FIBONACCI_POINTS}")
         
         # Generate unique ID
-        story_id = self._generate_story_id()
+        story_id = generate_story_id()
         
         # Create story instance
         story = UserStory(
@@ -151,7 +152,7 @@ class StoryService:
         return updated_story
     
     def delete_story(self, story_id: str) -> bool:
-        """Delete a story by ID.
+        """Delete a story by ID and clean up references.
         
         Args:
             story_id: ID of the story to delete
@@ -159,7 +160,24 @@ class StoryService:
         Returns:
             True if story was deleted, False if not found
         """
-        return self.project_manager.delete_story(story_id)
+        # Check if story exists first
+        story = self.get_story(story_id)
+        if not story:
+            return False
+        
+        # Remove story from any sprints that contain it
+        self._cleanup_sprint_references(story_id)
+        
+        # Remove story from any epics that contain it
+        self._cleanup_epic_references(story_id)
+        
+        # Delete the story
+        deleted = self.project_manager.delete_story(story_id)
+        
+        if deleted:
+            print(f"Info: Story {story_id} deleted and removed from all sprint and epic references", file=sys.stderr)
+        
+        return deleted
     
     def list_stories(
         self,
@@ -206,14 +224,47 @@ class StoryService:
         
         return stories
     
-    def _generate_story_id(self) -> str:
-        """Generate a unique story ID.
-        
-        Returns:
-            A unique story ID in format STORY-XXXX
-        """
-        # Generate a 4-character hex string
-        hex_part = uuid.uuid4().hex[:4].upper()
-        return f"STORY-{hex_part}"
+
     
+    def _cleanup_sprint_references(self, story_id: str) -> None:
+        """Remove story from all sprints that contain it.
+        
+        Args:
+            story_id: ID of the story to remove from sprints
+        """
+        # Get all sprints to check for references
+        sprints = self.project_manager.list_sprints()
+        
+        for sprint in sprints:
+            if story_id in sprint.story_ids:
+                # Remove story from sprint
+                updated_story_ids = [sid for sid in sprint.story_ids if sid != story_id]
+                updated_sprint = sprint.model_copy(update={"story_ids": updated_story_ids})
+                updated_sprint.updated_at = updated_sprint.updated_at  # Keep existing timestamp
+                
+                # Save updated sprint
+                self.project_manager.save_sprint(updated_sprint)
+                
+                print(f"Info: Removed story {story_id} from sprint {sprint.id}", file=sys.stderr)
+    
+    def _cleanup_epic_references(self, story_id: str) -> None:
+        """Remove story from all epics that contain it.
+        
+        Args:
+            story_id: ID of the story to remove from epics
+        """
+        # Get all epics to check for references
+        epics = self.project_manager.list_epics()
+        
+        for epic in epics:
+            if story_id in epic.story_ids:
+                # Remove story from epic
+                updated_story_ids = [sid for sid in epic.story_ids if sid != story_id]
+                updated_epic = epic.model_copy(update={"story_ids": updated_story_ids})
+                updated_epic.updated_at = updated_epic.updated_at  # Keep existing timestamp
+                
+                # Save updated epic
+                self.project_manager.save_epic(updated_epic)
+                
+                print(f"Info: Removed story {story_id} from epic {epic.id}", file=sys.stderr)
  

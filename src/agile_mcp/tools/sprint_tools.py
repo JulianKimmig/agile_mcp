@@ -67,14 +67,6 @@ class CreateSprintTool(AgileTool):
         self.last_result_data = sprint_data
         
         return f"Sprint '{sprint.name}' created successfully with ID {sprint.id}"
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class GetSprintTool(AgileTool):
@@ -100,6 +92,12 @@ class GetSprintTool(AgileTool):
         # Get progress information
         progress = self.agent.sprint_service.get_sprint_progress(sprint_id)
         
+        # Convert datetime objects to strings for JSON serialization
+        if "start_date" in progress and progress["start_date"]:
+            progress["start_date"] = progress["start_date"].isoformat()
+        if "end_date" in progress and progress["end_date"]:
+            progress["end_date"] = progress["end_date"].isoformat()
+        
         # Format result with sprint data and progress
         sprint_data = sprint.model_dump(mode='json')
         self.last_result_data = {
@@ -108,20 +106,12 @@ class GetSprintTool(AgileTool):
         }
         
         return f"Retrieved sprint: {sprint.name} (ID: {sprint.id}, Status: {sprint.status.value})"
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class ListSprintsTool(AgileTool):
     """List sprints with optional filtering."""
     
-    def apply(self, status: Optional[str] = None, include_stories: Optional[bool] = False) -> str:
+    def apply(self, status: Optional[str] = None, include_stories: Optional[bool] = False) -> Dict[str, Any]:
         """List sprints with optional filtering.
         
         Args:
@@ -129,7 +119,7 @@ class ListSprintsTool(AgileTool):
             include_stories: Include story IDs in results (optional: true/false, default: false)
             
         Returns:
-            Success message with list of sprints
+            Structured data with list of sprints
         """
         # Check if project is initialized
         self._check_project_initialized()
@@ -152,8 +142,8 @@ class ListSprintsTool(AgileTool):
         # Convert sprints to dict format
         sprints_data = [sprint.model_dump(mode='json') for sprint in sprints]
         
-        # Format result with sprints data
-        self.last_result_data = {
+        # Return structured data
+        return {
             "sprints": sprints_data,
             "count": len(sprints_data),
             "filters": {
@@ -161,16 +151,27 @@ class ListSprintsTool(AgileTool):
                 "include_stories": include_stories
             }
         }
-        
-        return json.dumps(self.last_result_data)
     
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
+    def _format_message_from_data(self, data: Dict[str, Any]) -> str:
+        """Format human-readable message from sprint list data.
+        
+        Args:
+            data: Structured sprint list data
+            
+        Returns:
+            Human-readable message string
+        """
+        count = data.get("count", 0)
+        filters = data.get("filters", {})
+        
+        if count == 0:
+            return "No sprints found matching the specified criteria"
+        
+        # Build filter description
+        status_filter_msg = f" with status '{filters.get('status')}'" if filters.get("status") else ""
+        stories_msg = " (including stories)" if filters.get("include_stories") else ""
+        
+        return f"Found {count} sprints{status_filter_msg}{stories_msg}"
 
 
 class UpdateSprintTool(AgileTool):
@@ -238,14 +239,6 @@ class UpdateSprintTool(AgileTool):
         self.last_result_data = sprint_data
         
         return f"Sprint '{updated_sprint.name}' updated successfully"
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class ManageSprintStoriesTool(AgileTool):
@@ -289,14 +282,6 @@ class ManageSprintStoriesTool(AgileTool):
         self.last_result_data = sprint_data
         
         return action_message
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class GetSprintProgressTool(AgileTool):
@@ -320,6 +305,12 @@ class GetSprintProgressTool(AgileTool):
         
         progress = self.agent.sprint_service.get_sprint_progress(sprint_id)
         
+        # Convert datetime objects to strings for JSON serialization
+        if "start_date" in progress and progress["start_date"]:
+            progress["start_date"] = progress["start_date"].isoformat()
+        if "end_date" in progress and progress["end_date"]:
+            progress["end_date"] = progress["end_date"].isoformat()
+        
         # Calculate duration if possible
         duration_info = {}
         duration = self.agent.sprint_service.calculate_sprint_duration(sprint_id)
@@ -340,14 +331,6 @@ class GetSprintProgressTool(AgileTool):
             status_message += f" ({progress['time_progress_percent']:.1f}% time elapsed)"
         
         return status_message
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class GetActiveSprintTool(AgileTool):
@@ -371,6 +354,12 @@ class GetActiveSprintTool(AgileTool):
         # Get progress information
         progress = self.agent.sprint_service.get_sprint_progress(active_sprint.id)
         
+        # Convert datetime objects to strings for JSON serialization
+        if "start_date" in progress and progress["start_date"]:
+            progress["start_date"] = progress["start_date"].isoformat()
+        if "end_date" in progress and progress["end_date"]:
+            progress["end_date"] = progress["end_date"].isoformat()
+        
         # Format result with active sprint data
         active_sprint_data = active_sprint.model_dump(mode='json')
         self.last_result_data = {
@@ -378,12 +367,4 @@ class GetActiveSprintTool(AgileTool):
             "progress": progress
         }
         
-        return f"Active sprint: {active_sprint.name} (ID: {active_sprint.id}, {len(active_sprint.story_ids)} stories)"
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result 
+        return f"Active sprint: {active_sprint.name} (ID: {active_sprint.id}, {len(active_sprint.story_ids)} stories)" 

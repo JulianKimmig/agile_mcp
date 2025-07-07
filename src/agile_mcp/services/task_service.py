@@ -1,11 +1,11 @@
 """Task service for Agile MCP Server."""
 
-import uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from ..models.task import Task, TaskStatus, TaskPriority
 from ..storage.filesystem import AgileProjectManager
+from ..utils.id_generator import generate_task_id
 
 
 class TaskService:
@@ -73,7 +73,7 @@ class TaskService:
                     raise ValueError(f"Dependency task with ID {dep_id} not found")
         
         # Generate unique task ID
-        task_id = self._generate_task_id()
+        task_id = generate_task_id()
         
         task = Task(
             id=task_id,
@@ -436,12 +436,4 @@ class TaskService:
             "actual_hours": sum(t.actual_hours or 0 for t in tasks)
         }
     
-    def _generate_task_id(self) -> str:
-        """Generate a unique task ID.
-        
-        Returns:
-            A unique task ID in format TASK-XXXX
-        """
-        # Generate a 4-character hex string
-        hex_part = uuid.uuid4().hex[:4].upper()
-        return f"TASK-{hex_part}" 
+ 

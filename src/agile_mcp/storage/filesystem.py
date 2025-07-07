@@ -419,7 +419,94 @@ class AgileProjectManager:
                 tasks.append(task)
         
         return tasks
-    
+
+    # Epic management methods
+    def save_epic(self, epic: "Epic") -> None:
+        """Save an epic to filesystem in status-based subfolder.
+        
+        Args:
+            epic: Epic instance to save
+        """
+        # Get the correct file path based on status
+        epic_file = self._get_artifact_file_path(self.get_epics_dir(), epic.id, epic.status.value)
+        epic_data = epic.model_dump(mode='json')
+        
+        # Check if the epic exists elsewhere and migrate it first
+        existing_file = self._find_artifact_file(self.get_epics_dir(), epic.id)
+        if existing_file and existing_file != epic_file:
+            # Remove the old file as we're saving to the new location
+            existing_file.unlink()
+        
+        with open(epic_file, 'w', encoding='utf-8') as f:
+            yaml.dump(epic_data, f, default_flow_style=False, sort_keys=False)
+
+    def get_epic(self, epic_id: str) -> Optional["Epic"]:
+        """Get an epic by ID from any status folder.
+        
+        Args:
+            epic_id: Epic ID
+            
+        Returns:
+            Epic instance if found, None otherwise
+        """
+        from ..models.epic import Epic
+        
+        epic_file = self._find_artifact_file(self.get_epics_dir(), epic_id)
+        
+        if not epic_file:
+            return None
+        
+        return self._load_and_verify_artifact(epic_file, Epic)
+
+    def delete_epic(self, epic_id: str) -> bool:
+        """Delete an epic by ID from any status folder.
+        
+        Args:
+            epic_id: Epic ID
+            
+        Returns:
+            True if epic was deleted, False if not found
+        """
+        epic_file = self._find_artifact_file(self.get_epics_dir(), epic_id)
+        
+        if not epic_file:
+            return False
+        
+        try:
+            epic_file.unlink()
+            return True
+        except Exception:
+            return False
+
+    def list_epics(self) -> List["Epic"]:
+        """List all epics from all status folders.
+        
+        Returns:
+            List of all epic instances
+        """
+        from ..models.epic import Epic
+        
+        epics = []
+        epics_dir = self.get_epics_dir()
+        
+        # Get files from status subfolders
+        for status_dir in epics_dir.iterdir():
+            if status_dir.is_dir():
+                epic_files = list(status_dir.glob("*.yml"))
+                for epic_file in epic_files:
+                    epic = self._load_and_verify_artifact(epic_file, Epic)
+                    if epic:
+                        epics.append(epic)
+        
+        # Also check root directory for backwards compatibility
+        root_epic_files = list(epics_dir.glob("*.yml"))
+        for epic_file in root_epic_files:
+            epic = self._load_and_verify_artifact(epic_file, Epic)
+            if epic:
+                epics.append(epic)
+        
+        return epics
+
     def _get_status_subfolder_path(self, base_dir: Path, status: str) -> Path:
         """Get the path to a status-based subfolder under the type directory.
         
@@ -488,7 +575,7 @@ class AgileProjectManager:
             correct_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(current_file), str(correct_path))
     
-    def _load_and_verify_artifact(self, file_path: Path, artifactfolder_class: Type["AgileArtifact"]) -> Optional["AgileArtifact"]:
+    def _load_and_verify_artifact(self, file_path: Path, artifact_class: Type["AgileArtifact"]) -> Optional["AgileArtifact"]:
         """Load an artifact and verify its status matches the  location.
         
         Args:
@@ -511,4 +598,38 @@ class AgileProjectManager:
             return artifact
         except Exception as e:
             print(f"Error loading artifact from {file_path}: {e}")
-            return None 
+            return None
+    
+    def clean_story_references(self, story_ids: List[str], artifact_type: str, artifact_id: str) -> List[str]:
+        """Clean broken story references from a list of story IDs.
+        
+        This utility method checks which stories actually exist and logs warnings
+        for any broken references found.
+        
+        Args:
+            story_ids: List of story IDs to validate
+            artifact_type: Type of artifact being cleaned (e.g., "Sprint", "Epic") for logging
+            artifact_id: ID of the artifact being cleaned for logging
+            
+        Returns:
+            List of valid story IDs (subset of input list)
+        """
+        if not story_ids:
+            return []
+        
+        valid_story_ids = []
+        broken_story_ids = []
+        
+        for story_id in story_ids:
+            story = self.get_story(story_id)
+            if story:
+                valid_story_ids.append(story_id)
+            else:
+                broken_story_ids.append(story_id)
+        
+        # Log warning if broken references were found
+        if broken_story_ids:
+            import sys
+            print(f"Warning: {artifact_type} {artifact_id} contains broken story references: {broken_story_ids}", file=sys.stderr)
+        
+        return valid_story_ids 

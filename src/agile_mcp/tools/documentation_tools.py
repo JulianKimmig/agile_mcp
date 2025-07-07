@@ -596,12 +596,4 @@ class GetAgileDocumentationTool(AgileTool):
                 "total_tools": sum(len(cat["tools"]) for cat in documentation["tools"]["categories"])
             }
         
-        return summary
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result 
+        return summary 

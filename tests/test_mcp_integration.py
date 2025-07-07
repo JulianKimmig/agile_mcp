@@ -53,7 +53,7 @@ class TestMCPServerIntegration:
         self.server._initialize_services()
         tools = list(self.server._iter_tools())
         
-        assert len(tools) == 15  # We have 2 project tools + 1 documentation tool + 5 story tools + 7 sprint tools
+        assert len(tools) == 27  # We have 2 project tools + 1 documentation tool + 5 story tools + 5 task tools + 7 epic tools + 7 sprint tools
         tool_names = [tool.get_name() for tool in tools]
         
         # Check for project tools
@@ -120,7 +120,7 @@ class TestMCPServerIntegration:
         self.server._set_mcp_tools(mock_mcp)
         
         # Check that tools were registered
-        assert len(mock_mcp._tool_manager._tools) == 15
+        assert len(mock_mcp._tool_manager._tools) == 27
         tool_names = list(mock_mcp._tool_manager._tools.keys())
         
         # Check for project tools
@@ -187,7 +187,7 @@ class TestMCPServerIntegration:
             assert self.server.sprint_service is not None
             
             # Check that tools were set
-            assert len(mock_mcp._tool_manager._tools) == 15
+            assert len(mock_mcp._tool_manager._tools) == 27
 
     def test_tool_error_handling(self) -> None:
         """Test that tools handle errors properly."""

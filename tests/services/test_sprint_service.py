@@ -297,14 +297,21 @@ class TestSprintService:
     def test_remove_story_from_sprint(self, sprint_service):
         """Test removing a story from a sprint."""
         sprint = sprint_service.create_sprint(name="Test Sprint")
-        sprint_service.add_story_to_sprint(sprint.id, "STORY-123")
-        sprint_service.add_story_to_sprint(sprint.id, "STORY-456")
         
-        updated_sprint = sprint_service.remove_story_from_sprint(sprint.id, "STORY-123")
+        # Create actual stories instead of using fake IDs
+        from agile_mcp.services.story_service import StoryService
+        story_service = StoryService(sprint_service.project_manager)
+        story1 = story_service.create_story("Test Story 1", "Description 1")
+        story2 = story_service.create_story("Test Story 2", "Description 2")
+        
+        sprint_service.add_story_to_sprint(sprint.id, story1.id)
+        sprint_service.add_story_to_sprint(sprint.id, story2.id)
+        
+        updated_sprint = sprint_service.remove_story_from_sprint(sprint.id, story1.id)
         
         assert updated_sprint is not None
-        assert "STORY-123" not in updated_sprint.story_ids
-        assert "STORY-456" in updated_sprint.story_ids
+        assert story1.id not in updated_sprint.story_ids
+        assert story2.id in updated_sprint.story_ids
     
     def test_remove_story_not_in_sprint(self, sprint_service):
         """Test removing a story that's not in the sprint."""
@@ -410,8 +417,15 @@ class TestSprintService:
             name="Test Sprint",
             goal="Test goal"
         )
-        sprint_service.add_story_to_sprint(sprint.id, "STORY-1")
-        sprint_service.add_story_to_sprint(sprint.id, "STORY-2")
+        
+        # Create actual stories
+        from agile_mcp.services.story_service import StoryService
+        story_service = StoryService(sprint_service.project_manager)
+        story1 = story_service.create_story("Test Story 1", "Description 1")
+        story2 = story_service.create_story("Test Story 2", "Description 2")
+        
+        sprint_service.add_story_to_sprint(sprint.id, story1.id)
+        sprint_service.add_story_to_sprint(sprint.id, story2.id)
         
         progress = sprint_service.get_sprint_progress(sprint.id)
         
@@ -481,16 +495,18 @@ class TestSprintService:
     
     def test_generate_sprint_id_unique(self, sprint_service):
         """Test that generated sprint IDs are unique."""
+        from agile_mcp.utils.id_generator import generate_sprint_id
+        
         ids = set()
         for _ in range(100):
-            sprint_id = sprint_service._generate_sprint_id()
+            sprint_id = generate_sprint_id()
             assert sprint_id.startswith("SPRINT-")
-            assert len(sprint_id) == 11  # SPRINT- + 4 hex chars
+            assert len(sprint_id) == 15  # SPRINT- + 8 hex chars
             ids.add(sprint_id)
         
-        # With 4 hex chars (65536 possibilities), expect very high uniqueness
-        # Allow for the tiny possibility of collision in 100 attempts
-        assert len(ids) >= 99
+        # With 8 hex chars (4.3 billion possibilities), expect perfect uniqueness
+        # in 100 attempts
+        assert len(ids) == 100
     
     def test_save_and_load_sprint_persistence(self, sprint_service):
         """Test that sprint data persists correctly."""
@@ -506,9 +522,15 @@ class TestSprintService:
             tags=["test", "persistence"]
         )
         
+        # Create actual stories
+        from agile_mcp.services.story_service import StoryService
+        story_service = StoryService(sprint_service.project_manager)
+        story1 = story_service.create_story("Test Story 1", "Description 1")
+        story2 = story_service.create_story("Test Story 2", "Description 2")
+        
         # Add some stories
-        sprint_service.add_story_to_sprint(original_sprint.id, "STORY-1")
-        sprint_service.add_story_to_sprint(original_sprint.id, "STORY-2")
+        sprint_service.add_story_to_sprint(original_sprint.id, story1.id)
+        sprint_service.add_story_to_sprint(original_sprint.id, story2.id)
         
         # Load the sprint fresh from disk
         loaded_sprint = sprint_service.get_sprint(original_sprint.id)
@@ -521,4 +543,4 @@ class TestSprintService:
         assert loaded_sprint.end_date == end_date
         assert loaded_sprint.status == SprintStatus.ACTIVE
         assert loaded_sprint.tags == ["test", "persistence"]
-        assert set(loaded_sprint.story_ids) == {"STORY-1", "STORY-2"} 
+        assert set(loaded_sprint.story_ids) == {story1.id, story2.id} 

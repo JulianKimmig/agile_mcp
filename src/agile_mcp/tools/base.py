@@ -79,13 +79,15 @@ class AgileTool(ABC):
         self.agent = agent
     
     @abstractmethod
-    def apply(self, *args, **kwargs) -> str:
+    def apply(self, *args, **kwargs):
         """Apply the tool with given parameters.
         
         This method must be implemented by subclasses with their specific parameter signatures.
+        For tools that return structured data, this should return a dict/object.
+        For tools that return simple results, this can return a string.
         
         Returns:
-            Result message string
+            Result data (string for simple tools, dict for structured tools)
         """
         pass
     
@@ -211,60 +213,76 @@ class AgileTool(ABC):
         """
         return ToolResult(success=False, message=message)
     
-    def apply_with_error_handling(self, **kwargs: Any) -> ToolResult:
-        """Apply the tool with comprehensive error handling.
-        
-        This method wraps the apply() method with validation and error handling.
-        
-        Args:
-            **kwargs: Tool parameters
-            
-        Returns:
-            ToolResult object
-        """
-        try:
-            # Validate input parameters
-            self.validate_input(kwargs)
-            
-            # Execute the tool
-            result_message = self.apply(**kwargs)
-            
-            # Return formatted success result
-            return self.format_result(result_message)
-            
-        except ToolError as e:
-            # Handle tool-specific errors
-            return self.format_error(str(e))
-            
-        except Exception as e:
-            # Handle unexpected errors
-            return self.format_error(f"Unexpected error: {str(e)}")
-    
     def apply_ex(self, **kwargs: Any) -> str:
         """Apply the tool with error handling for MCP compatibility.
         
         This method is required for MCP tool registration and provides
         the standardized interface expected by the MCP system.
+        All results are returned as structured JSON.
         
         Args:
             **kwargs: Tool parameters
             
         Returns:
-            Result string (JSON format for complex results)
+            JSON string representing ToolResult
         """
         try:
             # Validate input parameters
             self.validate_input(kwargs)
             
             # Execute the tool
-            result_message = self.apply(**kwargs)
+            apply_result = self.apply(**kwargs)
             
-            return result_message
+            # Handle different result types
+            if isinstance(apply_result, dict):
+                # New pattern: apply() returns structured data
+                data = apply_result
+                message = self._format_message_from_data(data)
+            elif isinstance(apply_result, str):
+                # Backward compatibility: apply() returns formatted string
+                message = apply_result
+                data = None
+                # Check if tool stored result data (legacy pattern)
+                if hasattr(self, 'last_result_data'):
+                    data = self.last_result_data
+                    delattr(self, 'last_result_data')
+            else:
+                # Handle other types by converting to string
+                message = str(apply_result)
+                data = {"raw_result": apply_result}
+            
+            # Return structured JSON result
+            result = ToolResult(success=True, message=message, data=data)
+            return result.to_json()
             
         except ToolError as e:
-            # Handle tool-specific errors
-            return f"Tool Error: {str(e)}"
+            # Handle tool-specific errors with "Tool Error:" prefix for backward compatibility
+            error_result = ToolResult(success=False, message=f"Tool Error: {str(e)}")
+            return error_result.to_json()
             
         except Exception as e:
-            # Handle unexpected errors
-            return f"Unexpected error in {self.get_name()}: {str(e)}" 
+            # Handle unexpected errors with "Tool Error:" prefix for backward compatibility
+            error_result = ToolResult(success=False, message=f"Tool Error: Unexpected error in {self.get_name()}: {str(e)}")
+            return error_result.to_json()
+    
+    def _format_message_from_data(self, data: Dict[str, Any]) -> str:
+        """Format a human-readable message from structured data.
+        
+        Override this method in subclasses to provide custom message formatting.
+        
+        Args:
+            data: Structured data returned from apply()
+            
+        Returns:
+            Human-readable message string
+        """
+        # Default implementation - subclasses should override for better messages
+        if isinstance(data, dict):
+            if "message" in data:
+                return data["message"]
+            elif "count" in data and "items" in data:
+                return f"Found {data['count']} items"
+            elif "success" in data:
+                return "Operation completed successfully" if data["success"] else "Operation failed"
+        
+        return f"Tool {self.get_name()} completed successfully" 

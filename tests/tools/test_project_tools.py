@@ -4,10 +4,27 @@ import tempfile
 import os
 from pathlib import Path
 import pytest
+import json
 
 from agile_mcp.server import AgileMCPServer
 from agile_mcp.tools.project_tools import SetProjectTool, GetProjectTool
 from agile_mcp.tools.base import ToolError
+
+
+class MockToolResult:
+    """Mock object to provide ToolResult-like interface for parsed JSON responses."""
+    
+    def __init__(self, json_response: str):
+        """Parse JSON response and create mock result object."""
+        parsed = json.loads(json_response)
+        self.success = parsed.get('success', False)
+        self.message = parsed.get('message', '')
+        self.data = parsed.get('data', None)
+
+
+def parse_tool_result(json_response: str) -> MockToolResult:
+    """Parse JSON response from apply_ex into a ToolResult-like object."""
+    return MockToolResult(json_response)
 
 
 class TestProjectTools:
@@ -115,7 +132,7 @@ class TestProjectTools:
     def test_set_project_tool_with_error_handling(self, server_without_project, temp_project_dir):
         """Test SetProjectTool with error handling wrapper."""
         tool = SetProjectTool(server_without_project)
-        result = tool.apply_with_error_handling(project_path=str(temp_project_dir))
+        result = parse_tool_result(tool.apply_ex(project_path=str(temp_project_dir)))
         
         assert result.success is True
         assert "Project directory set successfully" in result.message
@@ -124,7 +141,7 @@ class TestProjectTools:
     def test_set_project_tool_error_handling_invalid_path(self, server_without_project):
         """Test SetProjectTool error handling with invalid path."""
         tool = SetProjectTool(server_without_project)
-        result = tool.apply_with_error_handling(project_path="/invalid/path")
+        result = parse_tool_result(tool.apply_ex(project_path="/invalid/path"))
         
         assert result.success is False
         assert "Project path does not exist" in result.message 

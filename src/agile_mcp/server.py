@@ -15,12 +15,31 @@ from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata, func_metada
 from .storage.filesystem import AgileProjectManager
 from .services.story_service import StoryService
 from .services.sprint_service import SprintService
+from .services.task_service import TaskService
+from .services.epic_service import EpicService
+from .services.config_service import ConfigurationService
 from .tools.story_tools import (
     CreateStoryTool,
     GetStoryTool,
     UpdateStoryTool,
     ListStoriesTool,
     DeleteStoryTool,
+)
+from .tools.task_tools import (
+    CreateTaskTool,
+    GetTaskTool,
+    UpdateTaskTool,
+    ListTasksTool,
+    DeleteTaskTool,
+)
+from .tools.epic_tools import (
+    CreateEpicTool,
+    GetEpicTool,
+    UpdateEpicTool,
+    ListEpicsTool,
+    DeleteEpicTool,
+    ManageEpicStoriesTool,
+    GetProductBacklogTool,
 )
 from .tools.sprint_tools import (
     CreateSprintTool,
@@ -82,6 +101,9 @@ class AgileMCPServer:
         self.project_manager: AgileProjectManager | None = None
         self.story_service: StoryService | None = None
         self.sprint_service: SprintService | None = None
+        self.task_service: TaskService | None = None
+        self.epic_service: EpicService | None = None
+        self.config_service: ConfigurationService | None = None
         self.mcp_server: FastMCP | None = None
         
         if self.project_path:
@@ -100,11 +122,20 @@ class AgileMCPServer:
         self.project_manager = AgileProjectManager(self.project_path)
         self.project_manager.initialize()
         
+        # Initialize configuration service
+        self.config_service = ConfigurationService(self.project_manager)
+        
         # Initialize story service
         self.story_service = StoryService(self.project_manager)
         
         # Initialize sprint service
         self.sprint_service = SprintService(self.project_manager)
+        
+        # Initialize task service
+        self.task_service = TaskService(self.project_manager)
+        
+        # Initialize epic service
+        self.epic_service = EpicService(self.project_manager)
         
         log.info("Project services initialized successfully")
     
@@ -141,7 +172,7 @@ class AgileMCPServer:
             GetAgileDocumentationTool(self),
         ]
         
-        # Story and sprint tools (always exposed, but will error if no project is set)
+        # Story, task, epic, and sprint tools (always exposed, but will error if no project is set)
         agile_tools = [
             # Story tools
             CreateStoryTool(self),
@@ -149,6 +180,20 @@ class AgileMCPServer:
             UpdateStoryTool(self),
             ListStoriesTool(self),
             DeleteStoryTool(self),
+            # Task tools
+            CreateTaskTool(self),
+            GetTaskTool(self),
+            UpdateTaskTool(self),
+            ListTasksTool(self),
+            DeleteTaskTool(self),
+            # Epic tools
+            CreateEpicTool(self),
+            GetEpicTool(self),
+            UpdateEpicTool(self),
+            ListEpicsTool(self),
+            DeleteEpicTool(self),
+            ManageEpicStoriesTool(self),
+            GetProductBacklogTool(self),
             # Sprint tools
             CreateSprintTool(self),
             GetSprintTool(self),
@@ -330,4 +375,6 @@ class AgileAgent:
         self.server = server
         self.project_manager = server.project_manager
         self.story_service = server.story_service
-        self.sprint_service = server.sprint_service 
+        self.sprint_service = server.sprint_service
+        self.task_service = server.task_service
+        self.epic_service = server.epic_service 

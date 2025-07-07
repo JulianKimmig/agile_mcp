@@ -58,14 +58,6 @@ class CreateStoryTool(AgileTool):
         self.last_result_data = story_data
         
         return f"User story '{story.title}' created successfully with ID {story.id}"
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class GetStoryTool(AgileTool):
@@ -93,14 +85,6 @@ class GetStoryTool(AgileTool):
         self.last_result_data = story_data
         
         return f"Retrieved story: {story.title} (ID: {story.id})"
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class UpdateStoryTool(AgileTool):
@@ -174,20 +158,12 @@ class UpdateStoryTool(AgileTool):
         self.last_result_data = story_data
         
         return f"Story '{updated_story.title}' updated successfully"
-    
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
 
 
 class ListStoriesTool(AgileTool):
     """List user stories with optional filtering."""
     
-    def apply(self, status: Optional[str] = None, priority: Optional[str] = None, sprint_id: Optional[str] = None) -> str:
+    def apply(self, status: Optional[str] = None, priority: Optional[str] = None, sprint_id: Optional[str] = None) -> Dict[str, Any]:
         """List user stories with optional filtering.
         
         Args:
@@ -196,7 +172,7 @@ class ListStoriesTool(AgileTool):
             sprint_id: Filter by sprint ID (optional)
             
         Returns:
-            Success message with list of stories
+            Structured data with list of stories
         """
         # Check if project is initialized
         self._check_project_initialized()
@@ -232,18 +208,52 @@ class ListStoriesTool(AgileTool):
         # Convert stories to dict format
         stories_data = [story.model_dump(mode='json') for story in stories]
         
-        # Format result with stories data
-        self.last_result_data = {"stories": stories_data}
-        
-        return json.dumps(self.last_result_data)
+        # Return structured data
+        return {
+            "stories": stories_data,
+            "count": len(stories),
+            "filters": {
+                "status": status,
+                "priority": priority,
+                "sprint_id": sprint_id
+            }
+        }
     
-    def apply_with_error_handling(self, **kwargs: Any):
-        """Override to include data in result."""
-        result = super().apply_with_error_handling(**kwargs)
-        if result.success and hasattr(self, 'last_result_data'):
-            result.data = self.last_result_data
-            delattr(self, 'last_result_data')
-        return result
+    def _format_message_from_data(self, data: Dict[str, Any]) -> str:
+        """Format human-readable message from story list data.
+        
+        Args:
+            data: Structured story list data
+            
+        Returns:
+            Human-readable message string
+        """
+        count = data.get("count", 0)
+        filters = data.get("filters", {})
+        
+        if count == 0:
+            return "No stories found matching the specified criteria"
+        
+        # Build filter description
+        filter_parts = []
+        if filters.get("status"):
+            filter_parts.append(f"status '{filters['status']}'")
+        if filters.get("priority"):
+            filter_parts.append(f"priority '{filters['priority']}'")
+        if filters.get("sprint_id"):
+            filter_parts.append(f"sprint '{filters['sprint_id']}'")
+        
+        filter_desc = f" matching {', '.join(filter_parts)}" if filter_parts else ""
+        
+        # Create story summaries
+        story_summary = []
+        for story in data.get("stories", []):
+            status_str = story.get("status", "unknown")
+            points_str = f" ({story.get('points')} pts)" if story.get("points") else ""
+            sprint_str = f" [Sprint: {story.get('sprint_id')}]" if story.get("sprint_id") else ""
+            story_summary.append(f"- {story.get('id')}: {story.get('title')} ({status_str}){points_str}{sprint_str}")
+        
+        return f"Found {count} stories{filter_desc}:\n" + "\n".join(story_summary)
 
 
 class DeleteStoryTool(AgileTool):

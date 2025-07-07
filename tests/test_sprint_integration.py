@@ -3,8 +3,25 @@
 import tempfile
 from pathlib import Path
 import pytest
+import json
 
 from src.agile_mcp.server import AgileMCPServer
+
+
+class MockToolResult:
+    """Mock object to provide ToolResult-like interface for parsed JSON responses."""
+    
+    def __init__(self, json_response: str):
+        """Parse JSON response and create mock result object."""
+        parsed = json.loads(json_response)
+        self.success = parsed.get('success', False)
+        self.message = parsed.get('message', '')
+        self.data = parsed.get('data', None)
+
+
+def parse_tool_result(json_response: str) -> MockToolResult:
+    """Parse JSON response from apply_ex into a ToolResult-like object."""
+    return MockToolResult(json_response)
 
 
 class TestSprintIntegration:
@@ -45,10 +62,10 @@ class TestSprintIntegration:
         
         # First create a sprint
         create_tool = CreateSprintTool(server)
-        create_result = create_tool.apply_with_error_handling(
+        create_result = parse_tool_result(create_tool.apply_ex(
             name="Test Sprint",
             goal="Test sprint for retrieval"
-        )
+        ))
         
         assert create_result.success
         sprint_id = create_result.data["id"]
@@ -82,10 +99,10 @@ class TestSprintIntegration:
         
         # Create a sprint
         create_tool = CreateSprintTool(server)
-        create_result = create_tool.apply_with_error_handling(
+        create_result = parse_tool_result(create_tool.apply_ex(
             name="Original Sprint",
             goal="Original goal"
-        )
+        ))
         
         assert create_result.success
         sprint_id = create_result.data["id"]
@@ -108,15 +125,15 @@ class TestSprintIntegration:
         
         # Create a sprint and a story
         sprint_tool = CreateSprintTool(server)
-        sprint_result = sprint_tool.apply_with_error_handling(name="Test Sprint")
+        sprint_result = parse_tool_result(sprint_tool.apply_ex(name="Test Sprint"))
         assert sprint_result.success
         sprint_id = sprint_result.data["id"]
         
         story_tool = CreateStoryTool(server)
-        story_result = story_tool.apply_with_error_handling(
+        story_result = parse_tool_result(story_tool.apply_ex(
             title="Test Story",
             description="A test story"
-        )
+        ))
         assert story_result.success
         story_id = story_result.data["id"]
         
@@ -145,10 +162,10 @@ class TestSprintIntegration:
         
         # Create a sprint
         create_tool = CreateSprintTool(server)
-        create_result = create_tool.apply_with_error_handling(
+        create_result = parse_tool_result(create_tool.apply_ex(
             name="Progress Test Sprint",
             goal="Test progress tracking"
-        )
+        ))
         
         assert create_result.success
         sprint_id = create_result.data["id"]
@@ -166,12 +183,12 @@ class TestSprintIntegration:
         
         # Initially no active sprint
         active_tool = GetActiveSprintTool(server)
-        result = active_tool.apply_ex()
-        assert "No active sprint found" in result
+        result = parse_tool_result(active_tool.apply_ex())
+        assert "No active sprint found" in result.message
         
         # Create and activate a sprint
         create_tool = CreateSprintTool(server)
-        create_result = create_tool.apply_with_error_handling(name="Active Sprint")
+        create_result = parse_tool_result(create_tool.apply_ex(name="Active Sprint"))
         assert create_result.success
         sprint_id = create_result.data["id"]
         
@@ -193,25 +210,25 @@ class TestSprintIntegration:
         
         # 1. Create a sprint
         sprint_tool = CreateSprintTool(server)
-        sprint_result = sprint_tool.apply_with_error_handling(
+        sprint_result = parse_tool_result(sprint_tool.apply_ex(
             name="Integration Test Sprint",
             goal="Test complete workflow",
             start_date="2024-01-15",
             end_date="2024-01-29"
-        )
+        ))
         assert sprint_result.success
         sprint_id = sprint_result.data["id"]
         
         # 2. Create some stories
         story_tool = CreateStoryTool(server)
-        story1_result = story_tool.apply_with_error_handling(
+        story1_result = parse_tool_result(story_tool.apply_ex(
             title="User Authentication",
             description="Implement user login and registration"
-        )
-        story2_result = story_tool.apply_with_error_handling(
+        ))
+        story2_result = parse_tool_result(story_tool.apply_ex(
             title="Dashboard UI",
             description="Create user dashboard interface"
-        )
+        ))
         assert story1_result.success and story2_result.success
         story1_id = story1_result.data["id"]
         story2_id = story2_result.data["id"]
@@ -227,14 +244,14 @@ class TestSprintIntegration:
         
         # 5. Verify it's the active sprint
         active_tool = GetActiveSprintTool(server)
-        active_result = active_tool.apply_with_error_handling()
+        active_result = parse_tool_result(active_tool.apply_ex())
         assert active_result.success
         assert active_result.data["active_sprint"]["id"] == sprint_id
         assert len(active_result.data["active_sprint"]["story_ids"]) == 2
         
         # 6. Check progress
         progress_tool = GetSprintProgressTool(server)
-        progress_result = progress_tool.apply_with_error_handling(sprint_id=sprint_id)
+        progress_result = parse_tool_result(progress_tool.apply_ex(sprint_id=sprint_id))
         assert progress_result.success
         assert progress_result.data["progress"]["status"] == "active"
         assert progress_result.data["progress"]["story_count"] == 2

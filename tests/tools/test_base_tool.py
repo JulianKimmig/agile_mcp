@@ -1,5 +1,6 @@
 """Tests for base tool functionality."""
 
+import json
 import pytest
 from unittest.mock import Mock
 from typing import Dict, Any
@@ -7,18 +8,30 @@ from typing import Dict, Any
 from agile_mcp.tools.base import AgileTool, ToolResult, ToolError
 
 
-class TestAgileTool:
-    """Test cases for the AgileTool base class."""
+def parse_tool_result(json_result: str) -> Dict[str, Any]:
+    """Parse JSON tool result.
+    
+    Args:
+        json_result: JSON string from tool execution
+        
+    Returns:
+        Parsed result dictionary
+    """
+    return json.loads(json_result)
 
+
+class TestAgileTool:
+    """Test cases for AgileTool base class."""
+    
     def setup_method(self) -> None:
         """Set up test fixtures."""
         self.mock_agent = Mock()
-        
+
     def test_agile_tool_is_abstract(self) -> None:
         """Test that AgileTool cannot be instantiated directly."""
         with pytest.raises(TypeError):
             AgileTool(self.mock_agent)
-
+    
     def test_get_name_from_class_name(self) -> None:
         """Test that tool names are derived from class names."""
         class CreateStoryTool(AgileTool):
@@ -119,21 +132,21 @@ class TestAgileTool:
         assert result.message == "Something went wrong"
         assert result.data is None
 
-    def test_apply_with_error_handling_catches_exceptions(self) -> None:
-        """Test that apply_with_error_handling catches and formats exceptions."""
+    def test_apply_ex_catches_exceptions(self) -> None:
+        """Test that apply_ex catches and formats exceptions."""
         class TestTool(AgileTool):
             def apply(self, **kwargs) -> str:
                 raise ValueError("Test error")
         
         tool = TestTool(self.mock_agent)
-        result = tool.apply_with_error_handling(test="value")
+        json_result = tool.apply_ex(test="value")
+        result = parse_tool_result(json_result)
         
-        assert isinstance(result, ToolResult)
-        assert result.success is False
-        assert "Test error" in result.message
+        assert result["success"] is False
+        assert "Test error" in result["message"]
 
-    def test_apply_with_error_handling_validates_input(self) -> None:
-        """Test that apply_with_error_handling validates input before execution."""
+    def test_apply_ex_validates_input(self) -> None:
+        """Test that apply_ex validates input before execution."""
         class TestTool(AgileTool):
             def validate_input(self, params: Dict[str, Any]) -> None:
                 if "required" not in params:
@@ -143,24 +156,24 @@ class TestAgileTool:
                 return "success"
         
         tool = TestTool(self.mock_agent)
-        result = tool.apply_with_error_handling()
+        json_result = tool.apply_ex()
+        result = parse_tool_result(json_result)
         
-        assert isinstance(result, ToolResult)
-        assert result.success is False
-        assert "Missing required parameter" in result.message
+        assert result["success"] is False
+        assert "Missing required parameter" in result["message"]
 
-    def test_apply_with_error_handling_returns_formatted_success(self) -> None:
+    def test_apply_ex_returns_formatted_success(self) -> None:
         """Test that successful execution is properly formatted."""
         class TestTool(AgileTool):
             def apply(self, **kwargs) -> str:
                 return "Operation completed successfully"
         
         tool = TestTool(self.mock_agent)
-        result = tool.apply_with_error_handling(param="value")
+        json_result = tool.apply_ex(param="value")
+        result = parse_tool_result(json_result)
         
-        assert isinstance(result, ToolResult)
-        assert result.success is True
-        assert result.message == "Operation completed successfully"
+        assert result["success"] is True
+        assert result["message"] == "Operation completed successfully"
 
 
 class TestToolResult:

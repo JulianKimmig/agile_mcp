@@ -1,6 +1,6 @@
 """Service layer for sprint management."""
 
-import uuid
+import sys
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
@@ -8,6 +8,7 @@ import yaml
 
 from ..models.sprint import Sprint, SprintStatus
 from ..storage.filesystem import AgileProjectManager
+from ..utils.id_generator import generate_sprint_id
 
 
 class SprintService:
@@ -54,7 +55,7 @@ class SprintService:
             raise ValueError("End date must be after start date")
         
         # Generate unique ID
-        sprint_id = self._generate_sprint_id()
+        sprint_id = generate_sprint_id()
         
         # Create sprint instance
         sprint = Sprint(
@@ -82,7 +83,11 @@ class SprintService:
         Returns:
             The Sprint if found, None otherwise
         """
-        return self.project_manager.get_sprint(sprint_id)
+        sprint = self.project_manager.get_sprint(sprint_id)
+        if sprint:
+            # Validate and clean broken story references
+            sprint = self._validate_story_references(sprint)
+        return sprint
     
     def update_sprint(
         self,
@@ -326,14 +331,43 @@ class SprintService:
         if not sprint:
             return {}
         
+        # Calculate story completion statistics
+        completed_stories = 0
+        total_stories = len(sprint.story_ids)
+        completed_points = 0
+        total_points = 0
+        
+        for story_id in sprint.story_ids:
+            story = self.project_manager.get_story(story_id)
+            if story:
+                if story.points:
+                    total_points += story.points
+                
+                # Count completed stories (done status)
+                if story.status.value == "done":
+                    completed_stories += 1
+                    if story.points:
+                        completed_points += story.points
+        
+        # Calculate completion percentage
+        completion_percentage = 0.0
+        if total_stories > 0:
+            completion_percentage = (completed_stories / total_stories) * 100
+        
         progress = {
             "sprint_id": sprint_id,
             "name": sprint.name,
             "status": sprint.status.value,
-            "story_count": len(sprint.story_ids),
+            "story_count": total_stories,
             "start_date": sprint.start_date,
             "end_date": sprint.end_date,
-            "goal": sprint.goal
+            "goal": sprint.goal,
+            # Story completion statistics
+            "total_stories": total_stories,
+            "completed_stories": completed_stories,
+            "total_points": total_points,
+            "completed_points": completed_points,
+            "completion_percentage": completion_percentage
         }
         
         # Calculate time-based progress if dates are available
@@ -357,14 +391,35 @@ class SprintService:
         
         return progress
     
-    def _generate_sprint_id(self) -> str:
-        """Generate a unique sprint ID.
-        
-        Returns:
-            A unique sprint ID in format SPRINT-XXXX
-        """
-        # Generate a 4-character hex string
-        hex_part = uuid.uuid4().hex[:4].upper()
-        return f"SPRINT-{hex_part}"
+
     
+    def _validate_story_references(self, sprint: Sprint) -> Sprint:
+        """Validate story references and remove broken ones.
+        
+        Args:
+            sprint: Sprint to validate
+            
+        Returns:
+            Sprint with cleaned story references
+        """
+        if not sprint.story_ids:
+            return sprint
+        
+        # Use centralized story reference cleaning
+        valid_story_ids = self.project_manager.clean_story_references(
+            sprint.story_ids, "Sprint", sprint.id
+        )
+        
+        # If references were cleaned, update and save the sprint
+        if len(valid_story_ids) != len(sprint.story_ids):
+            # Create updated sprint with cleaned references
+            updated_sprint = sprint.model_copy(update={"story_ids": valid_story_ids})
+            updated_sprint.updated_at = datetime.now()
+            
+            # Save the cleaned sprint
+            self.project_manager.save_sprint(updated_sprint)
+            
+            return updated_sprint
+        
+        return sprint
  
