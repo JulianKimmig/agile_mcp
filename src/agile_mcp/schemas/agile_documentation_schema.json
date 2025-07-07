@@ -1,0 +1,772 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Agile Methodology Documentation Schema",
+    "description": "Schema for machine-readable agile methodology documentation including principles, workflows, and tool specifications",
+    "type": "object",
+    "properties": {
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "description": "Documentation version"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Documentation creation timestamp"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last update timestamp"
+                },
+                "schema_version": {
+                    "type": "string",
+                    "description": "Schema version used"
+                }
+            },
+            "required": [
+                "version",
+                "schema_version"
+            ]
+        },
+        "agile_principles": {
+            "type": "object",
+            "properties": {
+                "manifesto": {
+                    "type": "object",
+                    "properties": {
+                        "values": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "primary": {
+                                        "type": "string",
+                                        "description": "Primary value being prioritized"
+                                    },
+                                    "secondary": {
+                                        "type": "string",
+                                        "description": "Secondary value (still valuable but less prioritized)"
+                                    },
+                                    "explanation": {
+                                        "type": "string",
+                                        "description": "Detailed explanation of this value"
+                                    }
+                                },
+                                "required": [
+                                    "primary",
+                                    "secondary",
+                                    "explanation"
+                                ]
+                            }
+                        },
+                        "principles": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": "Principle title"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Full principle description"
+                                    },
+                                    "practical_application": {
+                                        "type": "string",
+                                        "description": "How this principle applies in practice"
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "practical_application"
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "values",
+                        "principles"
+                    ]
+                }
+            },
+            "required": [
+                "manifesto"
+            ]
+        },
+        "methodologies": {
+            "type": "object",
+            "properties": {
+                "scrum": {
+                    "type": "object",
+                    "properties": {
+                        "description": {
+                            "type": "string",
+                            "description": "Overview of Scrum methodology"
+                        },
+                        "roles": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Role name"
+                                    },
+                                    "responsibilities": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "interactions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "How this role interacts with others"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "responsibilities"
+                                ]
+                            }
+                        },
+                        "events": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Event name"
+                                    },
+                                    "purpose": {
+                                        "type": "string",
+                                        "description": "Purpose of this event"
+                                    },
+                                    "duration": {
+                                        "type": "string",
+                                        "description": "Typical duration"
+                                    },
+                                    "participants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "outcomes": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "tools_used": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "MCP tools typically used in this event"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "purpose",
+                                    "participants",
+                                    "outcomes"
+                                ]
+                            }
+                        },
+                        "artifacts": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Artifact name"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Artifact description"
+                                    },
+                                    "owner": {
+                                        "type": "string",
+                                        "description": "Who owns/maintains this artifact"
+                                    },
+                                    "creation_tools": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "MCP tools used to create/manage this artifact"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "description",
+                                    "owner"
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "description",
+                        "roles",
+                        "events",
+                        "artifacts"
+                    ]
+                },
+                "kanban": {
+                    "type": "object",
+                    "properties": {
+                        "description": {
+                            "type": "string",
+                            "description": "Overview of Kanban methodology"
+                        },
+                        "principles": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "implementation": {
+                                        "type": "string",
+                                        "description": "How to implement this principle"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "description",
+                                    "implementation"
+                                ]
+                            }
+                        },
+                        "practices": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "tools_used": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "description"
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "description",
+                        "principles",
+                        "practices"
+                    ]
+                }
+            },
+            "required": [
+                "scrum"
+            ]
+        },
+        "workflow_patterns": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Workflow pattern name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Workflow description"
+                    },
+                    "context": {
+                        "type": "string",
+                        "description": "When to use this workflow"
+                    },
+                    "steps": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "sequence": {
+                                    "type": "integer",
+                                    "description": "Step order"
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "description": "Action to perform"
+                                },
+                                "tool": {
+                                    "type": "string",
+                                    "description": "MCP tool to use"
+                                },
+                                "parameters": {
+                                    "type": "object",
+                                    "description": "Typical parameters for this step"
+                                },
+                                "decision_points": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "condition": {
+                                                "type": "string"
+                                            },
+                                            "action_if_true": {
+                                                "type": "string"
+                                            },
+                                            "action_if_false": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "condition",
+                                            "action_if_true",
+                                            "action_if_false"
+                                        ]
+                                    }
+                                }
+                            },
+                            "required": [
+                                "sequence",
+                                "action",
+                                "tool"
+                            ]
+                        }
+                    },
+                    "outcomes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "description",
+                    "context",
+                    "steps",
+                    "outcomes"
+                ]
+            }
+        },
+        "tools": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Category name (e.g., 'Project Management', 'Story Management')"
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Category description"
+                            },
+                            "tools": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string",
+                                            "description": "Tool name"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Tool description"
+                                        },
+                                        "parameters": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "type": {
+                                                        "type": "string"
+                                                    },
+                                                    "required": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "examples": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "name",
+                                                    "type",
+                                                    "required",
+                                                    "description"
+                                                ]
+                                            }
+                                        },
+                                        "use_cases": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "scenario": {
+                                                        "type": "string",
+                                                        "description": "When to use this tool"
+                                                    },
+                                                    "example": {
+                                                        "type": "object",
+                                                        "description": "Example usage"
+                                                    },
+                                                    "workflow_context": {
+                                                        "type": "string",
+                                                        "description": "Where this fits in agile workflows"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "scenario",
+                                                    "example",
+                                                    "workflow_context"
+                                                ]
+                                            }
+                                        },
+                                        "best_practices": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "common_errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "error": {
+                                                        "type": "string"
+                                                    },
+                                                    "cause": {
+                                                        "type": "string"
+                                                    },
+                                                    "solution": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "error",
+                                                    "cause",
+                                                    "solution"
+                                                ]
+                                            }
+                                        },
+                                        "related_tools": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "tool": {
+                                                        "type": "string"
+                                                    },
+                                                    "relationship": {
+                                                        "type": "string",
+                                                        "description": "How tools relate (prerequisite, follows, alternative, etc.)"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "tool",
+                                                    "relationship"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "description",
+                                        "parameters",
+                                        "use_cases",
+                                        "best_practices"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "description",
+                            "tools"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "categories"
+            ]
+        },
+        "best_practices": {
+            "type": "object",
+            "properties": {
+                "story_writing": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "principle": {
+                                "type": "string"
+                            },
+                            "explanation": {
+                                "type": "string"
+                            },
+                            "examples": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "good": {
+                                            "type": "string"
+                                        },
+                                        "bad": {
+                                            "type": "string"
+                                        },
+                                        "why": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "good",
+                                        "bad",
+                                        "why"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "principle",
+                            "explanation",
+                            "examples"
+                        ]
+                    }
+                },
+                "sprint_planning": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "practice": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "tools_involved": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "metrics": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "practice",
+                            "description",
+                            "tools_involved"
+                        ]
+                    }
+                },
+                "estimation": {
+                    "type": "object",
+                    "properties": {
+                        "techniques": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "when_to_use": {
+                                        "type": "string"
+                                    },
+                                    "implementation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "description",
+                                    "when_to_use",
+                                    "implementation"
+                                ]
+                            }
+                        },
+                        "story_points": {
+                            "type": "object",
+                            "properties": {
+                                "scale": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "value": {
+                                                "type": "integer"
+                                            },
+                                            "meaning": {
+                                                "type": "string"
+                                            },
+                                            "typical_tasks": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "required": [
+                                            "value",
+                                            "meaning",
+                                            "typical_tasks"
+                                        ]
+                                    }
+                                },
+                                "guidelines": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "scale",
+                                "guidelines"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "techniques",
+                        "story_points"
+                    ]
+                }
+            },
+            "required": [
+                "story_writing",
+                "sprint_planning",
+                "estimation"
+            ]
+        },
+        "decision_trees": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Decision tree name"
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "description": "What decision this helps make"
+                    },
+                    "root_question": {
+                        "type": "string",
+                        "description": "Initial question to consider"
+                    },
+                    "nodes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "question": {
+                                    "type": "string"
+                                },
+                                "options": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "condition": {
+                                                "type": "string"
+                                            },
+                                            "next_node": {
+                                                "type": "string",
+                                                "description": "Next node ID or 'END' for terminal nodes"
+                                            },
+                                            "action": {
+                                                "type": "string",
+                                                "description": "Recommended action if this is a terminal node"
+                                            },
+                                            "tools": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "required": [
+                                            "condition",
+                                            "next_node"
+                                        ]
+                                    }
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "question",
+                                "options"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "purpose",
+                    "root_question",
+                    "nodes"
+                ]
+            }
+        }
+    },
+    "required": [
+        "metadata",
+        "agile_principles",
+        "methodologies",
+        "workflow_patterns",
+        "tools",
+        "best_practices",
+        "decision_trees"
+    ]
+}

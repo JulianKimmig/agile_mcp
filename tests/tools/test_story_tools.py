@@ -1,0 +1,415 @@
+"""Tests for story management tools."""
+
+import tempfile
+import shutil
+from pathlib import Path
+import pytest
+from unittest.mock import Mock
+
+from agile_mcp.tools.story_tools import (
+    CreateStoryTool, GetStoryTool, UpdateStoryTool, 
+    ListStoriesTool, DeleteStoryTool
+)
+from agile_mcp.tools.base import ToolResult, ToolError
+from agile_mcp.models.story import StoryStatus, Priority
+from agile_mcp.storage.filesystem import AgileProjectManager
+from agile_mcp.services.story_service import StoryService
+
+
+class TestCreateStoryTool:
+    """Test cases for CreateStoryTool."""
+
+    def setup_method(self) -> None:
+        """Set up test fixtures."""
+        self.test_dir = tempfile.mkdtemp()
+        self.project_path = Path(self.test_dir) / "test_project"
+        self.project_path.mkdir()
+        
+        # Initialize project and services
+        self.project_manager = AgileProjectManager(str(self.project_path))
+        self.project_manager.initialize()
+        
+        # Create mock agent with story service
+        self.mock_agent = Mock()
+        self.mock_agent.story_service = StoryService(self.project_manager)
+        
+        # Create tool instance
+        self.tool = CreateStoryTool(self.mock_agent)
+        
+    def teardown_method(self) -> None:
+        """Clean up test fixtures."""
+        shutil.rmtree(self.test_dir)
+
+    def test_create_story_tool_name(self) -> None:
+        """Test that the tool name is correct."""
+        assert self.tool.get_name() == "create_story"
+
+    def test_create_story_tool_description(self) -> None:
+        """Test that the tool has a description."""
+        description = self.tool.get_description()
+        assert "create" in description.lower()
+        assert "story" in description.lower()
+
+    def test_create_story_with_minimal_params(self) -> None:
+        """Test creating a story with only required parameters."""
+        result = self.tool.apply_with_error_handling(
+            title="As a user, I want to login",
+            description="User authentication functionality"
+        )
+        
+        assert isinstance(result, ToolResult)
+        assert result.success is True
+        assert "created successfully" in result.message.lower()
+        assert result.data is not None
+        assert "id" in result.data
+        assert result.data["title"] == "As a user, I want to login"
+
+    def test_create_story_with_all_params(self) -> None:
+        """Test creating a story with all parameters."""
+        result = self.tool.apply_with_error_handling(
+            title="As a user, I want to logout",
+            description="User logout functionality",
+            priority="high",
+            points=5,
+            tags="auth,security"
+        )
+        
+        assert isinstance(result, ToolResult)
+        assert result.success is True
+        assert result.data is not None
+        assert result.data["priority"] == "high"
+        assert result.data["points"] == 5
+        assert result.data["tags"] == ["auth", "security"]
+
+    def test_create_story_validates_required_fields(self) -> None:
+        """Test that required fields are validated."""
+        # Missing title
+        result = self.tool.apply_with_error_handling(
+            description="Test description"
+        )
+        assert result.success is False
+        assert "title" in result.message.lower()
+
+        # Missing description
+        result = self.tool.apply_with_error_handling(
+            title="Test title"
+        )
+        assert result.success is False
+        assert "description" in result.message.lower()
+
+    def test_create_story_validates_story_points(self) -> None:
+        """Test that story points are validated to be Fibonacci numbers."""
+        result = self.tool.apply_with_error_handling(
+            title="Test story",
+            description="Test description",
+            points=4  # Invalid Fibonacci number
+        )
+        
+        assert result.success is False
+        assert "fibonacci" in result.message.lower()
+
+    def test_create_story_validates_priority(self) -> None:
+        """Test that priority values are validated."""
+        result = self.tool.apply_with_error_handling(
+            title="Test story",
+            description="Test description",
+            priority="invalid"
+        )
+        
+        assert result.success is False
+        assert "priority" in result.message.lower()
+
+    def test_create_story_parses_tags(self) -> None:
+        """Test that tags string is properly parsed."""
+        result = self.tool.apply_with_error_handling(
+            title="Test story",
+            description="Test description",
+            tags="tag1, tag2,tag3 , tag4"
+        )
+        
+        assert result.success is True
+        assert result.data["tags"] == ["tag1", "tag2", "tag3", "tag4"]
+
+
+class TestGetStoryTool:
+    """Test cases for GetStoryTool."""
+
+    def setup_method(self) -> None:
+        """Set up test fixtures."""
+        self.test_dir = tempfile.mkdtemp()
+        self.project_path = Path(self.test_dir) / "test_project"
+        self.project_path.mkdir()
+        
+        # Initialize project and services
+        self.project_manager = AgileProjectManager(str(self.project_path))
+        self.project_manager.initialize()
+        
+        # Create mock agent with story service
+        self.mock_agent = Mock()
+        self.mock_agent.story_service = StoryService(self.project_manager)
+        
+        # Create test story
+        self.test_story = self.mock_agent.story_service.create_story(
+            title="Test Story",
+            description="Test Description",
+            priority=Priority.HIGH
+        )
+        
+        # Create tool instance
+        self.tool = GetStoryTool(self.mock_agent)
+        
+    def teardown_method(self) -> None:
+        """Clean up test fixtures."""
+        shutil.rmtree(self.test_dir)
+
+    def test_get_story_tool_name(self) -> None:
+        """Test that the tool name is correct."""
+        assert self.tool.get_name() == "get_story"
+
+    def test_get_existing_story(self) -> None:
+        """Test retrieving an existing story."""
+        result = self.tool.apply_with_error_handling(
+            story_id=self.test_story.id
+        )
+        
+        assert isinstance(result, ToolResult)
+        assert result.success is True
+        assert result.data is not None
+        assert result.data["id"] == self.test_story.id
+        assert result.data["title"] == "Test Story"
+        assert result.data["priority"] == "high"
+
+    def test_get_nonexistent_story(self) -> None:
+        """Test retrieving a non-existent story."""
+        result = self.tool.apply_with_error_handling(
+            story_id="STORY-NONEXISTENT"
+        )
+        
+        assert result.success is False
+        assert "not found" in result.message.lower()
+
+    def test_get_story_validates_id_required(self) -> None:
+        """Test that story_id is required."""
+        result = self.tool.apply_with_error_handling()
+        
+        assert result.success is False
+        assert "story_id" in result.message.lower()
+
+
+class TestUpdateStoryTool:
+    """Test cases for UpdateStoryTool."""
+
+    def setup_method(self) -> None:
+        """Set up test fixtures."""
+        self.test_dir = tempfile.mkdtemp()
+        self.project_path = Path(self.test_dir) / "test_project"
+        self.project_path.mkdir()
+        
+        # Initialize project and services
+        self.project_manager = AgileProjectManager(str(self.project_path))
+        self.project_manager.initialize()
+        
+        # Create mock agent with story service
+        self.mock_agent = Mock()
+        self.mock_agent.story_service = StoryService(self.project_manager)
+        
+        # Create test story
+        self.test_story = self.mock_agent.story_service.create_story(
+            title="Original Title",
+            description="Original Description"
+        )
+        
+        # Create tool instance
+        self.tool = UpdateStoryTool(self.mock_agent)
+        
+    def teardown_method(self) -> None:
+        """Clean up test fixtures."""
+        shutil.rmtree(self.test_dir)
+
+    def test_update_story_tool_name(self) -> None:
+        """Test that the tool name is correct."""
+        assert self.tool.get_name() == "update_story"
+
+    def test_update_story_title(self) -> None:
+        """Test updating a story title."""
+        result = self.tool.apply_with_error_handling(
+            story_id=self.test_story.id,
+            title="Updated Title"
+        )
+        
+        assert result.success is True
+        assert result.data["title"] == "Updated Title"
+        assert result.data["description"] == "Original Description"  # Unchanged
+
+    def test_update_story_multiple_fields(self) -> None:
+        """Test updating multiple story fields."""
+        result = self.tool.apply_with_error_handling(
+            story_id=self.test_story.id,
+            title="New Title",
+            description="New Description",
+            priority="high",
+            status="in_progress",
+            points=8
+        )
+        
+        assert result.success is True
+        assert result.data["title"] == "New Title"
+        assert result.data["description"] == "New Description"
+        assert result.data["priority"] == "high"
+        assert result.data["status"] == "in_progress"
+        assert result.data["points"] == 8
+
+    def test_update_nonexistent_story(self) -> None:
+        """Test updating a non-existent story."""
+        result = self.tool.apply_with_error_handling(
+            story_id="STORY-NONEXISTENT",
+            title="Updated Title"
+        )
+        
+        assert result.success is False
+        assert "not found" in result.message.lower()
+
+    def test_update_story_validates_story_id_required(self) -> None:
+        """Test that story_id is required."""
+        result = self.tool.apply_with_error_handling(
+            title="Updated Title"
+        )
+        
+        assert result.success is False
+        assert "story_id" in result.message.lower()
+
+
+class TestListStoriesTool:
+    """Test cases for ListStoriesTool."""
+
+    def setup_method(self) -> None:
+        """Set up test fixtures."""
+        self.test_dir = tempfile.mkdtemp()
+        self.project_path = Path(self.test_dir) / "test_project"
+        self.project_path.mkdir()
+        
+        # Initialize project and services
+        self.project_manager = AgileProjectManager(str(self.project_path))
+        self.project_manager.initialize()
+        
+        # Create mock agent with story service
+        self.mock_agent = Mock()
+        self.mock_agent.story_service = StoryService(self.project_manager)
+        
+        # Create test stories
+        self.story1 = self.mock_agent.story_service.create_story(
+            title="Story 1", description="Description 1", priority=Priority.HIGH
+        )
+        self.story2 = self.mock_agent.story_service.create_story(
+            title="Story 2", description="Description 2", priority=Priority.LOW
+        )
+        self.mock_agent.story_service.update_story(
+            self.story2.id, status=StoryStatus.IN_PROGRESS
+        )
+        
+        # Create tool instance
+        self.tool = ListStoriesTool(self.mock_agent)
+        
+    def teardown_method(self) -> None:
+        """Clean up test fixtures."""
+        shutil.rmtree(self.test_dir)
+
+    def test_list_stories_tool_name(self) -> None:
+        """Test that the tool name is correct."""
+        assert self.tool.get_name() == "list_stories"
+
+    def test_list_all_stories(self) -> None:
+        """Test listing all stories."""
+        result = self.tool.apply_with_error_handling()
+        
+        assert result.success is True
+        assert result.data is not None
+        assert "stories" in result.data
+        assert len(result.data["stories"]) == 2
+
+    def test_list_stories_by_status(self) -> None:
+        """Test filtering stories by status."""
+        result = self.tool.apply_with_error_handling(status="in_progress")
+        
+        assert result.success is True
+        assert len(result.data["stories"]) == 1
+        assert result.data["stories"][0]["id"] == self.story2.id
+
+    def test_list_stories_by_priority(self) -> None:
+        """Test filtering stories by priority."""
+        result = self.tool.apply_with_error_handling(priority="high")
+        
+        assert result.success is True
+        assert len(result.data["stories"]) == 1
+        assert result.data["stories"][0]["id"] == self.story1.id
+
+    def test_list_stories_validates_filters(self) -> None:
+        """Test that invalid filter values are rejected."""
+        result = self.tool.apply_with_error_handling(status="invalid_status")
+        
+        assert result.success is False
+        assert "status" in result.message.lower()
+
+
+class TestDeleteStoryTool:
+    """Test cases for DeleteStoryTool."""
+
+    def setup_method(self) -> None:
+        """Set up test fixtures."""
+        self.test_dir = tempfile.mkdtemp()
+        self.project_path = Path(self.test_dir) / "test_project"
+        self.project_path.mkdir()
+        
+        # Initialize project and services
+        self.project_manager = AgileProjectManager(str(self.project_path))
+        self.project_manager.initialize()
+        
+        # Create mock agent with story service
+        self.mock_agent = Mock()
+        self.mock_agent.story_service = StoryService(self.project_manager)
+        
+        # Create test story
+        self.test_story = self.mock_agent.story_service.create_story(
+            title="Story to Delete",
+            description="This story will be deleted"
+        )
+        
+        # Create tool instance
+        self.tool = DeleteStoryTool(self.mock_agent)
+        
+    def teardown_method(self) -> None:
+        """Clean up test fixtures."""
+        shutil.rmtree(self.test_dir)
+
+    def test_delete_story_tool_name(self) -> None:
+        """Test that the tool name is correct."""
+        assert self.tool.get_name() == "delete_story"
+
+    def test_delete_existing_story(self) -> None:
+        """Test deleting an existing story."""
+        result = self.tool.apply_with_error_handling(
+            story_id=self.test_story.id
+        )
+        
+        assert result.success is True
+        assert "deleted successfully" in result.message.lower()
+        
+        # Verify story is actually deleted
+        deleted_story = self.mock_agent.story_service.get_story(self.test_story.id)
+        assert deleted_story is None
+
+    def test_delete_nonexistent_story(self) -> None:
+        """Test deleting a non-existent story."""
+        result = self.tool.apply_with_error_handling(
+            story_id="STORY-NONEXISTENT"
+        )
+        
+        assert result.success is False
+        assert "not found" in result.message.lower()
+
+    def test_delete_story_validates_id_required(self) -> None:
+        """Test that story_id is required."""
+        result = self.tool.apply_with_error_handling()
+        
+        assert result.success is False
+        assert "story_id" in result.message.lower() 
