@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-import yaml
 
 from ..models.sprint import Sprint, SprintStatus
 from ..storage.filesystem import AgileProjectManager
