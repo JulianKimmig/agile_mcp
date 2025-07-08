@@ -35,7 +35,7 @@ class TestTaskTools:
             estimated_hours=None,
             due_date=None,
             dependencies=[],
-            tags=[]
+            tags=[],
         )
 
     def test_create_task_with_optional_params(self, mock_agent):
@@ -48,7 +48,7 @@ class TestTaskTools:
             description="Another test task.",
             priority="high",
             story_id="STORY-1",
-            tags="bug, frontend"
+            tags="bug, frontend",
         )
 
         assert "Task 'Another Task' created successfully with ID TASK-2" in result
@@ -61,7 +61,7 @@ class TestTaskTools:
             estimated_hours=None,
             due_date=None,
             dependencies=[],
-            tags=["bug", "frontend"]
+            tags=["bug", "frontend"],
         )
 
     def test_create_task_invalid_priority(self, mock_agent):
@@ -97,10 +97,7 @@ class TestTaskTools:
         result = update_tool.apply(task_id="TASK-1", title="Updated Task")
 
         assert "Task 'Updated Task' updated successfully" in result
-        mock_agent.task_service.update_task.assert_called_once_with(
-            "TASK-1", 
-            title="Updated Task"
-        )
+        mock_agent.task_service.update_task.assert_called_once_with("TASK-1", title="Updated Task")
 
     def test_update_task_not_found(self, mock_agent):
         """Test updating a task that does not exist."""
@@ -133,8 +130,22 @@ class TestTaskTools:
         """Test successfully listing tasks."""
         list_tool = ListTasksTool(mock_agent)
         mock_agent.task_service.list_tasks.return_value = [
-            MagicMock(id="TASK-1", title="Task 1", status=MagicMock(value="todo"), priority=MagicMock(value="high"), assignee=None, story_id=None),
-            MagicMock(id="TASK-2", title="Task 2", status=MagicMock(value="in_progress"), priority=MagicMock(value="medium"), assignee=None, story_id=None)
+            MagicMock(
+                id="TASK-1",
+                title="Task 1",
+                status=MagicMock(value="todo"),
+                priority=MagicMock(value="high"),
+                assignee=None,
+                story_id=None,
+            ),
+            MagicMock(
+                id="TASK-2",
+                title="Task 2",
+                status=MagicMock(value="in_progress"),
+                priority=MagicMock(value="medium"),
+                assignee=None,
+                story_id=None,
+            ),
         ]
 
         result = list_tool.apply()

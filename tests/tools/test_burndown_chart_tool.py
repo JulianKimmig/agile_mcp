@@ -18,7 +18,7 @@ class TestBurndownChartTool:
         agent.project_manager.is_initialized.return_value = True
         return agent
 
-    @patch('agile_mcp.tools.burndown_chart_tool.SprintService')
+    @patch("agile_mcp.tools.burndown_chart_tool.SprintService")
     def test_get_burndown_chart_success(self, mock_sprint_service_class, mock_agent):
         """Test successful retrieval of a burndown chart."""
         # Set up the mock service instance
@@ -35,10 +35,10 @@ class TestBurndownChartTool:
                 {"date": "2025-01-04", "remaining_points": 4, "ideal_points": 4.0},
                 {"date": "2025-01-05", "remaining_points": 2, "ideal_points": 2.0},
                 {"date": "2025-01-06", "remaining_points": 0, "ideal_points": 0.0},
-            ]
+            ],
         }
         mock_sprint_service_class.return_value = mock_sprint_service
-        
+
         burndown_tool = GetSprintBurndownChartTool(mock_agent)
         result = burndown_tool.apply(sprint_id="SPRINT-1")
 
@@ -47,27 +47,27 @@ class TestBurndownChartTool:
         assert "2025-01-01 | 10               | 10.00" in result
         mock_sprint_service.get_sprint_burndown_data.assert_called_once_with("SPRINT-1")
 
-    @patch('agile_mcp.tools.burndown_chart_tool.SprintService')
+    @patch("agile_mcp.tools.burndown_chart_tool.SprintService")
     def test_get_burndown_chart_not_found(self, mock_sprint_service_class, mock_agent):
         """Test retrieving a burndown chart for a non-existent sprint."""
         # Set up the mock service instance to return None
         mock_sprint_service = MagicMock()
         mock_sprint_service.get_sprint_burndown_data.return_value = None
         mock_sprint_service_class.return_value = mock_sprint_service
-        
+
         burndown_tool = GetSprintBurndownChartTool(mock_agent)
 
         with pytest.raises(ToolError, match="Could not generate burndown chart for sprint with ID SPRINT-X"):
             burndown_tool.apply(sprint_id="SPRINT-X")
 
-    @patch('agile_mcp.tools.burndown_chart_tool.SprintService')
+    @patch("agile_mcp.tools.burndown_chart_tool.SprintService")
     def test_get_burndown_chart_empty_data(self, mock_sprint_service_class, mock_agent):
         """Test retrieving a burndown chart when sprint has no data."""
         # Set up the mock service instance to return empty dict
         mock_sprint_service = MagicMock()
         mock_sprint_service.get_sprint_burndown_data.return_value = {}
         mock_sprint_service_class.return_value = mock_sprint_service
-        
+
         burndown_tool = GetSprintBurndownChartTool(mock_agent)
 
         with pytest.raises(ToolError, match="Could not generate burndown chart for sprint with ID SPRINT-EMPTY"):

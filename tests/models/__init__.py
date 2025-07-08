@@ -1,1 +1,1 @@
-"""Tests for Agile MCP Server models.""" 
+"""Tests for Agile MCP Server models."""

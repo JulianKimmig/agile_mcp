@@ -1,1 +1,1 @@
-"""Tests for Agile MCP Server storage layer.""" 
+"""Tests for Agile MCP Server storage layer."""

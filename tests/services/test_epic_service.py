@@ -28,10 +28,7 @@ class TestEpicService:
         """Test successful creation of an epic."""
         mock_project_manager.save_epic.return_value = None
 
-        epic = epic_service.create_epic(
-            title="Test Epic", 
-            description="Test Description"
-        )
+        epic = epic_service.create_epic(title="Test Epic", description="Test Description")
 
         assert epic.title == "Test Epic"
         assert epic.description == "Test Description"
@@ -61,9 +58,11 @@ class TestEpicService:
 
     def test_update_epic_success(self, epic_service, mock_project_manager):
         """Test successful update of an epic."""
-        mock_epic = MagicMock(spec=Epic, id="EPIC-1", title="Old Title", description="Old Desc", status=EpicStatus.PLANNING, story_ids=[])
+        mock_epic = MagicMock(
+            spec=Epic, id="EPIC-1", title="Old Title", description="Old Desc", status=EpicStatus.PLANNING, story_ids=[]
+        )
         mock_project_manager.get_epic.return_value = mock_epic
-        
+
         # Create a new mock for the updated epic
         updated_mock = MagicMock(spec=Epic)
         updated_mock.title = "New Title"
@@ -86,13 +85,20 @@ class TestEpicService:
 
     def test_delete_epic_success(self, epic_service, mock_project_manager):
         """Test successful deletion of an epic."""
-        mock_epic = MagicMock(spec=Epic, id="EPIC-1", title="Test Epic", description="Desc", status=EpicStatus.PLANNING, story_ids=["STORY-1"])
+        mock_epic = MagicMock(
+            spec=Epic,
+            id="EPIC-1",
+            title="Test Epic",
+            description="Desc",
+            status=EpicStatus.PLANNING,
+            story_ids=["STORY-1"],
+        )
         mock_story = MagicMock(spec=UserStory, id="STORY-1", epic_id="EPIC-1")
-        
+
         mock_project_manager.get_epic.return_value = mock_epic
         mock_project_manager.delete_epic.return_value = True
         mock_project_manager.list_stories.return_value = [mock_story]
-        
+
         # Create updated story mock
         updated_story = MagicMock(spec=UserStory)
         updated_story.epic_id = None
@@ -119,23 +125,23 @@ class TestEpicService:
         # Create real datetime objects for sorting
         mock_epic1 = MagicMock(spec=Epic, id="EPIC-1", status=EpicStatus.PLANNING, story_ids=[])
         mock_epic1.created_at = datetime(2025, 1, 1)
-        
+
         mock_epic2 = MagicMock(spec=Epic, id="EPIC-2", status=EpicStatus.IN_PROGRESS, story_ids=[])
         mock_epic2.created_at = datetime(2025, 1, 2)
-        
+
         # Set up model_copy to return the same objects with modified story_ids
         mock_epic1_copy = MagicMock(spec=Epic)
         mock_epic1_copy.id = "EPIC-1"
         mock_epic1_copy.status = EpicStatus.PLANNING
         mock_epic1_copy.created_at = datetime(2025, 1, 1)
         mock_epic1.model_copy.return_value = mock_epic1_copy
-        
+
         mock_epic2_copy = MagicMock(spec=Epic)
         mock_epic2_copy.id = "EPIC-2"
         mock_epic2_copy.status = EpicStatus.IN_PROGRESS
         mock_epic2_copy.created_at = datetime(2025, 1, 2)
         mock_epic2.model_copy.return_value = mock_epic2_copy
-        
+
         mock_project_manager.list_epics.return_value = [mock_epic1, mock_epic2]
 
         epics = epic_service.list_epics()
@@ -148,17 +154,17 @@ class TestEpicService:
         # Create real datetime objects for sorting
         mock_epic1 = MagicMock(spec=Epic, id="EPIC-1", status=EpicStatus.PLANNING, story_ids=[])
         mock_epic1.created_at = datetime(2025, 1, 1)
-        
+
         mock_epic2 = MagicMock(spec=Epic, id="EPIC-2", status=EpicStatus.IN_PROGRESS, story_ids=[])
         mock_epic2.created_at = datetime(2025, 1, 2)
-        
+
         # Set up model_copy to return the same objects with modified story_ids
         mock_epic1_copy = MagicMock(spec=Epic)
         mock_epic1_copy.id = "EPIC-1"
         mock_epic1_copy.status = EpicStatus.PLANNING
         mock_epic1_copy.created_at = datetime(2025, 1, 1)
         mock_epic1.model_copy.return_value = mock_epic1_copy
-        
+
         mock_project_manager.list_epics.return_value = [mock_epic1, mock_epic2]
 
         epics = epic_service.list_epics(status=EpicStatus.PLANNING)
@@ -170,11 +176,11 @@ class TestEpicService:
         """Test successfully adding a story to an epic."""
         mock_epic = MagicMock(spec=Epic, id="EPIC-1", story_ids=[])
         mock_story = MagicMock(spec=UserStory, id="STORY-1", epic_id=None)
-        
+
         # Set up the update path
         updated_epic = MagicMock(spec=Epic)
         updated_epic.story_ids = ["STORY-1"]
-        
+
         mock_project_manager.get_epic.return_value = mock_epic
         mock_project_manager.get_story.return_value = mock_story
         mock_project_manager.save_epic.return_value = None
@@ -200,11 +206,11 @@ class TestEpicService:
         """Test successfully removing a story from an epic."""
         mock_epic = MagicMock(spec=Epic, id="EPIC-1", story_ids=["STORY-1"])
         mock_story = MagicMock(spec=UserStory, id="STORY-1", epic_id="EPIC-1")
-        
+
         # Set up the update path
         updated_epic = MagicMock(spec=Epic)
         updated_epic.story_ids = []
-        
+
         mock_project_manager.get_epic.return_value = mock_epic
         mock_project_manager.get_story.return_value = mock_story
         mock_project_manager.save_epic.return_value = None
@@ -237,7 +243,7 @@ class TestEpicService:
         updated_story1.epic_id = None
         updated_story2 = MagicMock(spec=UserStory)
         updated_story2.epic_id = None
-        
+
         mock_story1.model_copy.return_value = updated_story1
         mock_story2.model_copy.return_value = updated_story2
 

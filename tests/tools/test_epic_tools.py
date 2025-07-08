@@ -36,10 +36,7 @@ class TestEpicTools:
 
         assert "Epic 'Test Epic' created successfully with ID EPIC-1" in result
         mock_agent.epic_service.create_epic.assert_called_once_with(
-            title="Test Epic",
-            description="A test epic.",
-            status=EpicStatus.PLANNING,
-            tags=[]
+            title="Test Epic", description="A test epic.", status=EpicStatus.PLANNING, tags=[]
         )
 
     def test_create_epic_with_optional_params(self, mock_agent):
@@ -48,10 +45,7 @@ class TestEpicTools:
         mock_agent.epic_service.create_epic.return_value = MagicMock(id="EPIC-2", title="Another Epic")
 
         result = create_tool.apply(
-            title="Another Epic",
-            description="Another test epic.",
-            status="in_progress",
-            tags="feature, backend"
+            title="Another Epic", description="Another test epic.", status="in_progress", tags="feature, backend"
         )
 
         assert "Epic 'Another Epic' created successfully with ID EPIC-2" in result
@@ -59,7 +53,7 @@ class TestEpicTools:
             title="Another Epic",
             description="Another test epic.",
             status=EpicStatus.IN_PROGRESS,
-            tags=["feature", "backend"]
+            tags=["feature", "backend"],
         )
 
     def test_create_epic_invalid_status(self, mock_agent):
@@ -186,8 +180,24 @@ class TestEpicTools:
         """Test successfully retrieving the product backlog."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(id="STORY-1", title="Story 1", sprint_id=None, priority=Priority.HIGH, status=StoryStatus.TODO, epic_id=None, points=5),
-            MagicMock(id="STORY-3", title="Story 3", sprint_id=None, priority=Priority.LOW, status=StoryStatus.TODO, epic_id=None, points=2),
+            MagicMock(
+                id="STORY-1",
+                title="Story 1",
+                sprint_id=None,
+                priority=Priority.HIGH,
+                status=StoryStatus.TODO,
+                epic_id=None,
+                points=5,
+            ),
+            MagicMock(
+                id="STORY-3",
+                title="Story 3",
+                sprint_id=None,
+                priority=Priority.LOW,
+                status=StoryStatus.TODO,
+                epic_id=None,
+                points=2,
+            ),
         ]
 
         result = get_backlog_tool.apply()
@@ -209,8 +219,24 @@ class TestEpicTools:
         """Test retrieving the product backlog with a priority filter."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(id="STORY-1", title="Story 1", sprint_id=None, priority=Priority.HIGH, status=StoryStatus.TODO, epic_id=None, points=5),
-            MagicMock(id="STORY-3", title="Story 3", sprint_id=None, priority=Priority.LOW, status=StoryStatus.TODO, epic_id=None, points=2),
+            MagicMock(
+                id="STORY-1",
+                title="Story 1",
+                sprint_id=None,
+                priority=Priority.HIGH,
+                status=StoryStatus.TODO,
+                epic_id=None,
+                points=5,
+            ),
+            MagicMock(
+                id="STORY-3",
+                title="Story 3",
+                sprint_id=None,
+                priority=Priority.LOW,
+                status=StoryStatus.TODO,
+                epic_id=None,
+                points=2,
+            ),
         ]
 
         result = get_backlog_tool.apply(priority="high")
@@ -223,8 +249,26 @@ class TestEpicTools:
         """Test retrieving the product backlog with a tags filter."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(id="STORY-1", title="Story 1", sprint_id=None, priority=Priority.HIGH, status=StoryStatus.TODO, tags=["backend"], epic_id=None, points=5),
-            MagicMock(id="STORY-3", title="Story 3", sprint_id=None, priority=Priority.LOW, status=StoryStatus.TODO, tags=["frontend"], epic_id=None, points=2),
+            MagicMock(
+                id="STORY-1",
+                title="Story 1",
+                sprint_id=None,
+                priority=Priority.HIGH,
+                status=StoryStatus.TODO,
+                tags=["backend"],
+                epic_id=None,
+                points=5,
+            ),
+            MagicMock(
+                id="STORY-3",
+                title="Story 3",
+                sprint_id=None,
+                priority=Priority.LOW,
+                status=StoryStatus.TODO,
+                tags=["frontend"],
+                epic_id=None,
+                points=2,
+            ),
         ]
 
         result = get_backlog_tool.apply(tags="backend")
@@ -237,8 +281,24 @@ class TestEpicTools:
         """Test retrieving the product backlog including completed stories."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(id="STORY-1", title="Story 1", sprint_id=None, priority=Priority.HIGH, status=StoryStatus.TODO, epic_id=None, points=5),
-            MagicMock(id="STORY-3", title="Story 3", sprint_id=None, priority=Priority.LOW, status=StoryStatus.DONE, epic_id=None, points=2),
+            MagicMock(
+                id="STORY-1",
+                title="Story 1",
+                sprint_id=None,
+                priority=Priority.HIGH,
+                status=StoryStatus.TODO,
+                epic_id=None,
+                points=5,
+            ),
+            MagicMock(
+                id="STORY-3",
+                title="Story 3",
+                sprint_id=None,
+                priority=Priority.LOW,
+                status=StoryStatus.DONE,
+                epic_id=None,
+                points=2,
+            ),
         ]
 
         result = get_backlog_tool.apply(include_completed=True)
