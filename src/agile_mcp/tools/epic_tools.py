@@ -228,20 +228,27 @@ class ListEpicsTool(AgileTool):
         # Validate status filter
         if status:
             try:
-                EpicStatus(status)
+                status_enum = EpicStatus(status)
             except ValueError:
                 valid_statuses = [s.value for s in EpicStatus]
                 raise ToolError(f"Invalid status. Must be one of: {valid_statuses}")
 
-        # Get filtered epics
-        try:
-            if self.agent.epic_service is None:
-                raise ToolError("Epic service is not initialized.")
-            epics = self.agent.epic_service.list_epics(
-                status=EpicStatus(status) if status else None, include_story_ids=include_stories
-            )
-        except Exception as err:
-            raise RuntimeError("Failed to perform epic operation.") from err
+        # Get epics first
+        if self.agent.epic_service is None:
+            raise ToolError("Epic service not available")
+
+        epics = self.agent.epic_service.list_epics(status=status_enum)
+
+        # Get stories if requested - note: currently not used in output
+        # This could be extended in the future to show story details
+        if include_stories and self.agent.story_service is not None:
+            try:
+                _ = self.agent.story_service.list_stories()
+                # stories_data = [story.model_dump(mode="json") for story in stories]
+                # Could be used to enrich epic data with story details
+            except Exception:
+                # If story service fails, just continue without stories
+                pass
 
         # Format result
         epics_data = [epic.model_dump(mode="json") for epic in epics]

@@ -126,7 +126,7 @@ class SprintService:
         if goal:
             update_data["goal"] = goal
         if start_date:
-            update_data["start_date"] = start_date.isoformat()  # type: ignore
+            update_data["start_date"] = start_date.isoformat()
         if end_date:
             update_data["end_date"] = end_date.isoformat()  # type: ignore
         if status:

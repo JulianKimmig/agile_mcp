@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Type, cast
 
-import yaml
+import yaml  # type: ignore[import]
 
 if TYPE_CHECKING:
     from ..models.base import AgileArtifact

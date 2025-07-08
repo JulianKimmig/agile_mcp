@@ -6,26 +6,26 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
-from agile_mcp.models.story import Priority, StoryStatus
+from agile_mcp.models.story import Priority, StoryStatus, UserStory
 from agile_mcp.services.story_service import StoryService
 from agile_mcp.storage.filesystem import AgileProjectManager
+from agile_mcp.tools.base import ToolResult
 from agile_mcp.tools.story_tools import CreateStoryTool, DeleteStoryTool, GetStoryTool, ListStoriesTool, UpdateStoryTool
 
 
 class MockToolResult:
     """Mock object to provide ToolResult-like interface for parsed JSON responses."""
 
-    def __init__(self, json_response: str):
+    def __init__(self, tool_result: ToolResult):
         """Parse JSON response and create mock result object."""
-        parsed = json.loads(json_response)
-        self.success = parsed.get("success", False)
-        self.message = parsed.get("message", "")
-        self.data = parsed.get("data", None)
+        self.success = tool_result.success
+        self.message = tool_result.message
+        self.data = tool_result.data
 
 
-def parse_tool_result(json_response: str) -> MockToolResult:
+def parse_tool_result(tool_result: ToolResult) -> MockToolResult:
     """Parse JSON response from apply_ex into a ToolResult-like object."""
-    return MockToolResult(json_response)
+    return MockToolResult(tool_result)
 
 
 class TestCreateStoryTool:

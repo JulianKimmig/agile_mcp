@@ -158,7 +158,7 @@ class AgileTool(ABC):
 
     def get_parameters(self) -> dict[str, Any]:
         """Get parameter specification for the tool.
-        
+
         Returns:
             Dictionary containing parameter specifications
         """
@@ -166,12 +166,12 @@ class AgileTool(ABC):
 
     def validate_input(self, input_data: dict[str, Any]) -> None:
         """Validate input parameters for the tool.
-        
+
         Subclasses should override this method to implement specific validation logic.
-        
+
         Args:
             input_data: The input data to validate
-            
+
         Raises:
             ToolError: If validation fails
         """

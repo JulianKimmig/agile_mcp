@@ -3,7 +3,7 @@
 import json
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import]
 
 from .base import AgileTool, ToolError, ToolResult
 

@@ -3,7 +3,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from agile_mcp.models.task import TaskPriority
+from agile_mcp.models.task import Task, TaskPriority, TaskStatus
 from agile_mcp.tools.base import ToolError
 from agile_mcp.tools.task_tools import CreateTaskTool, DeleteTaskTool, GetTaskTool, ListTasksTool, UpdateTaskTool
 
@@ -21,7 +21,8 @@ class TestTaskTools:
     def test_create_task_success(self, mock_agent):
         """Test successful creation of a task."""
         create_tool = CreateTaskTool(mock_agent)
-        mock_agent.task_service.create_task.return_value = MagicMock(id="TASK-1", title="Test Task")
+        mock_task = Task(id="TASK-1", title="Test Task", description="A test task.")
+        mock_agent.task_service.create_task.return_value = mock_task
 
         result = create_tool.apply(title="Test Task", description="A test task.")
 
@@ -41,7 +42,8 @@ class TestTaskTools:
     def test_create_task_with_optional_params(self, mock_agent):
         """Test task creation with all optional parameters."""
         create_tool = CreateTaskTool(mock_agent)
-        mock_agent.task_service.create_task.return_value = MagicMock(id="TASK-2", title="Another Task")
+        mock_task = Task(id="TASK-2", title="Another Task", description="Another test task.")
+        mock_agent.task_service.create_task.return_value = mock_task
 
         result = create_tool.apply(
             title="Another Task",
@@ -74,7 +76,8 @@ class TestTaskTools:
     def test_get_task_success(self, mock_agent):
         """Test successfully retrieving a task."""
         get_tool = GetTaskTool(mock_agent)
-        mock_agent.task_service.get_task.return_value = MagicMock(id="TASK-1", title="Test Task")
+        mock_task = Task(id="TASK-1", title="Test Task", description="A test task.")
+        mock_agent.task_service.get_task.return_value = mock_task
 
         result = get_tool.apply(task_id="TASK-1")
 
@@ -92,7 +95,8 @@ class TestTaskTools:
     def test_update_task_success(self, mock_agent):
         """Test successfully updating a task."""
         update_tool = UpdateTaskTool(mock_agent)
-        mock_agent.task_service.update_task.return_value = MagicMock(id="TASK-1", title="Updated Task")
+        mock_task = Task(id="TASK-1", title="Updated Task", description="A test task.")
+        mock_agent.task_service.update_task.return_value = mock_task
 
         result = update_tool.apply(task_id="TASK-1", title="Updated Task")
 
@@ -110,7 +114,7 @@ class TestTaskTools:
     def test_delete_task_success(self, mock_agent):
         """Test successfully deleting a task."""
         delete_tool = DeleteTaskTool(mock_agent)
-        mock_agent.task_service.get_task.return_value = MagicMock(id="TASK-1", title="Test Task")
+        mock_agent.task_service.get_task.return_value = Task(id="TASK-1", title="Test Task", description="A test task.")
         mock_agent.task_service.delete_task.return_value = True
 
         result = delete_tool.apply(task_id="TASK-1")
@@ -130,19 +134,21 @@ class TestTaskTools:
         """Test successfully listing tasks."""
         list_tool = ListTasksTool(mock_agent)
         mock_agent.task_service.list_tasks.return_value = [
-            MagicMock(
+            Task(
                 id="TASK-1",
                 title="Task 1",
-                status=MagicMock(value="todo"),
-                priority=MagicMock(value="high"),
+                description="A test task.",
+                status=TaskStatus.TODO,
+                priority=TaskPriority.HIGH,
                 assignee=None,
                 story_id=None,
             ),
-            MagicMock(
+            Task(
                 id="TASK-2",
                 title="Task 2",
-                status=MagicMock(value="in_progress"),
-                priority=MagicMock(value="medium"),
+                description="A test task.",
+                status=TaskStatus.IN_PROGRESS,
+                priority=TaskPriority.MEDIUM,
                 assignee=None,
                 story_id=None,
             ),

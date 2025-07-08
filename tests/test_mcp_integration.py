@@ -12,6 +12,14 @@ from agile_mcp.server import AgileMCPServer
 class TestMCPServerIntegration:
     """Test cases for MCP server integration."""
 
+    @pytest.fixture
+    def mock_mcp(self) -> MagicMock:
+        """Create a mock MCP object."""
+        mock_mcp = MagicMock()
+        mock_mcp._tool_manager = MagicMock()
+        mock_mcp._tool_manager._tools = {}
+        return mock_mcp
+
     def setup_method(self) -> None:
         """Set up test fixtures."""
         # Create temporary directory for test project

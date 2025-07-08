@@ -1,30 +1,28 @@
 """Tests for project management tools."""
 
-import json
 import os
 import tempfile
 from pathlib import Path
 
 import pytest
 from agile_mcp.server import AgileMCPServer
-from agile_mcp.tools.base import ToolError
+from agile_mcp.tools.base import ToolError, ToolResult
 from agile_mcp.tools.project_tools import GetProjectTool, SetProjectTool
 
 
 class MockToolResult:
     """Mock object to provide ToolResult-like interface for parsed JSON responses."""
 
-    def __init__(self, json_response: str):
+    def __init__(self, tool_result: ToolResult):
         """Parse JSON response and create mock result object."""
-        parsed = json.loads(json_response)
-        self.success = parsed.get("success", False)
-        self.message = parsed.get("message", "")
-        self.data = parsed.get("data", None)
+        self.success = tool_result.success
+        self.message = tool_result.message
+        self.data = tool_result.data
 
 
-def parse_tool_result(json_response: str) -> MockToolResult:
+def parse_tool_result(tool_result: ToolResult) -> MockToolResult:
     """Parse JSON response from apply_ex into a ToolResult-like object."""
-    return MockToolResult(json_response)
+    return MockToolResult(tool_result)
 
 
 class TestProjectTools:

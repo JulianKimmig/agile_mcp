@@ -156,7 +156,10 @@ class ListSprintsTool(AgileTool):
                 raise ToolError(f"Invalid status. Must be one of: {valid_statuses}")
 
         # Get filtered sprints
-        sprints = self.agent.sprint_service.list_sprints(status=status_enum, include_story_ids=include_stories)
+        if self.agent.sprint_service is None:
+            raise ToolError("Sprint service not available")
+
+        sprints = self.agent.sprint_service.list_sprints(status=status_enum, include_story_ids=include_stories or False)
 
         # Convert sprints to dict format
         sprints_data = [sprint.model_dump(mode="json") for sprint in sprints]
@@ -306,12 +309,16 @@ class ManageSprintStoriesTool(AgileTool):
 
         if action == "add":
             try:
+                if self.agent.sprint_service is None:
+                    raise ToolError("Sprint service not available")
                 updated_sprint = self.agent.sprint_service.add_story_to_sprint(sprint_id, story_id)
             except Exception as err:
                 raise RuntimeError("Failed to perform sprint operation.") from err
             action_message = f"Story '{story_id}' added to sprint '{sprint_id}'"
         else:  # action == "remove"
             try:
+                if self.agent.sprint_service is None:
+                    raise ToolError("Sprint service not available")
                 updated_sprint = self.agent.sprint_service.remove_story_from_sprint(sprint_id, story_id)
             except Exception as err:
                 raise RuntimeError("Failed to perform sprint operation.") from err
@@ -352,6 +359,10 @@ class GetSprintProgressTool(AgileTool):
         # Check if project is initialized
         self._check_project_initialized()
 
+        # Get sprint
+        if self.agent.sprint_service is None:
+            raise ToolError("Sprint service not available")
+
         sprint = self.agent.sprint_service.get_sprint(sprint_id)
         if sprint is None:
             raise ToolError(f"Sprint with ID '{sprint_id}' not found")
@@ -366,6 +377,9 @@ class GetSprintProgressTool(AgileTool):
 
         # Calculate duration if possible
         duration_info = {}
+        if self.agent.sprint_service is None:
+            raise ToolError("Sprint service not available")
+
         duration = self.agent.sprint_service.calculate_sprint_duration(sprint_id)
         if duration:
             duration_info = {"total_days": duration.days, "total_hours": duration.total_seconds() / 3600}
@@ -396,23 +410,30 @@ class GetActiveSprintTool(AgileTool):
         # Check if project is initialized
         self._check_project_initialized()
 
+        # Get active sprint
+        if self.agent.sprint_service is None:
+            raise ToolError("Sprint service not available")
+
         active_sprint = self.agent.sprint_service.get_active_sprint()
 
         if active_sprint is None:
             return self.format_result("No active sprint found", {"active_sprint": None})
 
         # Get progress information
-        progress = self.agent.sprint_service.get_sprint_progress(active_sprint.id)
+        if self.agent.sprint_service is None:
+            raise ToolError("Sprint service not available")
+
+        active_progress = self.agent.sprint_service.get_sprint_progress(active_sprint.id)
 
         # Convert datetime objects to strings for JSON serialization
-        if "start_date" in progress and progress["start_date"]:
-            progress["start_date"] = progress["start_date"].isoformat()
-        if "end_date" in progress and progress["end_date"]:
-            progress["end_date"] = progress["end_date"].isoformat()
+        if "start_date" in active_progress and active_progress["start_date"]:
+            active_progress["start_date"] = active_progress["start_date"].isoformat()
+        if "end_date" in active_progress and active_progress["end_date"]:
+            active_progress["end_date"] = active_progress["end_date"].isoformat()
 
         # Format result with active sprint data
         active_sprint_data = active_sprint.model_dump(mode="json")
-        data = {"active_sprint": active_sprint_data, "progress": progress}
+        data = {"active_sprint": active_sprint_data, "progress": active_progress}
 
         return self.format_result(
             f"Active sprint: {active_sprint.name} (ID: {active_sprint.id}, {len(active_sprint.story_ids)} stories)",

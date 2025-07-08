@@ -264,17 +264,21 @@ class DeleteTaskTool(AgileTool):
         self._check_project_initialized()
 
         # Check if task exists first
+        if self.agent.task_service is None:
+            raise ToolError("Task service not available")
+
         task = self.agent.task_service.get_task(task_id)
+
         if task is None:
             raise ToolError(f"Task with ID {task_id} not found")
 
         # Delete the task
-        try:
-            deleted = self.agent.task_service.delete_task(task_id)
-        except Exception as err:
-            raise RuntimeError("Failed to perform task operation.") from err
+        if self.agent.task_service is None:
+            raise ToolError("Task service not available")
 
-        if not deleted:
+        success = self.agent.task_service.delete_task(task_id)
+
+        if not success:
             raise ToolError(f"Failed to delete task with ID {task_id}")
 
         return self.format_result(
@@ -329,6 +333,9 @@ class ListTasksTool(AgileTool):
                 raise ToolError(f"Invalid priority. Must be one of: {valid_priorities}")
 
         # Get filtered tasks
+        if self.agent.task_service is None:
+            raise ToolError("Task service not available")
+
         try:
             tasks = self.agent.task_service.list_tasks(
                 story_id=story_id,

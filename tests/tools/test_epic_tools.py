@@ -3,8 +3,8 @@
 from unittest.mock import MagicMock
 
 import pytest
-from agile_mcp.models.epic import EpicStatus
-from agile_mcp.models.story import Priority, StoryStatus
+from agile_mcp.models.epic import Epic, EpicStatus
+from agile_mcp.models.story import Priority, StoryStatus, UserStory
 from agile_mcp.tools.base import ToolError
 from agile_mcp.tools.epic_tools import (
     CreateEpicTool,
@@ -30,11 +30,8 @@ class TestEpicTools:
     def test_create_epic_success(self, mock_agent):
         """Test successful creation of an epic."""
         create_tool = CreateEpicTool(mock_agent)
-        mock_agent.epic_service.create_epic.return_value = MagicMock(
-            id="EPIC-1",
-            title="Test Epic",
-            model_dump=MagicMock(side_effect=lambda **kwargs: {"id": "EPIC-1", "title": "Test Epic"}),
-        )
+        mock_epic = Epic(id="EPIC-1", title="Test Epic", description="A test epic.")
+        mock_agent.epic_service.create_epic.return_value = mock_epic
 
         result = create_tool.apply(title="Test Epic", description="A test epic.")
 
@@ -46,11 +43,8 @@ class TestEpicTools:
     def test_create_epic_with_optional_params(self, mock_agent):
         """Test epic creation with all optional parameters."""
         create_tool = CreateEpicTool(mock_agent)
-        mock_agent.epic_service.create_epic.return_value = MagicMock(
-            id="EPIC-2",
-            title="Another Epic",
-            model_dump=MagicMock(return_value={"id": "EPIC-2", "title": "Another Epic"}),
-        )
+        mock_epic = Epic(id="EPIC-2", title="Another Epic", description="Another test epic.")
+        mock_agent.epic_service.create_epic.return_value = mock_epic
 
         result = create_tool.apply(
             title="Another Epic", description="Another test epic.", status="in_progress", tags="feature, backend"
@@ -74,7 +68,8 @@ class TestEpicTools:
     def test_get_epic_success(self, mock_agent):
         """Test successfully retrieving an epic."""
         get_tool = GetEpicTool(mock_agent)
-        mock_agent.epic_service.get_epic.return_value = MagicMock(id="EPIC-1", title="Test Epic")
+        mock_epic = Epic(id="EPIC-1", title="Test Epic", description="A test epic.")
+        mock_agent.epic_service.get_epic.return_value = mock_epic
 
         result = get_tool.apply(epic_id="EPIC-1")
 
@@ -92,9 +87,8 @@ class TestEpicTools:
     def test_update_epic_success(self, mock_agent):
         """Test successfully updating an epic."""
         update_tool = UpdateEpicTool(mock_agent)
-        mock_agent.epic_service.update_epic.return_value = MagicMock(
-            id="EPIC-1", title="Updated Epic", model_dump=lambda: {"id": "EPIC-1", "title": "Updated Epic"}
-        )
+        mock_epic = Epic(id="EPIC-1", title="Updated Epic", description="A test epic.")
+        mock_agent.epic_service.update_epic.return_value = mock_epic
 
         result = update_tool.apply(epic_id="EPIC-1", title="Updated Epic")
 
@@ -112,7 +106,7 @@ class TestEpicTools:
     def test_delete_epic_success(self, mock_agent):
         """Test successfully deleting an epic."""
         delete_tool = DeleteEpicTool(mock_agent)
-        mock_agent.epic_service.get_epic.return_value = MagicMock(id="EPIC-1", title="Test Epic")
+        mock_agent.epic_service.get_epic.return_value = Epic(id="EPIC-1", title="Test Epic", description="A test epic.")
         mock_agent.epic_service.delete_epic.return_value = True
 
         result = delete_tool.apply(epic_id="EPIC-1")
@@ -132,8 +126,14 @@ class TestEpicTools:
         """Test successfully listing epics."""
         list_tool = ListEpicsTool(mock_agent)
         mock_agent.epic_service.list_epics.return_value = [
-            MagicMock(id="EPIC-1", title="Epic 1", status=MagicMock(value="planning"), story_ids=["STORY-1"]),
-            MagicMock(id="EPIC-2", title="Epic 2", status=MagicMock(value="in_progress"), story_ids=[]),
+            Epic(
+                id="EPIC-1",
+                title="Epic 1",
+                description="A test epic.",
+                status=EpicStatus.PLANNING,
+                story_ids=["STORY-1"],
+            ),
+            Epic(id="EPIC-2", title="Epic 2", description="A test epic.", status=EpicStatus.IN_PROGRESS, story_ids=[]),
         ]
 
         result = list_tool.apply()
@@ -154,7 +154,9 @@ class TestEpicTools:
     def test_manage_epic_stories_add_success(self, mock_agent):
         """Test successfully adding a story to an epic."""
         manage_tool = ManageEpicStoriesTool(mock_agent)
-        mock_agent.epic_service.add_story_to_epic.return_value = MagicMock(id="EPIC-1", title="Test Epic")
+        mock_agent.epic_service.add_story_to_epic.return_value = Epic(
+            id="EPIC-1", title="Test Epic", description="A test epic."
+        )
 
         result = manage_tool.apply(epic_id="EPIC-1", action="add", story_id="STORY-1")
 
@@ -164,7 +166,9 @@ class TestEpicTools:
     def test_manage_epic_stories_remove_success(self, mock_agent):
         """Test successfully removing a story from an epic."""
         manage_tool = ManageEpicStoriesTool(mock_agent)
-        mock_agent.epic_service.remove_story_from_epic.return_value = MagicMock(id="EPIC-1", title="Test Epic")
+        mock_agent.epic_service.remove_story_from_epic.return_value = Epic(
+            id="EPIC-1", title="Test Epic", description="A test epic."
+        )
 
         result = manage_tool.apply(epic_id="EPIC-1", action="remove", story_id="STORY-1")
 
@@ -190,18 +194,20 @@ class TestEpicTools:
         """Test successfully retrieving the product backlog."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(
+            UserStory(
                 id="STORY-1",
                 title="Story 1",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
                 status=StoryStatus.TODO,
                 epic_id=None,
                 points=5,
             ),
-            MagicMock(
+            UserStory(
                 id="STORY-3",
                 title="Story 3",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,
                 status=StoryStatus.TODO,
@@ -212,7 +218,7 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply()
 
-        assert "Product Backlog (2 stories, 7 total points)" in result.message
+        assert "Product Backlog: 2 stories (7 total points)" in result.message
         assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result.message
         assert "- STORY-3: Story 3 (low) (2 pts) [todo]" in result.message
 
@@ -223,24 +229,26 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply()
 
-        assert "Product backlog is empty - no unassigned stories found" in result.message
+        assert "Product backlog is empty" in result.message
 
     def test_get_product_backlog_with_priority_filter(self, mock_agent):
         """Test retrieving the product backlog with a priority filter."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(
+            UserStory(
                 id="STORY-1",
                 title="Story 1",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
                 status=StoryStatus.TODO,
                 epic_id=None,
                 points=5,
             ),
-            MagicMock(
+            UserStory(
                 id="STORY-3",
                 title="Story 3",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,
                 status=StoryStatus.TODO,
@@ -251,7 +259,7 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply(priority="high")
 
-        assert "Product Backlog (1 stories" in result.message
+        assert "Product Backlog: 1 stories" in result.message
         assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result.message
         assert "- STORY-3: Story 3 (low) (2 pts) [todo]" not in result.message
 
@@ -259,9 +267,10 @@ class TestEpicTools:
         """Test retrieving the product backlog with a tags filter."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(
+            UserStory(
                 id="STORY-1",
                 title="Story 1",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
                 status=StoryStatus.TODO,
@@ -269,9 +278,10 @@ class TestEpicTools:
                 epic_id=None,
                 points=5,
             ),
-            MagicMock(
+            UserStory(
                 id="STORY-3",
                 title="Story 3",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,
                 status=StoryStatus.TODO,
@@ -283,7 +293,7 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply(tags="backend")
 
-        assert "Product Backlog (1 stories" in result.message
+        assert "Product Backlog: 1 stories" in result.message
         assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result.message
         assert "- STORY-3: Story 3 (low) (2 pts) [todo]" not in result.message
 
@@ -291,18 +301,20 @@ class TestEpicTools:
         """Test retrieving the product backlog including completed stories."""
         get_backlog_tool = GetProductBacklogTool(mock_agent)
         mock_agent.story_service.list_stories.return_value = [
-            MagicMock(
+            UserStory(
                 id="STORY-1",
                 title="Story 1",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
                 status=StoryStatus.TODO,
                 epic_id=None,
                 points=5,
             ),
-            MagicMock(
+            UserStory(
                 id="STORY-3",
                 title="Story 3",
+                description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,
                 status=StoryStatus.DONE,
@@ -313,6 +325,6 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply(include_completed=True)
 
-        assert "Product Backlog (2 stories, 7 total points)" in result
-        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result
-        assert "- STORY-3: Story 3 (low) (2 pts) [done]" in result
+        assert "Product Backlog: 2 stories (7 total points)" in result.message
+        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result.message
+        assert "- STORY-3: Story 3 (low) (2 pts) [done]" in result.message
