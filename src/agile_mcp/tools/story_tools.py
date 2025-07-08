@@ -7,7 +7,7 @@ from .base import AgileTool, ToolError, ToolResult
 
 
 class CreateStoryTool(AgileTool):
-    """Tool for creating new user stories."""
+    """Tool to create new user story."""
 
     def validate_input(self, input_data: dict) -> None:
         """Validate input parameters for story creation."""
@@ -26,7 +26,7 @@ class CreateStoryTool(AgileTool):
         Args:
             title: Story title (required)
             description: Story description (required)
-            priority: Story priority. Options: Priority.CRITICAL, Priority.HIGH, Priority.MEDIUM, Priority.LOW
+            priority: Story priority. Options: critical, high, medium, low
             points: Story points - must be Fibonacci number (optional)
             tags: Comma-separated tags (optional)
 
@@ -137,8 +137,8 @@ class UpdateStoryTool(AgileTool):
             story_id: The ID of the story to update (required)
             title: New story title (optional)
             description: New story description (optional)
-            priority: New priority. Options: Priority.CRITICAL, Priority.HIGH, Priority.MEDIUM, Priority.LOW
-            status: New status. Options: StoryStatus.TODO, StoryStatus.IN_PROGRESS, StoryStatus.IN_REVIEW, StoryStatus.DONE, StoryStatus.BLOCKED
+            priority: New priority. Options: critical, high, medium, low
+            status: New status. Options: todo, in_progress, in_review, done, blocked
             points: New story points (optional)
             tags: New comma-separated tags (optional)
 
@@ -211,8 +211,8 @@ class ListStoriesTool(AgileTool):
         """List user stories with optional filtering.
 
         Args:
-            status: Filter by status. Options: StoryStatus.TODO, StoryStatus.IN_PROGRESS, StoryStatus.IN_REVIEW, StoryStatus.DONE, StoryStatus.BLOCKED
-            priority: Filter by priority. Options: Priority.CRITICAL, Priority.HIGH, Priority.MEDIUM, Priority.LOW
+            status: Filter by status. Options: todo, in_progress, in_review, done, blocked
+            priority: Filter by priority. Options: critical, high, medium, low
             sprint_id: Filter by sprint ID (optional)
 
         Returns:

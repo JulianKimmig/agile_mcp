@@ -19,7 +19,7 @@ class CreateEpicTool(AgileTool):
         Args:
             title: Epic title (required)
             description: Epic description (required)
-            status: Epic status. Options: EpicStatus.PLANNING, EpicStatus.IN_PROGRESS, EpicStatus.COMPLETED, EpicStatus.ON_HOLD
+            status: Epic status. Options: planning, in_progress, completed, cancelled
             tags: Comma-separated tags (optional)
 
         Returns:
@@ -113,7 +113,7 @@ class UpdateEpicTool(AgileTool):
             epic_id: The ID of the epic to update (required)
             title: New epic title (optional)
             description: New epic description (optional)
-            status: New status. Options: EpicStatus.PLANNING, EpicStatus.IN_PROGRESS, EpicStatus.COMPLETED, EpicStatus.ON_HOLD
+            status: New status. Options: planning, in_progress, completed, cancelled
             tags: New comma-separated tags (optional)
 
         Returns:
@@ -216,7 +216,7 @@ class ListEpicsTool(AgileTool):
         """List epics with optional filtering.
 
         Args:
-            status: Filter by status. Options: EpicStatus.PLANNING, EpicStatus.IN_PROGRESS, EpicStatus.COMPLETED, EpicStatus.ON_HOLD
+            status: Filter by status. Options: planning, in_progress, completed, cancelled
             include_stories: Include story IDs in results (optional, default: false)
 
         Returns:
@@ -240,27 +240,31 @@ class ListEpicsTool(AgileTool):
 
         epics = self.agent.epic_service.list_epics(status=status_enum)
 
-        # Get stories if requested - note: currently not used in output
-        # This could be extended in the future to show story details
-        if include_stories and self.agent.story_service is not None:
-            try:
-                _ = self.agent.story_service.list_stories()
-                # stories_data = [story.model_dump(mode="json") for story in stories]
-                # Could be used to enrich epic data with story details
-            except Exception:
-                # If story service fails, just continue without stories
-                pass
-
         # Format result
         epics_data = [epic.model_dump(mode="json") for epic in epics]
 
-        # Build filter description for message
-        filter_desc = f" with status '{status}'" if status else ""
-        stories_desc = " (including stories)" if include_stories else ""
+        # Build message with epic details
+        if not epics:
+            message = "No epics found matching the specified criteria"
+        else:
+            # Build message with epic listings
+            epic_lines = []
+            for epic in epics:
+                story_count = len(epic.story_ids) if epic.story_ids else 0
+                epic_line = f"- {epic.id}: {epic.title} ({epic.status.value})"
+                if story_count > 0:
+                    epic_line += f" ({story_count} stories)"
+                epic_lines.append(epic_line)
+
+            # Build filter description for message
+            filter_desc = f" with status '{status}'" if status else ""
+            stories_desc = " (including stories)" if include_stories else ""
+
+            message = f"Found {len(epics)} epics{filter_desc}{stories_desc}\n" + "\n".join(epic_lines)
 
         data = {"epics": epics_data, "count": len(epics)}
 
-        return self.format_result(f"Found {len(epics)} epics{filter_desc}{stories_desc}", data)
+        return self.format_result(message, data)
 
 
 class ManageEpicStoriesTool(AgileTool):
@@ -332,7 +336,7 @@ class GetProductBacklogTool(AgileTool):
         """Get the product backlog with optional filtering.
 
         Args:
-            priority: Filter by priority. Options: Priority.LOW, Priority.MEDIUM, Priority.HIGH, Priority.CRITICAL
+            priority: Filter by priority. Options: low, Priority.MEDIUM, high, Priority.CRITICAL
             tags: Filter by comma-separated tags (optional)
             include_completed: Include completed stories (optional, default: false)
 
@@ -391,6 +395,22 @@ class GetProductBacklogTool(AgileTool):
 
         filter_desc = f" matching {', '.join(filter_parts)}" if filter_parts else ""
 
+        # Build message with story details
+        if not backlog_stories:
+            message = "Product backlog is empty"
+        else:
+            # Build story listings
+            story_lines = []
+            for story in backlog_stories:
+                points_text = f" ({story.points} pts)" if story.points else ""
+                story_line = f"- {story.id}: {story.title} ({story.priority.value}){points_text} [{story.status.value}]"
+                story_lines.append(story_line)
+
+            message = (
+                f"Product Backlog: {len(backlog_stories)} stories ({total_points} total points){filter_desc}\n"
+                + "\n".join(story_lines)
+            )
+
         data = {
             "backlog_stories": stories_data,
             "count": len(backlog_stories),
@@ -398,6 +418,4 @@ class GetProductBacklogTool(AgileTool):
             "filters": {"priority": priority, "tags": tags, "include_completed": include_completed},
         }
 
-        return self.format_result(
-            f"Product Backlog: {len(backlog_stories)} stories ({total_points} total points){filter_desc}", data
-        )
+        return self.format_result(message, data)

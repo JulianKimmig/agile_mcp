@@ -31,7 +31,7 @@ class CreateTaskTool(AgileTool):
             title: Task title (required)
             description: Task description (required)
             story_id: ID of the parent story (optional)
-            priority: Task priority. Options: TaskPriority.LOW, TaskPriority.MEDIUM, TaskPriority.HIGH, TaskPriority.CRITICAL
+            priority: Task priority. Options: low, medium, high, critical
             assignee: Person assigned to this task (optional)
             estimated_hours: Estimated hours to complete (optional)
             due_date: Task due date in YYYY-MM-DD format (optional)
@@ -160,8 +160,8 @@ class UpdateTaskTool(AgileTool):
             task_id: The ID of the task to update (required)
             title: New task title (optional)
             description: New task description (optional)
-            status: New status. Options: TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE, TaskStatus.BLOCKED
-            priority: New priority. Options: TaskPriority.LOW, TaskPriority.MEDIUM, TaskPriority.HIGH, TaskPriority.CRITICAL
+            status: New status. Options: todo, in_progress, done, blocked
+            priority: New priority. Options: low, medium, high, critical
             assignee: New assignee (optional)
             estimated_hours: New estimated hours (optional)
             actual_hours: Actual hours spent (optional)
@@ -306,8 +306,8 @@ class ListTasksTool(AgileTool):
 
         Args:
             story_id: Filter by story ID (optional)
-            status: Filter by status. Options: TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE, TaskStatus.BLOCKED
-            priority: Filter by priority. Options: TaskPriority.LOW, TaskPriority.MEDIUM, TaskPriority.HIGH, TaskPriority.CRITICAL
+            status: Filter by status. Options: todo, in_progress, done, blocked
+            priority: Filter by priority. Options: low, medium, high, critical
             assignee: Filter by assignee (optional)
             include_completed: Include completed tasks (optional, default: true)
 
@@ -365,6 +365,18 @@ class ListTasksTool(AgileTool):
 
         filter_desc = f" matching {', '.join(filter_parts)}" if filter_parts else ""
 
+        # Build message with task details
+        if not tasks:
+            message = f"Found 0 tasks{filter_desc}"
+        else:
+            # Build task listings
+            task_lines = []
+            for task in tasks:
+                task_line = f"- {task.id}: {task.title} ({task.status.value})"
+                task_lines.append(task_line)
+
+            message = f"Found {len(tasks)} tasks{filter_desc}\n" + "\n".join(task_lines)
+
         data = {"tasks": tasks_data, "count": len(tasks)}
 
-        return self.format_result(f"Found {len(tasks)} tasks{filter_desc}", data)
+        return self.format_result(message, data)
