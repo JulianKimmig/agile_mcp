@@ -226,6 +226,7 @@ class ListEpicsTool(AgileTool):
         self._check_project_initialized()
 
         # Validate status filter
+        status_enum = None
         if status:
             try:
                 status_enum = EpicStatus(status)

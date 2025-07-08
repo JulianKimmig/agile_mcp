@@ -1,12 +1,11 @@
 """Tests for story management tools."""
 
-import json
 import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
-from agile_mcp.models.story import Priority, StoryStatus, UserStory
+from agile_mcp.models.story import Priority, StoryStatus
 from agile_mcp.services.story_service import StoryService
 from agile_mcp.storage.filesystem import AgileProjectManager
 from agile_mcp.tools.base import ToolResult

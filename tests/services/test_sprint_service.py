@@ -8,7 +8,7 @@ import shutil
 
 from src.agile_mcp.storage.filesystem import AgileProjectManager
 from src.agile_mcp.services.sprint_service import SprintService
-from src.agile_mcp.models.sprint import SprintStatus
+from src.agile_mcp.models.sprint import Sprint, SprintStatus
 
 
 class TestSprintService:
