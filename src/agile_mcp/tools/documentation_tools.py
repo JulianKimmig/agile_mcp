@@ -41,11 +41,22 @@ class GetAgileDocumentationTool(AgileTool):
         
         # Filter by topic if specified
         if topic and topic != "all":
-            if topic not in documentation:
-                raise ToolError(f"Topic '{topic}' not found in documentation")
+            # Map topic names to documentation keys
+            topic_mapping = {
+                "principles": "agile_principles",
+                "tools": "tools",
+                "workflows": "workflow_patterns", 
+                "best_practices": "best_practices",
+                "methodologies": "methodologies",
+                "decision_trees": "decision_trees"
+            }
+            
+            mapped_topic = topic_mapping.get(topic, topic)
+            if mapped_topic not in documentation:
+                raise ToolError(f"Topic '{topic}' not found in documentation, available topics: {list(topic_mapping.keys())}")
             documentation = {
                 "metadata": documentation["metadata"],
-                topic: documentation[topic]
+                mapped_topic: documentation[mapped_topic]
             }
         
         # Adjust detail level
