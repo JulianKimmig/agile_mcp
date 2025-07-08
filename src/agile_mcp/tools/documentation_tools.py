@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from .base import AgileTool, ToolError
-
+import yaml
+import json
 
 class GetAgileDocumentationTool(AgileTool):
     """Retrieve comprehensive machine-readable agile methodology documentation."""
@@ -54,7 +55,6 @@ class GetAgileDocumentationTool(AgileTool):
         # Format output
         if format == "yaml":
             try:
-                import yaml
                 output = yaml.dump(documentation, default_flow_style=False, indent=2)
             except ImportError:
                 raise ToolError("YAML format requires PyYAML package. Install with: pip install PyYAML")
@@ -69,7 +69,7 @@ class GetAgileDocumentationTool(AgileTool):
             "documentation": documentation
         }
         
-        return f"Agile methodology documentation retrieved successfully. Topic: {topic or 'all'}, Format: {format}, Detail level: {detail_level}. Content length: {len(output)} characters."
+        return output
     
     def _generate_agile_documentation(self) -> Dict[str, Any]:
         """Generate comprehensive agile methodology documentation."""
