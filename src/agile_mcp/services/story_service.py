@@ -134,7 +134,7 @@ class StoryService:
         if status:
             update_data["status"] = status
         if points:
-            update_data["points"] = points
+            update_data["points"] = points  # type: ignore
         if sprint_id:
             update_data["sprint_id"] = sprint_id
         if tags:

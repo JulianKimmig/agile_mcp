@@ -157,28 +157,25 @@ class AgileTool(ABC):
         return func_metadata(apply_method, skip_names=["self"])
 
     def get_parameters(self) -> dict[str, Any]:
-        """Get the tool parameters specification.
-
-        Override this method to specify tool parameters.
-
+        """Get parameter specification for the tool.
+        
         Returns:
-            Dictionary of parameter specifications
+            Dictionary containing parameter specifications
         """
         return {}
 
-    @abstractmethod
-    def validate_input(self, input_data: dict) -> None:
-        """Validate input parameters.
-
-        Override this method to add custom validation.
-
+    def validate_input(self, input_data: dict[str, Any]) -> None:
+        """Validate input parameters for the tool.
+        
+        Subclasses should override this method to implement specific validation logic.
+        
         Args:
-            params: Input parameters to validate
-
+            input_data: The input data to validate
+            
         Raises:
             ToolError: If validation fails
         """
-        pass  # Default implementation does nothing
+        pass
 
     def _check_project_initialized(self) -> None:
         """Check if the project is initialized and raise error if not.
@@ -272,7 +269,7 @@ class AgileTool(ABC):
         # Default implementation - subclasses should override for better messages
         if isinstance(data, dict):
             if "message" in data:
-                return data["message"]
+                return str(data["message"])
             elif "count" in data and "items" in data:
                 return f"Found {data['count']} items"
             elif "success" in data:

@@ -22,6 +22,8 @@ class GetSprintBurndownChartTool(AgileTool):
         """
         self._check_project_initialized()
 
+        if self.agent.project_manager is None:
+            raise ToolError("Project manager is not initialized.")
         sprint_service = SprintService(self.agent.project_manager)
         burndown_data = sprint_service.get_sprint_burndown_data(sprint_id)
 

@@ -75,6 +75,10 @@ class CreateTaskTool(AgileTool):
 
         # Create the task
         try:
+            # Check if task service is available
+            if self.agent.task_service is None:
+                raise ToolError("Task service not available")
+
             task = self.agent.task_service.create_task(
                 title=title,
                 description=description,
@@ -113,6 +117,10 @@ class GetTaskTool(AgileTool):
         """
         # Check if project is initialized
         self._check_project_initialized()
+
+        # Check if task service is available
+        if self.agent.task_service is None:
+            raise ToolError("Task service not available")
 
         task = self.agent.task_service.get_task(task_id)
 
@@ -184,10 +192,12 @@ class UpdateTaskTool(AgileTool):
                 raise ToolError(f"Invalid priority. Must be one of: {valid_priorities}")
 
         # Validate hours if provided
-        if estimated_hours and estimated_hours < 0:
-            raise ToolError("Estimated hours must be non-negative")
-        if actual_hours and actual_hours < 0:
-            raise ToolError("Actual hours must be non-negative")
+        if estimated_hours is not None:
+            if estimated_hours < 0:
+                raise ToolError("Estimated hours must be non-negative")
+        if actual_hours is not None:
+            if actual_hours < 0:
+                raise ToolError("Actual hours must be non-negative")
 
         # Prepare update parameters
         update_params = {}
@@ -201,19 +211,23 @@ class UpdateTaskTool(AgileTool):
             update_params["priority"] = TaskPriority(priority)
         if assignee:
             update_params["assignee"] = assignee
-        if estimated_hours:
-            update_params["estimated_hours"] = estimated_hours
-        if actual_hours:
-            update_params["actual_hours"] = actual_hours
+        if estimated_hours is not None:
+            update_params["estimated_hours"] = float(estimated_hours)
+        if actual_hours is not None:
+            update_params["actual_hours"] = float(actual_hours)
         if due_date:
             try:
-                update_params["due_date"] = datetime.strptime(due_date, "%Y-%m-%d")
+                update_params["due_date"] = datetime.strptime(due_date, "%Y-%m-%d").isoformat()
             except ValueError:
                 raise ToolError("Due date must be in YYYY-MM-DD format")
         if dependencies:
             update_params["dependencies"] = [dep.strip() for dep in dependencies.split(",")]
         if tags:
             update_params["tags"] = [tag.strip() for tag in tags.split(",")]
+
+        # Check if task service is available
+        if self.agent.task_service is None:
+            raise ToolError("Task service not available")
 
         # Update the task
         try:

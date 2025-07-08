@@ -70,19 +70,19 @@ class AgileToolInterface:
 
     def get_name(self) -> str:
         """Get the tool name."""
-        pass
+        ...
 
     def get_apply_docstring(self) -> str:
         """Get the docstring for the apply method."""
-        pass
+        ...
 
     def get_apply_fn_metadata(self) -> FuncMetadata:
         """Get the metadata for the apply method."""
-        pass
+        ...
 
     def apply_ex(self, **kwargs) -> ToolResult:
         """Apply the tool with error handling."""
-        pass
+        ...
 
 
 class AgileMCPServer:

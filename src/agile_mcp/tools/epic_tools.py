@@ -42,6 +42,8 @@ class CreateEpicTool(AgileTool):
 
         # Create the epic
         try:
+            if self.agent.epic_service is None:
+                raise ToolError("Epic service is not initialized.")
             epic = self.agent.epic_service.create_epic(
                 title=title, description=description, status=status_enum, tags=tags_list
             )
@@ -75,6 +77,8 @@ class GetEpicTool(AgileTool):
         # Check if project is initialized
         self._check_project_initialized()
 
+        if self.agent.epic_service is None:
+            raise ToolError("Epic service is not initialized.")
         epic = self.agent.epic_service.get_epic(epic_id)
 
         if epic is None:
@@ -139,6 +143,8 @@ class UpdateEpicTool(AgileTool):
 
         # Update the epic
         try:
+            if self.agent.epic_service is None:
+                raise ToolError("Epic service is not initialized.")
             updated_epic = self.agent.epic_service.update_epic(epic_id, **update_params)
         except Exception as err:
             raise RuntimeError("Failed to perform epic operation.") from err
@@ -174,12 +180,16 @@ class DeleteEpicTool(AgileTool):
         self._check_project_initialized()
 
         # Check if epic exists first
+        if self.agent.epic_service is None:
+            raise ToolError("Epic service is not initialized.")
         epic = self.agent.epic_service.get_epic(epic_id)
         if epic is None:
             raise ToolError(f"Epic with ID {epic_id} not found")
 
         # Delete the epic
         try:
+            if self.agent.epic_service is None:
+                raise ToolError("Epic service is not initialized.")
             deleted = self.agent.epic_service.delete_epic(epic_id)
         except Exception as err:
             raise RuntimeError("Failed to perform epic operation.") from err
@@ -225,6 +235,8 @@ class ListEpicsTool(AgileTool):
 
         # Get filtered epics
         try:
+            if self.agent.epic_service is None:
+                raise ToolError("Epic service is not initialized.")
             epics = self.agent.epic_service.list_epics(
                 status=EpicStatus(status) if status else None, include_story_ids=include_stories
             )
@@ -273,9 +285,13 @@ class ManageEpicStoriesTool(AgileTool):
         # Perform the action
         try:
             if action == "add":
+                if self.agent.epic_service is None:
+                    raise ToolError("Epic service is not initialized.")
                 updated_epic = self.agent.epic_service.add_story_to_epic(epic_id, story_id)
                 action_msg = "added to"
             else:  # remove
+                if self.agent.epic_service is None:
+                    raise ToolError("Epic service is not initialized.")
                 updated_epic = self.agent.epic_service.remove_story_from_epic(epic_id, story_id)
                 action_msg = "removed from"
         except Exception as err:

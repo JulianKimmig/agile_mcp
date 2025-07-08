@@ -18,4 +18,4 @@ class AgileArtifact(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        json_encoders = {datetime: lambda v: v.isoformat()}
+        json_encoders = {datetime: lambda v: v.isoformat() if isinstance(v, datetime) else v}

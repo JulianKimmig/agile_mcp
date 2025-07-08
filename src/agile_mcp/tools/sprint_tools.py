@@ -64,6 +64,10 @@ class CreateSprintTool(AgileTool):
 
         # Create the sprint
         try:
+            # Check if sprint service is available
+            if self.agent.sprint_service is None:
+                raise ToolError("Sprint service not available")
+
             sprint = self.agent.sprint_service.create_sprint(
                 name=name, goal=goal, start_date=start_date_obj, end_date=end_date_obj, tags=tags_list
             )
@@ -94,6 +98,10 @@ class GetSprintTool(AgileTool):
         """
         # Check if project is initialized
         self._check_project_initialized()
+
+        # Check if sprint service is available
+        if self.agent.sprint_service is None:
+            raise ToolError("Sprint service not available")
 
         sprint = self.agent.sprint_service.get_sprint(sprint_id)
 
@@ -226,41 +234,41 @@ class UpdateSprintTool(AgileTool):
         self._check_project_initialized()
 
         # Prepare update parameters
-        update_params = {}
+        update_data = {}
 
         if name:
-            update_params["name"] = name
+            update_data["name"] = name
 
         if goal:
-            update_params["goal"] = goal
+            update_data["goal"] = goal
 
         if status:
             try:
-                update_params["status"] = SprintStatus(status.lower())
+                update_data["status"] = SprintStatus(status.lower())
             except ValueError:
                 valid_statuses = [s.value for s in SprintStatus]
                 raise ToolError(f"Invalid status. Must be one of: {valid_statuses}")
 
         if start_date:
             try:
-                update_params["start_date"] = datetime.strptime(start_date, "%Y-%m-%d")
+                update_data["start_date"] = datetime.strptime(start_date, "%Y-%m-%d").isoformat()
             except ValueError:
                 raise ToolError(f"Invalid start_date format: {start_date}. Use YYYY-MM-DD format.")
 
         if end_date:
             try:
-                update_params["end_date"] = datetime.strptime(end_date, "%Y-%m-%d")
+                update_data["end_date"] = datetime.strptime(end_date, "%Y-%m-%d").isoformat()
             except ValueError:
                 raise ToolError(f"Invalid end_date format: {end_date}. Use YYYY-MM-DD format.")
 
-        if tags:
-            update_params["tags"] = [tag.strip() for tag in tags.split(",")]
+        if tags is not None:
+            update_data["tags"] = tags.split(",") if isinstance(tags, str) else tags
 
-        # Update the sprint
-        try:
-            updated_sprint = self.agent.sprint_service.update_sprint(sprint_id, **update_params)
-        except Exception as err:
-            raise RuntimeError("Failed to perform sprint operation.") from err
+        # Check if sprint service is available
+        if self.agent.sprint_service is None:
+            raise ToolError("Sprint service not available")
+
+        updated_sprint = self.agent.sprint_service.update_sprint(sprint_id, **update_data)
 
         if updated_sprint is None:
             raise ToolError(f"Sprint with ID {sprint_id} not found")

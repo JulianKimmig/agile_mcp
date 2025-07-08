@@ -56,9 +56,18 @@ class CreateStoryTool(AgileTool):
 
         # Create the story
         try:
-            story = self.agent.story_service.create_story(
-                title=title, description=description, priority=priority_enum, points=points, tags=tags_list
-            )
+            story_data = {
+                "title": title,
+                "description": description,
+                "priority": priority_enum,
+                "points": points,
+                "tags": tags_list,
+            }
+            # Check if story service is available
+            if self.agent.story_service is None:
+                raise ToolError("Story service not available")
+
+            story = self.agent.story_service.create_story(**story_data)
         except Exception as err:
             raise RuntimeError("Failed to create story.") from err
 
@@ -88,6 +97,10 @@ class GetStoryTool(AgileTool):
         self._check_project_initialized()
 
         try:
+            # Check if story service is available
+            if self.agent.story_service is None:
+                raise ToolError("Story service not available")
+
             story = self.agent.story_service.get_story(story_id)
         except Exception as err:
             raise RuntimeError("Failed to load story.") from err
@@ -158,25 +171,25 @@ class UpdateStoryTool(AgileTool):
                 raise ToolError(f"Story points must be a Fibonacci number: {valid_points}")
 
         # Prepare update parameters
-        update_params = {}
+        update_data = {}
         if title:
-            update_params["title"] = title
+            update_data["title"] = title
         if description:
-            update_params["description"] = description
+            update_data["description"] = description
         if priority:
-            update_params["priority"] = Priority(priority)
+            update_data["priority"] = Priority(priority)
         if status:
-            update_params["status"] = StoryStatus(status)
-        if points:
-            update_params["points"] = points
-        if tags:
-            update_params["tags"] = [tag.strip() for tag in tags.split(",")]
+            update_data["status"] = StoryStatus(status)
+        if points is not None:
+            update_data["points"] = int(points) if isinstance(points, str) else points
+        if tags is not None:
+            update_data["tags"] = tags.split(",") if isinstance(tags, str) else tags
 
-        # Update the story
-        try:
-            updated_story = self.agent.story_service.update_story(story_id, **update_params)
-        except Exception as err:
-            raise RuntimeError("Failed to update story.") from err
+        # Check if story service is available
+        if self.agent.story_service is None:
+            raise ToolError("Story service not available")
+
+        updated_story = self.agent.story_service.update_story(story_id, **update_data)
 
         if updated_story is None:
             raise ToolError(f"Story with ID {story_id} not found")
@@ -235,6 +248,9 @@ class ListStoriesTool(AgileTool):
 
         # Get filtered stories
         try:
+            # Check if story service is available
+            if self.agent.story_service is None:
+                raise ToolError("Story service not available")
             stories = self.agent.story_service.list_stories(**filters)
         except Exception as err:
             raise RuntimeError("Failed to list stories.") from err
@@ -323,6 +339,10 @@ class DeleteStoryTool(AgileTool):
 
         # Check if story exists first
         try:
+            # Check if story service is available
+            if self.agent.story_service is None:
+                raise ToolError("Story service not available")
+
             story = self.agent.story_service.get_story(story_id)
         except Exception as err:
             raise RuntimeError("Failed to load story.") from err
@@ -332,6 +352,10 @@ class DeleteStoryTool(AgileTool):
 
         # Delete the story
         try:
+            # Check if story service is available
+            if self.agent.story_service is None:
+                raise ToolError("Story service not available")
+
             success = self.agent.story_service.delete_story(story_id)
         except Exception as err:
             raise RuntimeError("Failed to delete story.") from err

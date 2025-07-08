@@ -3,9 +3,9 @@
 import shutil
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Type, cast
 
-import yaml  # type: ignore
+import yaml
 
 if TYPE_CHECKING:
     from ..models.base import AgileArtifact
@@ -182,7 +182,7 @@ class AgileProjectManager:
         if not story_file:
             return None
 
-        return self._load_and_verify_artifact(story_file, UserStory)
+        return cast(Optional["UserStory"], self._load_and_verify_artifact(story_file, UserStory))
 
     def delete_story(self, story_id: str) -> bool:
         """Delete a story by ID from any status folder.
@@ -212,7 +212,7 @@ class AgileProjectManager:
         """
         from ..models.story import UserStory
 
-        stories = []
+        stories: list[UserStory] = []
         stories_dir = self.get_stories_dir()
 
         # Get files from status subfolders
@@ -222,14 +222,14 @@ class AgileProjectManager:
                 for story_file in story_files:
                     story = self._load_and_verify_artifact(story_file, UserStory)
                     if story:
-                        stories.append(story)
+                        stories.append(cast(UserStory, story))
 
         # Also check root directory for backwards compatibility
         root_story_files = list(stories_dir.glob("*.yml"))
         for story_file in root_story_files:
             story = self._load_and_verify_artifact(story_file, UserStory)
             if story:
-                stories.append(story)
+                stories.append(cast(UserStory, story))
 
         return stories
 
@@ -269,7 +269,7 @@ class AgileProjectManager:
         if not sprint_file:
             return None
 
-        return self._load_and_verify_artifact(sprint_file, Sprint)
+        return cast(Optional["Sprint"], self._load_and_verify_artifact(sprint_file, Sprint))
 
     def delete_sprint(self, sprint_id: str) -> bool:
         """Delete a sprint by ID from any status folder.
@@ -299,7 +299,7 @@ class AgileProjectManager:
         """
         from ..models.sprint import Sprint
 
-        sprints = []
+        sprints: list[Sprint] = []
         sprints_dir = self.get_sprints_dir()
 
         # Get files from status subfolders
@@ -309,14 +309,14 @@ class AgileProjectManager:
                 for sprint_file in sprint_files:
                     sprint = self._load_and_verify_artifact(sprint_file, Sprint)
                     if sprint:
-                        sprints.append(sprint)
+                        sprints.append(cast(Sprint, sprint))
 
         # Also check root directory for backwards compatibility
         root_sprint_files = list(sprints_dir.glob("*.yml"))
         for sprint_file in root_sprint_files:
             sprint = self._load_and_verify_artifact(sprint_file, Sprint)
             if sprint:
-                sprints.append(sprint)
+                sprints.append(cast(Sprint, sprint))
 
         return sprints
 
@@ -356,7 +356,7 @@ class AgileProjectManager:
         if not task_file:
             return None
 
-        return self._load_and_verify_artifact(task_file, Task)
+        return cast(Optional["Task"], self._load_and_verify_artifact(task_file, Task))
 
     def delete_task(self, task_id: str) -> bool:
         """Delete a task by ID from any status folder.
@@ -386,7 +386,7 @@ class AgileProjectManager:
         """
         from ..models.task import Task
 
-        tasks = []
+        tasks: list[Task] = []
         tasks_dir = self.get_tasks_dir()
 
         # Get files from status subfolders
@@ -396,14 +396,14 @@ class AgileProjectManager:
                 for task_file in task_files:
                     task = self._load_and_verify_artifact(task_file, Task)
                     if task:
-                        tasks.append(task)
+                        tasks.append(cast(Task, task))
 
         # Also check root directory for backwards compatibility
         root_task_files = list(tasks_dir.glob("*.yml"))
         for task_file in root_task_files:
             task = self._load_and_verify_artifact(task_file, Task)
             if task:
-                tasks.append(task)
+                tasks.append(cast(Task, task))
 
         return tasks
 
@@ -443,7 +443,7 @@ class AgileProjectManager:
         if not epic_file:
             return None
 
-        return self._load_and_verify_artifact(epic_file, Epic)
+        return cast(Optional["Epic"], self._load_and_verify_artifact(epic_file, Epic))
 
     def delete_epic(self, epic_id: str) -> bool:
         """Delete an epic by ID from any status folder.
@@ -473,7 +473,7 @@ class AgileProjectManager:
         """
         from ..models.epic import Epic
 
-        epics = []
+        epics: list[Epic] = []
         epics_dir = self.get_epics_dir()
 
         # Get files from status subfolders
@@ -483,14 +483,14 @@ class AgileProjectManager:
                 for epic_file in epic_files:
                     epic = self._load_and_verify_artifact(epic_file, Epic)
                     if epic:
-                        epics.append(epic)
+                        epics.append(cast(Epic, epic))
 
         # Also check root directory for backwards compatibility
         root_epic_files = list(epics_dir.glob("*.yml"))
         for epic_file in root_epic_files:
             epic = self._load_and_verify_artifact(epic_file, Epic)
             if epic:
-                epics.append(epic)
+                epics.append(cast(Epic, epic))
 
         return epics
 
@@ -556,14 +556,15 @@ class AgileProjectManager:
         if not current_file:
             return
         # Get the correct path based on status
-        correct_path = self._get_artifact_file_path(base_dir, artifact.id, artifact.status.value)
-        # Only move if the file is not already in the correct location
-        if current_file != correct_path:
-            correct_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(current_file), str(correct_path))
+        if hasattr(artifact, "status"):
+            correct_path = self._get_artifact_file_path(base_dir, artifact.id, artifact.status.value)
+            # Only move if the file is not already in the correct location
+            if current_file != correct_path:
+                correct_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(current_file), str(correct_path))
 
     def _load_and_verify_artifact(
-        self, file_path: Path, artifact_class: type["AgileArtifact"]
+        self, file_path: Path, artifact_class: Type["AgileArtifact"]
     ) -> Optional["AgileArtifact"]:
         """Load an artifact and verify its status matches the  location.
 
@@ -577,13 +578,16 @@ class AgileProjectManager:
         try:
             with open(file_path, encoding="utf-8") as f:
                 artifact_data = yaml.safe_load(f)
+            if not isinstance(artifact_data, dict):
+                return None
             artifact = artifact_class(**artifact_data)
             # Check if the file is in the correct status folder under the type directory
-            expected_status = artifact.status.value
-            parent_folder = file_path.parent.name
-            base_dir = file_path.parent.parent
-            if parent_folder != expected_status:
-                self._migrate_artifact_to_status_folder(artifact, base_dir)
+            if hasattr(artifact, "status"):
+                expected_status = artifact.status.value
+                parent_folder = file_path.parent.name
+                base_dir = file_path.parent.parent
+                if parent_folder != expected_status:
+                    self._migrate_artifact_to_status_folder(artifact, base_dir)
             return artifact
         except Exception as e:
             print(f"Error loading artifact from {file_path}: {e}")
