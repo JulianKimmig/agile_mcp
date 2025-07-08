@@ -55,6 +55,7 @@ dev = [
     "pre-commit>=3.0.0",
     "types-pyyaml",
     "hypothesis>=6.0.0",
+    "requests>=2.32.4",
 ]
 
 # Tool configuration
