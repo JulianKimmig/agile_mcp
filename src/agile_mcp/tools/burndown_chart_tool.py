@@ -21,10 +21,15 @@ class GetSprintBurndownChartTool(AgileTool):
         sprint_service = SprintService(self.agent.project_manager)
         burndown_data = sprint_service.get_sprint_burndown_data(sprint_id)
 
-        if burndown_data is None:
+        if burndown_data is None or not burndown_data or not self._has_required_keys(burndown_data):
             raise ToolError(f"Could not generate burndown chart for sprint with ID {sprint_id}")
 
         return self._generate_chart(burndown_data)
+
+    def _has_required_keys(self, data: dict) -> bool:
+        """Check if the data contains all required keys for chart generation."""
+        required_keys = ['sprint_name', 'ideal_burn_per_day', 'burndown']
+        return all(key in data for key in required_keys)
 
     def _generate_chart(self, data: dict) -> str:
         """Generates a textual burndown chart."""
