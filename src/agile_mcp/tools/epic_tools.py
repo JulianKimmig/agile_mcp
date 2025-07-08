@@ -1,16 +1,19 @@
 """Epic management tools for Agile MCP Server."""
 
-import json
-from typing import Dict, Any, Optional, List
-
-from .base import AgileTool, ToolError, ToolResult
 from ..models.epic import EpicStatus
+from .base import AgileTool, ToolError, ToolResult
 
 
 class CreateEpicTool(AgileTool):
+    """Tool for creating new epics."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for epic creation."""
+        pass  # Default implementation - no validation
+
     """Create a new epic in the agile project."""
 
-    def apply(self, title: str, description: str, status: str = "planning", tags: Optional[str] = None) -> ToolResult:
+    def apply(self, title: str, description: str, status: str = "planning", tags: str | None = None) -> ToolResult:
         """Create a new epic.
 
         Args:
@@ -38,20 +41,26 @@ class CreateEpicTool(AgileTool):
             tags_list = [tag.strip() for tag in tags.split(",")]
 
         # Create the epic
-        epic = self.agent.epic_service.create_epic(
-            title=title, description=description, status=status_enum, tags=tags_list
-        )
+        try:
+            epic = self.agent.epic_service.create_epic(
+                title=title, description=description, status=status_enum, tags=tags_list
+            )
+        except Exception as err:
+            raise RuntimeError("Failed to perform epic operation.") from err
 
         # Format result with epic data
         epic_data = epic.model_dump(mode="json")
 
-        return self.format_result(
-            f"Epic '{epic.title}' created successfully with ID {epic.id}",
-            epic_data
-        )
+        return self.format_result(f"Epic '{epic.title}' created successfully with ID {epic.id}", epic_data)
 
 
 class GetEpicTool(AgileTool):
+    """Tool for retrieving epics."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for epic retrieval."""
+        pass  # Default implementation - no validation
+
     """Retrieve an epic by its ID."""
 
     def apply(self, epic_id: str) -> ToolResult:
@@ -74,22 +83,25 @@ class GetEpicTool(AgileTool):
         # Format result with epic data
         epic_data = epic.model_dump(mode="json")
 
-        return self.format_result(
-            f"Retrieved epic: {epic.title} (ID: {epic.id})",
-            epic_data
-        )
+        return self.format_result(f"Retrieved epic: {epic.title} (ID: {epic.id})", epic_data)
 
 
 class UpdateEpicTool(AgileTool):
+    """Tool for updating existing epics."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for epic update."""
+        pass  # Default implementation - no validation
+
     """Update an existing epic."""
 
     def apply(
         self,
         epic_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        status: Optional[str] = None,
-        tags: Optional[str] = None,
+        title: str | None = None,
+        description: str | None = None,
+        status: str | None = None,
+        tags: str | None = None,
     ) -> ToolResult:
         """Update an existing epic.
 
@@ -126,7 +138,10 @@ class UpdateEpicTool(AgileTool):
             update_params["tags"] = [tag.strip() for tag in tags.split(",")]
 
         # Update the epic
-        updated_epic = self.agent.epic_service.update_epic(epic_id, **update_params)
+        try:
+            updated_epic = self.agent.epic_service.update_epic(epic_id, **update_params)
+        except Exception as err:
+            raise RuntimeError("Failed to perform epic operation.") from err
 
         if updated_epic is None:
             raise ToolError(f"Epic with ID {epic_id} not found")
@@ -134,13 +149,16 @@ class UpdateEpicTool(AgileTool):
         # Format result with epic data
         epic_data = updated_epic.model_dump(mode="json")
 
-        return self.format_result(
-            f"Epic '{updated_epic.title}' updated successfully",
-            epic_data
-        )
+        return self.format_result(f"Epic '{updated_epic.title}' updated successfully", epic_data)
 
 
 class DeleteEpicTool(AgileTool):
+    """Tool for deleting epics."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for epic deletion."""
+        pass  # Default implementation - no validation
+
     """Delete an epic from the agile project."""
 
     def apply(self, epic_id: str) -> ToolResult:
@@ -161,21 +179,30 @@ class DeleteEpicTool(AgileTool):
             raise ToolError(f"Epic with ID {epic_id} not found")
 
         # Delete the epic
-        deleted = self.agent.epic_service.delete_epic(epic_id)
+        try:
+            deleted = self.agent.epic_service.delete_epic(epic_id)
+        except Exception as err:
+            raise RuntimeError("Failed to perform epic operation.") from err
 
         if not deleted:
             raise ToolError(f"Failed to delete epic with ID {epic_id}")
 
         return self.format_result(
             f"Epic '{epic.title}' (ID: {epic_id}) deleted successfully",
-            {"deleted_epic_id": epic_id, "deleted_epic_title": epic.title}
+            {"deleted_epic_id": epic_id, "deleted_epic_title": epic.title},
         )
 
 
 class ListEpicsTool(AgileTool):
+    """Tool for listing epics with optional filtering."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for epic listing."""
+        pass  # Default implementation - no validation
+
     """List epics with optional filtering."""
 
-    def apply(self, status: Optional[str] = None, include_stories: bool = False) -> ToolResult:
+    def apply(self, status: str | None = None, include_stories: bool = False) -> ToolResult:
         """List epics with optional filtering.
 
         Args:
@@ -197,26 +224,32 @@ class ListEpicsTool(AgileTool):
                 raise ToolError(f"Invalid status. Must be one of: {valid_statuses}")
 
         # Get filtered epics
-        epics = self.agent.epic_service.list_epics(
-            status=EpicStatus(status) if status else None, include_story_ids=include_stories
-        )
+        try:
+            epics = self.agent.epic_service.list_epics(
+                status=EpicStatus(status) if status else None, include_story_ids=include_stories
+            )
+        except Exception as err:
+            raise RuntimeError("Failed to perform epic operation.") from err
 
         # Format result
         epics_data = [epic.model_dump(mode="json") for epic in epics]
-        
+
         # Build filter description for message
         filter_desc = f" with status '{status}'" if status else ""
         stories_desc = " (including stories)" if include_stories else ""
 
         data = {"epics": epics_data, "count": len(epics)}
 
-        return self.format_result(
-            f"Found {len(epics)} epics{filter_desc}{stories_desc}",
-            data
-        )
+        return self.format_result(f"Found {len(epics)} epics{filter_desc}{stories_desc}", data)
 
 
 class ManageEpicStoriesTool(AgileTool):
+    """Tool for managing story assignments to epics."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for epic story management."""
+        pass  # Default implementation - no validation
+
     """Add or remove stories from an epic."""
 
     def apply(self, epic_id: str, action: str, story_id: str) -> ToolResult:
@@ -238,12 +271,15 @@ class ManageEpicStoriesTool(AgileTool):
             raise ToolError("Action must be either 'add' or 'remove'")
 
         # Perform the action
-        if action == "add":
-            updated_epic = self.agent.epic_service.add_story_to_epic(epic_id, story_id)
-            action_msg = "added to"
-        else:  # remove
-            updated_epic = self.agent.epic_service.remove_story_from_epic(epic_id, story_id)
-            action_msg = "removed from"
+        try:
+            if action == "add":
+                updated_epic = self.agent.epic_service.add_story_to_epic(epic_id, story_id)
+                action_msg = "added to"
+            else:  # remove
+                updated_epic = self.agent.epic_service.remove_story_from_epic(epic_id, story_id)
+                action_msg = "removed from"
+        except Exception as err:
+            raise RuntimeError("Failed to perform epic operation.") from err
 
         if updated_epic is None:
             raise ToolError(f"Epic with ID {epic_id} not found")
@@ -253,18 +289,22 @@ class ManageEpicStoriesTool(AgileTool):
 
         return self.format_result(
             f"Story '{story_id}' {action_msg} epic '{updated_epic.title}'",
-            {
-                "epic": epic_data,
-                "action": action,
-                "story_id": story_id
-            }
+            {"epic": epic_data, "action": action, "story_id": story_id},
         )
 
 
 class GetProductBacklogTool(AgileTool):
+    """Tool for retrieving the product backlog."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for product backlog retrieval."""
+        pass  # Default implementation - no validation
+
     """Get the product backlog - all stories not assigned to a sprint."""
 
-    def apply(self, priority: Optional[str] = None, tags: Optional[str] = None, include_completed: bool = False) -> ToolResult:
+    def apply(
+        self, priority: str | None = None, tags: str | None = None, include_completed: bool = False
+    ) -> ToolResult:
         """Get the product backlog with optional filtering.
 
         Args:
@@ -279,7 +319,10 @@ class GetProductBacklogTool(AgileTool):
         self._check_project_initialized()
 
         # Get all stories not assigned to sprints
-        backlog_stories = self.agent.story_service.list_stories(_filter_no_sprint=True)
+        try:
+            backlog_stories = self.agent.story_service.list_stories(_filter_no_sprint=True)
+        except Exception as err:
+            raise RuntimeError("Failed to perform story operation.") from err
 
         # Apply filters
         if priority:
@@ -309,7 +352,7 @@ class GetProductBacklogTool(AgileTool):
 
         # Format result
         stories_data = [story.model_dump(mode="json") for story in backlog_stories]
-        
+
         # Calculate total points
         total_points = sum(story.points for story in backlog_stories if story.points)
 
@@ -325,17 +368,12 @@ class GetProductBacklogTool(AgileTool):
         filter_desc = f" matching {', '.join(filter_parts)}" if filter_parts else ""
 
         data = {
-            "backlog_stories": stories_data, 
+            "backlog_stories": stories_data,
             "count": len(backlog_stories),
             "total_points": total_points,
-            "filters": {
-                "priority": priority,
-                "tags": tags,
-                "include_completed": include_completed
-            }
+            "filters": {"priority": priority, "tags": tags, "include_completed": include_completed},
         }
 
         return self.format_result(
-            f"Product Backlog: {len(backlog_stories)} stories ({total_points} total points){filter_desc}",
-            data
+            f"Product Backlog: {len(backlog_stories)} stories ({total_points} total points){filter_desc}", data
         )

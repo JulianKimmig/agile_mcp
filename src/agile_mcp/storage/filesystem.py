@@ -1,23 +1,24 @@
 """Filesystem storage layer for agile project management."""
 
-import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Union, Optional, List, Type, TYPE_CHECKING
-import yaml
+from typing import TYPE_CHECKING, Optional
+
+import yaml  # type: ignore
 
 if TYPE_CHECKING:
-    from ..models.story import UserStory
-    from ..models.sprint import Sprint
-    from ..models.task import Task
     from ..models.base import AgileArtifact
+    from ..models.sprint import Sprint
+    from ..models.story import UserStory
+    from ..models.task import Task
+from ..models.epic import Epic
 
 
 class AgileProjectManager:
     """Manages the .agile directory structure and project initialization."""
 
-    def __init__(self, project_path: Union[str, Path]):
+    def __init__(self, project_path: str | Path):
         """Initialize the project manager.
 
         Args:
@@ -203,7 +204,7 @@ class AgileProjectManager:
         except Exception:
             return False
 
-    def list_stories(self) -> List["UserStory"]:
+    def list_stories(self) -> list["UserStory"]:
         """List all stories from all status folders.
 
         Returns:
@@ -290,7 +291,7 @@ class AgileProjectManager:
         except Exception:
             return False
 
-    def list_sprints(self) -> List["Sprint"]:
+    def list_sprints(self) -> list["Sprint"]:
         """List all sprints from all status folders.
 
         Returns:
@@ -377,7 +378,7 @@ class AgileProjectManager:
         except Exception:
             return False
 
-    def list_tasks(self) -> List["Task"]:
+    def list_tasks(self) -> list["Task"]:
         """List all tasks from all status folders.
 
         Returns:
@@ -464,7 +465,7 @@ class AgileProjectManager:
         except Exception:
             return False
 
-    def list_epics(self) -> List["Epic"]:
+    def list_epics(self) -> list["Epic"]:
         """List all epics from all status folders.
 
         Returns:
@@ -521,7 +522,7 @@ class AgileProjectManager:
         status_dir = self._get_status_subfolder_path(base_dir, status)
         return status_dir / f"{artifact_id}.yml"
 
-    def _find_artifact_file(self, base_dir: Path, artifact_id: str) -> Optional[Path]:
+    def _find_artifact_file(self, base_dir: Path, artifact_id: str) -> Path | None:
         """Find an artifact file, checking both status subfolders and root directory of the type.
 
         Args:
@@ -562,7 +563,7 @@ class AgileProjectManager:
             shutil.move(str(current_file), str(correct_path))
 
     def _load_and_verify_artifact(
-        self, file_path: Path, artifact_class: Type["AgileArtifact"]
+        self, file_path: Path, artifact_class: type["AgileArtifact"]
     ) -> Optional["AgileArtifact"]:
         """Load an artifact and verify its status matches the  location.
 
@@ -574,7 +575,7 @@ class AgileProjectManager:
             Artifact instance if loaded successfully, None otherwise
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 artifact_data = yaml.safe_load(f)
             artifact = artifact_class(**artifact_data)
             # Check if the file is in the correct status folder under the type directory
@@ -588,7 +589,7 @@ class AgileProjectManager:
             print(f"Error loading artifact from {file_path}: {e}")
             return None
 
-    def clean_story_references(self, story_ids: List[str], artifact_type: str, artifact_id: str) -> List[str]:
+    def clean_story_references(self, story_ids: list[str], artifact_type: str, artifact_id: str) -> list[str]:
         """Clean broken story references from a list of story IDs.
 
         This utility method checks which stories actually exist and logs warnings

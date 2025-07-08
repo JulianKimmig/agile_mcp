@@ -1,27 +1,29 @@
 """Task management tools for Agile MCP Server."""
 
-import json
-from typing import Dict, Any, Optional, List
 from datetime import datetime
 
+from ..models.task import TaskPriority, TaskStatus
 from .base import AgileTool, ToolError, ToolResult
-from ..models.task import TaskStatus, TaskPriority
 
 
 class CreateTaskTool(AgileTool):
-    """Create a new task in the agile project."""
+    """Tool for creating new tasks."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for task creation."""
+        pass  # Default implementation - no validation
 
     def apply(
         self,
         title: str,
         description: str,
-        story_id: Optional[str] = None,
+        story_id: str | None = None,
         priority: str = "medium",
-        assignee: Optional[str] = None,
-        estimated_hours: Optional[float] = None,
-        due_date: Optional[str] = None,
-        dependencies: Optional[str] = None,
-        tags: Optional[str] = None,
+        assignee: str | None = None,
+        estimated_hours: float | None = None,
+        due_date: str | None = None,
+        dependencies: str | None = None,
+        tags: str | None = None,
     ) -> ToolResult:
         """Create a new task.
 
@@ -72,29 +74,33 @@ class CreateTaskTool(AgileTool):
             tags_list = [tag.strip() for tag in tags.split(",")]
 
         # Create the task
-        task = self.agent.task_service.create_task(
-            title=title,
-            description=description,
-            story_id=story_id,
-            priority=priority_enum,
-            assignee=assignee,
-            estimated_hours=estimated_hours,
-            due_date=due_date_obj,
-            dependencies=dependencies_list,
-            tags=tags_list,
-        )
+        try:
+            task = self.agent.task_service.create_task(
+                title=title,
+                description=description,
+                story_id=story_id,
+                priority=priority_enum,
+                assignee=assignee,
+                estimated_hours=estimated_hours,
+                due_date=due_date_obj,
+                dependencies=dependencies_list,
+                tags=tags_list,
+            )
+        except Exception as err:
+            raise RuntimeError("Failed to perform task operation.") from err
 
         # Format result with task data
         task_data = task.model_dump(mode="json")
 
-        return self.format_result(
-            f"Task '{task.title}' created successfully with ID {task.id}",
-            task_data
-        )
+        return self.format_result(f"Task '{task.title}' created successfully with ID {task.id}", task_data)
 
 
 class GetTaskTool(AgileTool):
-    """Retrieve a task by its ID."""
+    """Tool for retrieving tasks."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for task retrieval."""
+        pass  # Default implementation - no validation
 
     def apply(self, task_id: str) -> ToolResult:
         """Get a task by ID.
@@ -116,28 +122,29 @@ class GetTaskTool(AgileTool):
         # Format result with task data
         task_data = task.model_dump(mode="json")
 
-        return self.format_result(
-            f"Retrieved task: {task.title} (ID: {task.id})",
-            task_data
-        )
+        return self.format_result(f"Retrieved task: {task.title} (ID: {task.id})", task_data)
 
 
 class UpdateTaskTool(AgileTool):
-    """Update an existing task."""
+    """Tool for updating existing tasks."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for task update."""
+        pass  # Default implementation - no validation
 
     def apply(
         self,
         task_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        status: Optional[str] = None,
-        priority: Optional[str] = None,
-        assignee: Optional[str] = None,
-        estimated_hours: Optional[float] = None,
-        actual_hours: Optional[float] = None,
-        due_date: Optional[str] = None,
-        dependencies: Optional[str] = None,
-        tags: Optional[str] = None,
+        title: str | None = None,
+        description: str | None = None,
+        status: str | None = None,
+        priority: str | None = None,
+        assignee: str | None = None,
+        estimated_hours: float | None = None,
+        actual_hours: float | None = None,
+        due_date: str | None = None,
+        dependencies: str | None = None,
+        tags: str | None = None,
     ) -> ToolResult:
         """Update an existing task.
 
@@ -209,7 +216,10 @@ class UpdateTaskTool(AgileTool):
             update_params["tags"] = [tag.strip() for tag in tags.split(",")]
 
         # Update the task
-        updated_task = self.agent.task_service.update_task(task_id, **update_params)
+        try:
+            updated_task = self.agent.task_service.update_task(task_id, **update_params)
+        except Exception as err:
+            raise RuntimeError("Failed to perform task operation.") from err
 
         if updated_task is None:
             raise ToolError(f"Task with ID {task_id} not found")
@@ -217,14 +227,15 @@ class UpdateTaskTool(AgileTool):
         # Format result with task data
         task_data = updated_task.model_dump(mode="json")
 
-        return self.format_result(
-            f"Task '{updated_task.title}' updated successfully",
-            task_data
-        )
+        return self.format_result(f"Task '{updated_task.title}' updated successfully", task_data)
 
 
 class DeleteTaskTool(AgileTool):
-    """Delete a task from the agile project."""
+    """Tool for deleting tasks."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for task deletion."""
+        pass  # Default implementation - no validation
 
     def apply(self, task_id: str) -> ToolResult:
         """Delete a task by ID.
@@ -244,26 +255,33 @@ class DeleteTaskTool(AgileTool):
             raise ToolError(f"Task with ID {task_id} not found")
 
         # Delete the task
-        deleted = self.agent.task_service.delete_task(task_id)
+        try:
+            deleted = self.agent.task_service.delete_task(task_id)
+        except Exception as err:
+            raise RuntimeError("Failed to perform task operation.") from err
 
         if not deleted:
             raise ToolError(f"Failed to delete task with ID {task_id}")
 
         return self.format_result(
             f"Task '{task.title}' (ID: {task_id}) deleted successfully",
-            {"deleted_task_id": task_id, "deleted_task_title": task.title}
+            {"deleted_task_id": task_id, "deleted_task_title": task.title},
         )
 
 
 class ListTasksTool(AgileTool):
-    """List tasks with optional filtering."""
+    """Tool for listing tasks with optional filtering."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for task listing."""
+        pass  # Default implementation - no validation
 
     def apply(
         self,
-        story_id: Optional[str] = None,
-        status: Optional[str] = None,
-        priority: Optional[str] = None,
-        assignee: Optional[str] = None,
+        story_id: str | None = None,
+        status: str | None = None,
+        priority: str | None = None,
+        assignee: str | None = None,
         include_completed: bool = True,
     ) -> ToolResult:
         """List tasks with optional filtering.
@@ -297,17 +315,20 @@ class ListTasksTool(AgileTool):
                 raise ToolError(f"Invalid priority. Must be one of: {valid_priorities}")
 
         # Get filtered tasks
-        tasks = self.agent.task_service.list_tasks(
-            story_id=story_id,
-            status=TaskStatus(status) if status else None,
-            priority=TaskPriority(priority) if priority else None,
-            assignee=assignee,
-            include_completed=include_completed,
-        )
+        try:
+            tasks = self.agent.task_service.list_tasks(
+                story_id=story_id,
+                status=TaskStatus(status) if status else None,
+                priority=TaskPriority(priority) if priority else None,
+                assignee=assignee,
+                include_completed=include_completed,
+            )
+        except Exception as err:
+            raise RuntimeError("Failed to perform task operation.") from err
 
         # Format result
         tasks_data = [task.model_dump(mode="json") for task in tasks]
-        
+
         # Build filter description for message
         filter_parts = []
         if story_id:
@@ -325,7 +346,4 @@ class ListTasksTool(AgileTool):
 
         data = {"tasks": tasks_data, "count": len(tasks)}
 
-        return self.format_result(
-            f"Found {len(tasks)} tasks{filter_desc}",
-            data
-        )
+        return self.format_result(f"Found {len(tasks)} tasks{filter_desc}", data)

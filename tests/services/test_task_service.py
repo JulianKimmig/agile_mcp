@@ -4,9 +4,8 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from datetime import datetime
 
-from agile_mcp.models.task import Task, TaskStatus
+from agile_mcp.models.task import TaskStatus
 from agile_mcp.services.task_service import TaskService
 from agile_mcp.storage.filesystem import AgileProjectManager
 

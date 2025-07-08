@@ -3,7 +3,6 @@
 import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, mock_open
 
 from agile_mcp.storage.filesystem import AgileProjectManager
 from agile_mcp.services.config_service import ConfigurationService

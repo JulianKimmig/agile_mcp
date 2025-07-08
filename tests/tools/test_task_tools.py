@@ -1,11 +1,11 @@
 """Tests for task management tools."""
 
-import pytest
 from unittest.mock import MagicMock
 
-from agile_mcp.tools.task_tools import CreateTaskTool, GetTaskTool, UpdateTaskTool, DeleteTaskTool, ListTasksTool
-from agile_mcp.tools.base import ToolError
+import pytest
 from agile_mcp.models.task import TaskPriority
+from agile_mcp.tools.base import ToolError
+from agile_mcp.tools.task_tools import CreateTaskTool, DeleteTaskTool, GetTaskTool, ListTasksTool, UpdateTaskTool
 
 
 class TestTaskTools:
@@ -25,7 +25,7 @@ class TestTaskTools:
 
         result = create_tool.apply(title="Test Task", description="A test task.")
 
-        assert "Task 'Test Task' created successfully with ID TASK-1" in result
+        assert "Task 'Test Task' created successfully with ID TASK-1" in result.message
         mock_agent.task_service.create_task.assert_called_once_with(
             title="Test Task",
             description="A test task.",
@@ -51,7 +51,7 @@ class TestTaskTools:
             tags="bug, frontend",
         )
 
-        assert "Task 'Another Task' created successfully with ID TASK-2" in result
+        assert "Task 'Another Task' created successfully with ID TASK-2" in result.message
         mock_agent.task_service.create_task.assert_called_once_with(
             title="Another Task",
             description="Another test task.",
@@ -78,7 +78,7 @@ class TestTaskTools:
 
         result = get_tool.apply(task_id="TASK-1")
 
-        assert "Retrieved task: Test Task (ID: TASK-1)" in result
+        assert "Retrieved task: Test Task (ID: TASK-1)" in result.message
         mock_agent.task_service.get_task.assert_called_once_with("TASK-1")
 
     def test_get_task_not_found(self, mock_agent):
@@ -96,7 +96,7 @@ class TestTaskTools:
 
         result = update_tool.apply(task_id="TASK-1", title="Updated Task")
 
-        assert "Task 'Updated Task' updated successfully" in result
+        assert "Task 'Updated Task' updated successfully" in result.message
         mock_agent.task_service.update_task.assert_called_once_with("TASK-1", title="Updated Task")
 
     def test_update_task_not_found(self, mock_agent):
@@ -115,7 +115,7 @@ class TestTaskTools:
 
         result = delete_tool.apply(task_id="TASK-1")
 
-        assert "Task 'Test Task' (ID: TASK-1) deleted successfully" in result
+        assert "Task 'Test Task' (ID: TASK-1) deleted successfully" in result.message
         mock_agent.task_service.delete_task.assert_called_once_with("TASK-1")
 
     def test_delete_task_not_found(self, mock_agent):
@@ -150,6 +150,6 @@ class TestTaskTools:
 
         result = list_tool.apply()
 
-        assert "Found 2 tasks" in result
-        assert "- TASK-1: Task 1 (todo)"
-        assert "- TASK-2: Task 2 (in_progress)"
+        assert "Found 2 tasks" in result.message
+        assert "- TASK-1: Task 1 (todo)" in result.message
+        assert "- TASK-2: Task 2 (in_progress)" in result.message

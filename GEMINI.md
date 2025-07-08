@@ -1,0 +1,1 @@
+- "I will use uv as a package manager and run commands always via 'uv run <command>'"

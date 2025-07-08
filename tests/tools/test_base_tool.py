@@ -1,23 +1,15 @@
 """Tests for base tool functionality."""
 
-import json
-import pytest
+from typing import Any
 from unittest.mock import Mock
-from typing import Dict, Any
 
-from agile_mcp.tools.base import AgileTool, ToolResult, ToolError
+import pytest
+from agile_mcp.tools.base import AgileTool, ToolError, ToolResult
 
 
-def parse_tool_result(json_result: str) -> Dict[str, Any]:
-    """Parse JSON tool result.
-
-    Args:
-        json_result: JSON string from tool execution
-
-    Returns:
-        Parsed result dictionary
-    """
-    return json.loads(json_result)
+def parse_tool_result(result: ToolResult) -> ToolResult:
+    """Pass through ToolResult directly."""
+    return result
 
 
 class TestAgileTool:
@@ -36,7 +28,10 @@ class TestAgileTool:
         """Test that tool names are derived from class names."""
 
         class CreateStoryTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = CreateStoryTool(self.mock_agent)
@@ -46,7 +41,10 @@ class TestAgileTool:
         """Test that 'Tool' suffix is removed from class names."""
 
         class UpdateTaskTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = UpdateTaskTool(self.mock_agent)
@@ -58,7 +56,10 @@ class TestAgileTool:
         class TestTool(AgileTool):
             """This is a test tool for demonstration purposes."""
 
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = TestTool(self.mock_agent)
@@ -68,7 +69,10 @@ class TestAgileTool:
         """Test that a default description is provided if no docstring exists."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = TestTool(self.mock_agent)
@@ -79,7 +83,10 @@ class TestAgileTool:
         """Test that get_parameters returns empty dict by default."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = TestTool(self.mock_agent)
@@ -89,7 +96,10 @@ class TestAgileTool:
         """Test that input validation passes by default."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = TestTool(self.mock_agent)
@@ -100,7 +110,10 @@ class TestAgileTool:
         """Test that successful results are formatted correctly."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = TestTool(self.mock_agent)
@@ -115,7 +128,10 @@ class TestAgileTool:
         """Test that results with data are formatted correctly."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = TestTool(self.mock_agent)
@@ -131,7 +147,10 @@ class TestAgileTool:
         """Test that errors are formatted correctly."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 return "test"
 
         tool = TestTool(self.mock_agent)
@@ -146,47 +165,53 @@ class TestAgileTool:
         """Test that apply_ex catches and formats exceptions."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs: Any) -> str:
                 raise ValueError("Test error")
 
         tool = TestTool(self.mock_agent)
         json_result = tool.apply_ex(test="value")
         result = parse_tool_result(json_result)
 
-        assert result["success"] is False
-        assert "Test error" in result["message"]
+        assert result.success is False
+        assert "Test error" in result.message
 
     def test_apply_ex_validates_input(self) -> None:
         """Test that apply_ex validates input before execution."""
 
         class TestTool(AgileTool):
-            def validate_input(self, params: Dict[str, Any]) -> None:
+            def validate_input(self, params: dict[str, Any]) -> None:
                 if "required" not in params:
                     raise ToolError("Missing required parameter")
 
-            def apply(self, **kwargs) -> str:
+            def apply(self, **kwargs: Any) -> str:
                 return "success"
 
         tool = TestTool(self.mock_agent)
         json_result = tool.apply_ex()
         result = parse_tool_result(json_result)
 
-        assert result["success"] is False
-        assert "Missing required parameter" in result["message"]
+        assert result.success is False
+        assert "Missing required parameter" in result.message
 
     def test_apply_ex_returns_formatted_success(self) -> None:
         """Test that successful execution is properly formatted."""
 
         class TestTool(AgileTool):
-            def apply(self, **kwargs) -> str:
-                return "Operation completed successfully"
+            def validate_input(self, input_data: dict) -> None:
+                pass
+
+            def apply(self, **kwargs) -> ToolResult:
+                return self.format_result("Operation completed successfully")
 
         tool = TestTool(self.mock_agent)
         json_result = tool.apply_ex(param="value")
         result = parse_tool_result(json_result)
 
-        assert result["success"] is True
-        assert result["message"] == "Operation completed successfully"
+        assert result.success is True
+        assert result.message == "Operation completed successfully"
 
 
 class TestToolResult:

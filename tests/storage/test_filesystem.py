@@ -1,6 +1,5 @@
 """Tests for filesystem storage layer."""
 
-import os
 import tempfile
 import shutil
 from pathlib import Path
@@ -149,7 +148,7 @@ class TestAgileProjectManager:
 
     def test_status_folder_migration_on_save(self):
         """Test that files are moved to correct status folder when status changes."""
-        from agile_mcp.models.story import UserStory, StoryStatus, Priority
+        from agile_mcp.models.story import UserStory, StoryStatus
 
         manager = AgileProjectManager(str(self.project_path))
         manager.initialize()
@@ -175,7 +174,7 @@ class TestAgileProjectManager:
 
     def test_backwards_compatibility_loading(self):
         """Test that files in root directory are still loaded (backwards compatibility)."""
-        from agile_mcp.models.story import UserStory, StoryStatus, Priority
+        from agile_mcp.models.story import StoryStatus
         import yaml
 
         manager = AgileProjectManager(str(self.project_path))
@@ -215,7 +214,7 @@ class TestAgileProjectManager:
 
     def test_status_mismatch_correction(self):
         """Test that files in wrong status folder are corrected based on content."""
-        from agile_mcp.models.story import UserStory, StoryStatus, Priority
+        from agile_mcp.models.story import StoryStatus
         import yaml
 
         manager = AgileProjectManager(str(self.project_path))
@@ -255,7 +254,7 @@ class TestAgileProjectManager:
 
     def test_list_stories_from_multiple_folders(self):
         """Test that listing stories works across all status folders."""
-        from agile_mcp.models.story import UserStory, StoryStatus, Priority
+        from agile_mcp.models.story import UserStory, StoryStatus
 
         manager = AgileProjectManager(str(self.project_path))
         manager.initialize()

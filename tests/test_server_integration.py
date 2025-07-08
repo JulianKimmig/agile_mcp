@@ -1,7 +1,5 @@
 """Integration tests for the Agile MCP Server."""
 
-import asyncio
-import os
 import subprocess
 import tempfile
 import time
@@ -379,7 +377,7 @@ class TestServerIntegration:
         """Test that server logging is configured correctly."""
         import logging
 
-        server = AgileMCPServer(str(temp_project_dir))
+        AgileMCPServer(str(temp_project_dir))
 
         # Check that logging is configured
         logger = logging.getLogger("agile_mcp.server")

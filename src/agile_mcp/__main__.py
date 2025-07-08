@@ -225,7 +225,7 @@ def validate(project: Path) -> None:
                     print(f"   • Task {ref['task_id']} references non-existent story: {ref['broken_story_id']}")
 
             print(
-                f"\n💡 Tip: These broken references will be automatically cleaned up when you access the affected artifacts."
+                "\n💡 Tip: These broken references will be automatically cleaned up when you access the affected artifacts."
             )
 
     except Exception as e:

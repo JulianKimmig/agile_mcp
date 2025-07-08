@@ -8,7 +8,7 @@ import shutil
 
 from src.agile_mcp.storage.filesystem import AgileProjectManager
 from src.agile_mcp.services.sprint_service import SprintService
-from src.agile_mcp.models.sprint import Sprint, SprintStatus
+from src.agile_mcp.models.sprint import SprintStatus
 
 
 class TestSprintService:
@@ -157,8 +157,8 @@ class TestSprintService:
 
     def test_list_sprints_multiple(self, sprint_service):
         """Test listing multiple sprints."""
-        sprint1 = sprint_service.create_sprint(name="Sprint 1")
-        sprint2 = sprint_service.create_sprint(name="Sprint 2")
+        sprint_service.create_sprint(name="Sprint 1")
+        sprint_service.create_sprint(name="Sprint 2")
 
         sprints = sprint_service.list_sprints()
 
@@ -169,7 +169,7 @@ class TestSprintService:
 
     def test_list_sprints_filter_by_status(self, sprint_service):
         """Test listing sprints filtered by status."""
-        sprint1 = sprint_service.create_sprint(name="Planning Sprint")
+        sprint_service.create_sprint(name="Planning Sprint")
         sprint2 = sprint_service.create_sprint(name="Active Sprint")
 
         # Make one sprint active
@@ -211,7 +211,7 @@ class TestSprintService:
 
     def test_get_active_sprint_exists(self, sprint_service):
         """Test getting active sprint when one exists."""
-        sprint1 = sprint_service.create_sprint(name="Planning Sprint")
+        sprint_service.create_sprint(name="Planning Sprint")
         sprint2 = sprint_service.create_sprint(name="Active Sprint")
 
         # Make sprint2 active
@@ -226,7 +226,7 @@ class TestSprintService:
     def test_get_sprints_by_status(self, sprint_service):
         """Test getting sprints by specific status."""
         sprint1 = sprint_service.create_sprint(name="Completed Sprint")
-        sprint2 = sprint_service.create_sprint(name="Planning Sprint")
+        sprint_service.create_sprint(name="Planning Sprint")
 
         # Make sprint1 completed
         sprint_service.update_sprint(sprint1.id, status=SprintStatus.COMPLETED)

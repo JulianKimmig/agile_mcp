@@ -4,15 +4,14 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from datetime import datetime
 
 from agile_mcp.storage.filesystem import AgileProjectManager
 from agile_mcp.services.story_service import StoryService
 from agile_mcp.services.sprint_service import SprintService
 from agile_mcp.services.epic_service import EpicService
-from agile_mcp.models.story import UserStory, StoryStatus, Priority
-from agile_mcp.models.sprint import Sprint, SprintStatus
-from agile_mcp.models.epic import Epic, EpicStatus
+from agile_mcp.models.story import Priority
+from agile_mcp.models.sprint import SprintStatus
+from agile_mcp.models.epic import EpicStatus
 
 
 class TestStoryCascadingCleanup:

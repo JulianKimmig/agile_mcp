@@ -6,7 +6,7 @@ from datetime import datetime
 
 from agile_mcp.services.epic_service import EpicService
 from agile_mcp.models.epic import Epic, EpicStatus
-from agile_mcp.models.story import UserStory, StoryStatus, Priority
+from agile_mcp.models.story import UserStory
 
 
 class TestEpicService:

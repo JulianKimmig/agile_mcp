@@ -1,7 +1,6 @@
 """Project Status Service for aggregating status information from all services."""
 
-from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 
 from ..storage.filesystem import AgileProjectManager
 from .config_service import ConfigurationService

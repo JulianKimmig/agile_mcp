@@ -1,14 +1,14 @@
 """Tests for project management tools."""
 
-import tempfile
-import os
-from pathlib import Path
-import pytest
 import json
+import os
+import tempfile
+from pathlib import Path
 
+import pytest
 from agile_mcp.server import AgileMCPServer
-from agile_mcp.tools.project_tools import SetProjectTool, GetProjectTool
 from agile_mcp.tools.base import ToolError
+from agile_mcp.tools.project_tools import GetProjectTool, SetProjectTool
 
 
 class MockToolResult:
@@ -46,8 +46,8 @@ class TestProjectTools:
         tool = GetProjectTool(server_without_project)
         result = tool.apply()
 
-        assert "No project directory is currently set" in result
-        assert "set_project" in result
+        assert "No project directory is currently set" in result.message
+        assert "set_project" in result.message
 
     def test_get_project_tool_with_project_set(self, temp_project_dir):
         """Test GetProjectTool when project is set."""
@@ -55,17 +55,17 @@ class TestProjectTools:
         tool = GetProjectTool(server)
         result = tool.apply()
 
-        assert "Current project directory:" in result
+        assert "Current project directory:" in result.message
         # Check that the resolved path is in the result
-        assert str(temp_project_dir.resolve()) in result
+        assert str(temp_project_dir.resolve()) in result.message
 
     def test_set_project_tool_valid_directory(self, server_without_project, temp_project_dir):
         """Test SetProjectTool with a valid directory."""
         tool = SetProjectTool(server_without_project)
         result = tool.apply(project_path=str(temp_project_dir))
 
-        assert "Project directory set successfully" in result
-        assert str(temp_project_dir.resolve()) in result
+        assert "Project directory set successfully" in result.message
+        assert str(temp_project_dir.resolve()) in result.message
         assert server_without_project.project_path == temp_project_dir.resolve()
         assert server_without_project.project_manager is not None
         assert server_without_project.story_service is not None
@@ -76,7 +76,7 @@ class TestProjectTools:
         tool = SetProjectTool(server_without_project)
         result = tool.apply(project_path=".")
 
-        assert "Project directory set successfully" in result
+        assert "Project directory set successfully" in result.message
         expected_path = Path(os.getcwd()).resolve()
         assert server_without_project.project_path == expected_path
 

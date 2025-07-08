@@ -2,7 +2,7 @@
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 from agile_mcp.services.project_status_service import ProjectStatusService
 

@@ -1,11 +1,8 @@
 """Service layer for user story management."""
 
 import sys
-from pathlib import Path
-from typing import List, Optional, Dict, Any
-import yaml
 
-from ..models.story import UserStory, StoryStatus, Priority
+from ..models.story import Priority, StoryStatus, UserStory
 from ..storage.filesystem import AgileProjectManager
 from ..utils.id_generator import generate_story_id
 
@@ -31,9 +28,9 @@ class StoryService:
         description: str,
         priority: Priority = Priority.MEDIUM,
         status: StoryStatus = StoryStatus.TODO,
-        points: Optional[int] = None,
-        sprint_id: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        points: int | None = None,
+        sprint_id: str | None = None,
+        tags: list[str] | None = None,
     ) -> UserStory:
         """Create a new user story.
 
@@ -78,7 +75,7 @@ class StoryService:
 
         return story
 
-    def get_story(self, story_id: str) -> Optional[UserStory]:
+    def get_story(self, story_id: str) -> UserStory | None:
         """Retrieve a story by ID.
 
         Args:
@@ -92,14 +89,14 @@ class StoryService:
     def update_story(
         self,
         story_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        priority: Optional[Priority] = None,
-        status: Optional[StoryStatus] = None,
-        points: Optional[int] = None,
-        sprint_id: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-    ) -> Optional[UserStory]:
+        title: str | None = None,
+        description: str | None = None,
+        priority: Priority | None = None,
+        status: StoryStatus | None = None,
+        points: int | None = None,
+        sprint_id: str | None = None,
+        tags: list[str] | None = None,
+    ) -> UserStory | None:
         """Update an existing story.
 
         Args:
@@ -181,11 +178,11 @@ class StoryService:
 
     def list_stories(
         self,
-        status: Optional[StoryStatus] = None,
-        priority: Optional[Priority] = None,
-        sprint_id: Optional[str] = None,
+        status: StoryStatus | None = None,
+        priority: Priority | None = None,
+        sprint_id: str | None = None,
         _filter_no_sprint: bool = False,
-    ) -> List[UserStory]:
+    ) -> list[UserStory]:
         """List stories with optional filtering.
 
         Args:

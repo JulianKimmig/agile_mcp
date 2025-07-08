@@ -1,0 +1,158 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Agile MCP Task Management Rule
+
+Always use the agile-mcp server for task and story management when it's available. This ensures proper tracking, prevents dangling stories, and maintains agile workflow consistency.
+
+## Workflow Requirements
+
+### 1. Task Creation Before Work
+Before starting any new development work:
+
+1. **Check if agile-mcp server is running**
+   - Use `mcp_agile-mcp_get_project` to verify server availability
+   - If not available, remind user to start the server
+
+2. **Create or verify story exists**
+   - Use `mcp_agile-mcp_list_stories` to check for existing relevant stories
+   - If no suitable story exists, create one with `mcp_agile-mcp_create_story`
+   - Include proper title, description, priority, and tags
+
+3. **Create subtasks if needed**
+   - For complex stories, break down into smaller, manageable subtasks
+   - Each subtask should be specific and actionable
+   - Use appropriate story points (Fibonacci: 1, 2, 3, 5, 8, 13, 21)
+
+### 2. During Development
+- Reference the story/task ID in commit messages
+- Update story status if significant progress is made
+- Add notes or updates to stories as needed
+
+### 3. Task Completion
+**ALWAYS** mark tasks as complete when finished:
+
+1. **Update story status**
+   - Use `mcp_agile-mcp_update_story` to set status to "done"
+   - Verify the change with `mcp_agile-mcp_get_story`
+
+2. **Document completion**
+   - Add final notes about implementation details
+   - Reference any related commits or files changed
+
+## Required Commands
+
+### Before Starting Work
+```bash
+# Verify server is available
+mcp_agile-mcp_get_project
+
+# Check existing stories
+mcp_agile-mcp_list_stories
+
+# Create new story if needed
+mcp_agile-mcp_create_story(
+  title="Clear, actionable title",
+  description="Detailed description with acceptance criteria",
+  priority="high|medium|low",
+  points=fibonacci_number,
+  tags="relevant,tags"
+)
+```
+
+### After Completing Work
+```bash
+# Mark story as complete
+mcp_agile-mcp_update_story(
+  story_id="STORY-XXXX",
+  status="done"
+)
+
+# Verify completion
+mcp_agile-mcp_get_story(story_id="STORY-XXXX")
+```
+
+## Story Guidelines
+
+### Title Format
+- Use clear, actionable language
+- Start with verb when possible
+- Be specific about the goal
+
+**Good**: "Add coverage reporting to pytest configuration"
+**Bad**: "Coverage stuff"
+
+### Description Requirements
+- Include acceptance criteria
+- List specific implementation steps
+- Reference related files when appropriate: [pyproject.toml](mdc:pyproject.toml)
+- Add context about why the work is needed
+
+### Priority Assignment
+- **High**: Critical bugs, security issues, blocking dependencies
+- **Medium**: New features, improvements, technical debt
+- **Low**: Nice-to-have features, minor optimizations
+
+### Story Points (Fibonacci)
+- **1**: Trivial changes (typos, simple config)
+- **2**: Small features or bug fixes
+- **3**: Medium features requiring some research
+- **5**: Larger features with multiple components
+- **8**: Complex features requiring significant work
+- **13+**: Should be broken down into smaller stories
+
+## Sprint Management
+
+### Active Sprint
+- Use `mcp_agile-mcp_get_active_sprint` to check current sprint
+- Add stories to active sprint when appropriate
+- Create new sprints for major feature development
+
+### Sprint Planning
+- Group related stories into logical sprints
+- Set realistic sprint goals and timelines
+- Use `mcp_agile-mcp_create_sprint` for new sprint planning
+
+## Anti-Patterns to Avoid
+
+❌ **Never start work without a story**
+❌ **Never leave stories in "in_progress" status after completion**
+❌ **Never create overly broad stories without breakdown**
+❌ **Never ignore the agile-mcp server when it's available**
+
+✅ **Always create stories before starting work**
+✅ **Always mark stories as done when complete**
+✅ **Always break down large work into manageable stories**
+✅ **Always use descriptive titles and detailed descriptions**
+
+## Integration with Development
+
+### Commit Messages
+Reference story IDs in commit messages:
+```
+feat(STORY-A123): add pytest coverage configuration
+
+- Updated pyproject.toml with coverage settings
+- Set 75% coverage threshold
+- Added HTML report generation
+```
+
+### Code Reviews
+- Verify story completion in PR descriptions
+- Reference the agile-mcp story for context
+- Ensure story status reflects PR merge
+
+### Documentation Updates
+When updating project files like [README.md](mdc:README.md) or [pyproject.toml](mdc:pyproject.toml), ensure the related story captures the change rationale and implementation details.
+
+## Enforcement
+
+This rule should be applied to:
+- All new feature development
+- Bug fixes and improvements
+- Configuration changes
+- Documentation updates
+
+The agile-mcp server provides structured task management that prevents work from falling through the cracks and ensures proper project tracking.

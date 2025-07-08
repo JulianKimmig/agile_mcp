@@ -2,26 +2,16 @@
 
 import tempfile
 from pathlib import Path
+
 import pytest
-import json
+from agile_mcp.tools.base import ToolResult, ToolResultError
 
 from src.agile_mcp.server import AgileMCPServer
 
 
-class MockToolResult:
-    """Mock object to provide ToolResult-like interface for parsed JSON responses."""
-
-    def __init__(self, json_response: str):
-        """Parse JSON response and create mock result object."""
-        parsed = json.loads(json_response)
-        self.success = parsed.get("success", False)
-        self.message = parsed.get("message", "")
-        self.data = parsed.get("data", None)
-
-
-def parse_tool_result(json_response: str) -> MockToolResult:
-    """Parse JSON response from apply_ex into a ToolResult-like object."""
-    return MockToolResult(json_response)
+def parse_tool_result(result: ToolResult | ToolResultError) -> ToolResult | ToolResultError:
+    """Pass through ToolResult or ToolResultError directly."""
+    return result
 
 
 class TestSprintIntegration:
@@ -51,8 +41,8 @@ class TestSprintIntegration:
             name="Sprint 1", goal="Implement authentication features", tags="authentication,security"
         )
 
-        assert "Sprint 'Sprint 1' created successfully" in result
-        assert "SPRINT-" in result
+        assert "Sprint 'Sprint 1' created successfully" in result.message
+        assert "SPRINT-" in result.message
 
     def test_get_sprint_tool(self, server):
         """Test retrieving a sprint using the tool interface."""
@@ -69,9 +59,9 @@ class TestSprintIntegration:
         get_tool = GetSprintTool(server)
         result = get_tool.apply_ex(sprint_id=sprint_id)
 
-        assert "Retrieved sprint: Test Sprint" in result
-        assert sprint_id in result
-        assert "Status: planning" in result
+        assert "Retrieved sprint: Test Sprint" in result.message
+        assert sprint_id in result.message
+        assert "Status: planning" in result.message
 
     def test_list_sprints_tool(self, server):
         """Test listing sprints using the tool interface."""
@@ -86,7 +76,7 @@ class TestSprintIntegration:
         list_tool = ListSprintsTool(server)
         result = list_tool.apply_ex()
 
-        assert "Found 2 sprints" in result
+        assert "Found 2 sprints" in result.message
 
     def test_update_sprint_tool(self, server):
         """Test updating a sprint using the tool interface."""
@@ -103,7 +93,7 @@ class TestSprintIntegration:
         update_tool = UpdateSprintTool(server)
         result = update_tool.apply_ex(sprint_id=sprint_id, name="Updated Sprint", goal="Updated goal", status="active")
 
-        assert "Sprint 'Updated Sprint' updated successfully" in result
+        assert "Sprint 'Updated Sprint' updated successfully" in result.message
 
     def test_manage_sprint_stories_tool(self, server):
         """Test adding/removing stories from sprint using the tool interface."""
@@ -125,12 +115,12 @@ class TestSprintIntegration:
         manage_tool = ManageSprintStoriesTool(server)
         add_result = manage_tool.apply_ex(sprint_id=sprint_id, action="add", story_id=story_id)
 
-        assert f"Story '{story_id}' added to sprint '{sprint_id}'" in add_result
+        assert f"Story '{story_id}' added to sprint '{sprint_id}'" in add_result.message
 
         # Remove story from sprint
         remove_result = manage_tool.apply_ex(sprint_id=sprint_id, action="remove", story_id=story_id)
 
-        assert f"Story '{story_id}' removed from sprint '{sprint_id}'" in remove_result
+        assert f"Story '{story_id}' removed from sprint '{sprint_id}'" in remove_result.message
 
     def test_get_sprint_progress_tool(self, server):
         """Test getting sprint progress using the tool interface."""
@@ -149,12 +139,12 @@ class TestSprintIntegration:
         progress_tool = GetSprintProgressTool(server)
         result = progress_tool.apply_ex(sprint_id=sprint_id)
 
-        assert "Sprint 'Progress Test Sprint' progress" in result
-        assert "planning" in result
+        assert "Sprint 'Progress Test Sprint' progress" in result.message
+        assert "planning" in result.message
 
     def test_get_active_sprint_tool(self, server):
         """Test getting the active sprint using the tool interface."""
-        from src.agile_mcp.tools.sprint_tools import CreateSprintTool, UpdateSprintTool, GetActiveSprintTool
+        from src.agile_mcp.tools.sprint_tools import CreateSprintTool, GetActiveSprintTool, UpdateSprintTool
 
         # Initially no active sprint
         active_tool = GetActiveSprintTool(server)
@@ -172,17 +162,17 @@ class TestSprintIntegration:
 
         # Now there should be an active sprint
         result = active_tool.apply_ex()
-        assert "Active sprint: Active Sprint" in result
-        assert sprint_id in result
+        assert "Active sprint: Active Sprint" in result.message
+        assert sprint_id in result.message
 
     def test_sprint_workflow_integration(self, server):
         """Test a complete sprint workflow integration."""
         from src.agile_mcp.tools.sprint_tools import (
             CreateSprintTool,
-            UpdateSprintTool,
-            ManageSprintStoriesTool,
-            GetSprintProgressTool,
             GetActiveSprintTool,
+            GetSprintProgressTool,
+            ManageSprintStoriesTool,
+            UpdateSprintTool,
         )
         from src.agile_mcp.tools.story_tools import CreateStoryTool
 
@@ -239,7 +229,7 @@ class TestSprintIntegration:
 
         # 8. Verify no active sprint now
         active_result = active_tool.apply_ex()
-        assert "No active sprint found" in active_result
+        assert "No active sprint found" in active_result.message
 
     def test_sprint_date_validation(self, server):
         """Test that sprint date validation works correctly."""
@@ -249,13 +239,13 @@ class TestSprintIntegration:
 
         # Test invalid date format
         result = tool.apply_ex(name="Bad Date Sprint", start_date="invalid-date")
-        assert "Tool Error:" in result
-        assert "Invalid start_date format" in result
+        assert "Tool Error:" in result.message
+        assert "Invalid start_date format" in result.message
 
         # Test end date before start date
         result = tool.apply_ex(name="Bad Range Sprint", start_date="2024-01-29", end_date="2024-01-15")
-        assert "Tool Error:" in result
-        assert "End date must be after start date" in result
+        assert "Tool Error:" in result.message
+        assert "End date must be after start date" in result.message
 
     def test_sprint_error_handling(self, server):
         """Test error handling in sprint tools."""
@@ -264,11 +254,11 @@ class TestSprintIntegration:
         # Test getting non-existent sprint
         get_tool = GetSprintTool(server)
         result = get_tool.apply_ex(sprint_id="SPRINT-NONEXISTENT")
-        assert "Tool Error:" in result
-        assert "not found" in result
+        assert "Tool Error:" in result.message
+        assert "not found" in result.message
 
         # Test updating non-existent sprint
         update_tool = UpdateSprintTool(server)
         result = update_tool.apply_ex(sprint_id="SPRINT-NONEXISTENT", name="New Name")
-        assert "Tool Error:" in result
-        assert "not found" in result
+        assert "Tool Error:" in result.message
+        assert "not found" in result.message

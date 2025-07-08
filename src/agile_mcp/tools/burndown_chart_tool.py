@@ -1,12 +1,15 @@
 """Burndown chart tool for Agile MCP Server."""
 
-from .base import AgileTool, ToolError, ToolResult
 from ..services.sprint_service import SprintService
-from ..storage.filesystem import AgileProjectManager
+from .base import AgileTool, ToolError, ToolResult
 
 
 class GetSprintBurndownChartTool(AgileTool):
-    """Get a burndown chart for a specific sprint."""
+    """Tool for retrieving sprint burndown charts."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for burndown chart retrieval."""
+        pass  # Default implementation - no validation
 
     def apply(self, sprint_id: str) -> ToolResult:
         """Get a burndown chart for a specific sprint.
@@ -26,15 +29,15 @@ class GetSprintBurndownChartTool(AgileTool):
             raise ToolError(f"Could not generate burndown chart for sprint with ID {sprint_id}")
 
         chart_text = self._generate_chart(burndown_data)
-        
+
         return self.format_result(
             f"Generated burndown chart for sprint: {burndown_data['sprint_name']}",
             {
                 "sprint_id": sprint_id,
                 "sprint_name": burndown_data["sprint_name"],
                 "chart": chart_text,
-                "burndown_data": burndown_data
-            }
+                "burndown_data": burndown_data,
+            },
         )
 
     def _has_required_keys(self, data: dict) -> bool:

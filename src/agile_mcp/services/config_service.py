@@ -2,8 +2,9 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional, List
-import yaml
+from typing import Any
+
+import yaml  # type: ignore
 
 from ..storage.filesystem import AgileProjectManager
 
@@ -20,7 +21,7 @@ class ConfigurationService:
             project_manager: The project manager instance
         """
         self.project_manager = project_manager
-        self._config_cache: Optional[Dict[str, Any]] = None
+        self._config_cache: dict[str, Any] | None = None
 
     def get_config_path(self) -> Path:
         """Get the path to the config.yml file.
@@ -30,7 +31,7 @@ class ConfigurationService:
         """
         return self.project_manager.get_agile_dir() / "config.yml"
 
-    def load_config(self, force_reload: bool = False) -> Dict[str, Any]:
+    def load_config(self, force_reload: bool = False) -> dict[str, Any]:
         """Load configuration from config.yml.
 
         Args:
@@ -49,7 +50,7 @@ class ConfigurationService:
             self.project_manager._create_default_config()
 
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 self._config_cache = yaml.safe_load(f) or {}
             log.debug(f"Loaded configuration from {config_path}")
             return self._config_cache
@@ -58,7 +59,7 @@ class ConfigurationService:
             # Return default config if loading fails
             return self._get_default_config()
 
-    def save_config(self, config: Dict[str, Any]) -> None:
+    def save_config(self, config: dict[str, Any]) -> None:
         """Save configuration to config.yml.
 
         Args:
@@ -81,7 +82,7 @@ class ConfigurationService:
             log.error(f"Failed to save configuration: {e}")
             raise
 
-    def get_project_config(self) -> Dict[str, Any]:
+    def get_project_config(self) -> dict[str, Any]:
         """Get project-specific configuration.
 
         Returns:
@@ -90,7 +91,7 @@ class ConfigurationService:
         config = self.load_config()
         return config.get("project", {})
 
-    def get_agile_config(self) -> Dict[str, Any]:
+    def get_agile_config(self) -> dict[str, Any]:
         """Get agile methodology configuration.
 
         Returns:
@@ -99,7 +100,7 @@ class ConfigurationService:
         config = self.load_config()
         return config.get("agile", {})
 
-    def get_story_point_scale(self) -> List[int]:
+    def get_story_point_scale(self) -> list[int]:
         """Get the story point scale from configuration.
 
         Returns:
@@ -144,7 +145,7 @@ class ConfigurationService:
         project_config = self.get_project_config()
         return project_config.get("version", "1.0.0")
 
-    def update_project_config(self, **kwargs) -> None:
+    def update_project_config(self, **kwargs: Any) -> None:
         """Update project configuration.
 
         Args:
@@ -157,7 +158,7 @@ class ConfigurationService:
         config["project"].update(kwargs)
         self.save_config(config)
 
-    def update_agile_config(self, **kwargs) -> None:
+    def update_agile_config(self, **kwargs: Any) -> None:
         """Update agile methodology configuration.
 
         Args:
@@ -182,7 +183,7 @@ class ConfigurationService:
         scale = self.get_story_point_scale()
         return points in scale
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Get default configuration if loading fails.
 
         Returns:
@@ -197,7 +198,7 @@ class ConfigurationService:
             "agile": {"methodology": "scrum", "story_point_scale": [1, 2, 3, 5, 8, 13, 21], "sprint_duration_weeks": 2},
         }
 
-    def get_full_config(self) -> Dict[str, Any]:
+    def get_full_config(self) -> dict[str, Any]:
         """Get the complete configuration.
 
         Returns:

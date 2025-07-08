@@ -1,7 +1,5 @@
 """Service layer for sprint management."""
 
-import sys
-from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 
@@ -122,7 +120,7 @@ class SprintService:
             return None
 
         # Prepare update data
-        update_data = {}
+        update_data: Dict[str, Any] = {}
         if name:
             update_data["name"] = name
         if goal:

@@ -2,13 +2,16 @@
 
 import os
 from pathlib import Path
-from typing import Dict, Any
 
 from .base import AgileTool, ToolError, ToolResult
 
 
 class SetProjectTool(AgileTool):
-    """Set the project directory for the Agile MCP Server."""
+    """Tool for setting the project directory."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for project setting."""
+        pass  # Default implementation - no validation
 
     def apply(self, project_path: str) -> ToolResult:
         """Set the project directory for agile project management.
@@ -42,13 +45,16 @@ class SetProjectTool(AgileTool):
         self.agent.set_project_path(str(resolved_path))
 
         return self.format_result(
-            f"Project directory set successfully to: {resolved_path}",
-            {"project_path": str(resolved_path)}
+            f"Project directory set successfully to: {resolved_path}", {"project_path": str(resolved_path)}
         )
 
 
 class GetProjectTool(AgileTool):
-    """Get the current project directory for the Agile MCP Server."""
+    """Tool for getting the current project directory."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for project retrieval."""
+        pass  # Default implementation - no validation
 
     def apply(self) -> ToolResult:
         """Get the current project directory.
@@ -58,11 +64,9 @@ class GetProjectTool(AgileTool):
         """
         if self.agent.project_path is None:
             return self.format_result(
-                "No project directory is currently set. Use set_project to set one first.",
-                {"project_path": None}
+                "No project directory is currently set. Use set_project to set one first.", {"project_path": None}
             )
 
         return self.format_result(
-            f"Current project directory: {self.agent.project_path}",
-            {"project_path": self.agent.project_path}
+            f"Current project directory: {self.agent.project_path}", {"project_path": self.agent.project_path}
         )

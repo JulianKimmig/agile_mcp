@@ -1,11 +1,9 @@
 """Tests for documentation tools."""
 
-import pytest
 from unittest.mock import MagicMock
-import json
 
+import pytest
 from agile_mcp.tools.documentation_tools import GetAgileDocumentationTool
-from agile_mcp.tools.base import ToolError
 
 
 class TestDocumentationTools:
@@ -26,15 +24,13 @@ class TestDocumentationTools:
         """Test successful retrieval of agile documentation."""
         get_doc_tool = GetAgileDocumentationTool(mock_agent)
 
-        result = get_doc_tool.apply()
-
-        # The result should be a JSON string, parse it to check content
-        result_data = json.loads(result)
-        assert result_data["metadata"]["version"] == "1.0.0"
-        assert "agile_principles" in result_data
-        assert "methodologies" in result_data
-        assert "workflow_patterns" in result_data
-        assert "tools" in result_data
+        result = get_doc_tool.apply_ex()
+        assert result.success is True
+        assert result.data["documentation"]["metadata"]["version"] == "1.0.0"
+        assert "agile_principles" in result.data["documentation"]
+        assert "methodologies" in result.data["documentation"]
+        assert "workflow_patterns" in result.data["documentation"]
+        assert "tools" in result.data["documentation"]
 
     def test_get_agile_documentation_yaml_format(self, mock_agent):
         """Test retrieval of agile documentation in YAML format."""
@@ -43,8 +39,8 @@ class TestDocumentationTools:
         result = get_doc_tool.apply(format="yaml")
 
         # Should be YAML string
-        assert "metadata:" in result
-        assert "version: 1.0.0" in result
+        assert "metadata:" in result.data["formatted_output"]
+        assert "version: 1.0.0" in result.data["formatted_output"]
 
     def test_get_agile_documentation_summary(self, mock_agent):
         """Test retrieval of summary documentation."""
@@ -52,10 +48,10 @@ class TestDocumentationTools:
 
         result = get_doc_tool.apply(detail_level="summary")
 
-        result_data = json.loads(result)
-        assert result_data["metadata"]["version"] == "1.0.0"
+        result_data = result.data
+        assert result_data["documentation"]["metadata"]["version"] == "1.0.0"
         # Summary should have counts rather than full data
-        assert "values_count" in result_data["agile_principles"]["manifesto"]
+        assert "values_count" in result_data["documentation"]["agile_principles"]["manifesto"]
 
     def test_get_agile_documentation_specific_topic(self, mock_agent):
         """Test retrieval of specific topic documentation."""
@@ -63,8 +59,8 @@ class TestDocumentationTools:
 
         result = get_doc_tool.apply(topic="principles")
 
-        result_data = json.loads(result)
-        assert "agile_principles" in result_data
+        result_data = result.data
+        assert "agile_principles" in result_data["documentation"]
         assert "methodologies" not in result_data
 
     def test_get_agile_documentation_not_initialized(self, mock_agent):
@@ -74,5 +70,9 @@ class TestDocumentationTools:
         get_doc_tool = GetAgileDocumentationTool(mock_agent)
 
         result = get_doc_tool.apply_ex()
-        result_data = json.loads(result)
-        assert result_data["success"] is True  # Documentation doesn't require project initialization
+        assert result.success is True
+        assert result.data["documentation"]["metadata"]["version"] == "1.0.0"
+        assert "agile_principles" in result.data["documentation"]
+        assert "methodologies" in result.data["documentation"]
+        assert "workflow_patterns" in result.data["documentation"]
+        assert "tools" in result.data["documentation"]

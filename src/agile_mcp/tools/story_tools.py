@@ -1,22 +1,25 @@
 """Story management tools for Agile MCP Server."""
 
-import json
-from typing import Dict, Any, Optional, List
+from typing import Any
 
+from ..models.story import Priority, StoryStatus
 from .base import AgileTool, ToolError, ToolResult
-from ..models.story import StoryStatus, Priority
 
 
 class CreateStoryTool(AgileTool):
-    """Create a new user story in the agile project."""
+    """Tool for creating new user stories."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for story creation."""
+        pass  # Default implementation - no validation
 
     def apply(
         self,
         title: str,
         description: str,
         priority: str = "medium",
-        points: Optional[int] = None,
-        tags: Optional[str] = None,
+        points: int | None = None,
+        tags: str | None = None,
     ) -> ToolResult:
         """Create a new user story.
 
@@ -52,21 +55,25 @@ class CreateStoryTool(AgileTool):
             tags_list = [tag.strip() for tag in tags.split(",")]
 
         # Create the story
-        story = self.agent.story_service.create_story(
-            title=title, description=description, priority=priority_enum, points=points, tags=tags_list
-        )
+        try:
+            story = self.agent.story_service.create_story(
+                title=title, description=description, priority=priority_enum, points=points, tags=tags_list
+            )
+        except Exception as err:
+            raise RuntimeError("Failed to create story.") from err
 
         # Format result with story data
         story_data = story.model_dump(mode="json")
 
-        return self.format_result(
-            f"User story '{story.title}' created successfully with ID {story.id}",
-            story_data
-        )
+        return self.format_result(f"User story '{story.title}' created successfully with ID {story.id}", story_data)
 
 
 class GetStoryTool(AgileTool):
-    """Retrieve a user story by its ID."""
+    """Tool for retrieving user stories."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for story retrieval."""
+        pass  # Default implementation - no validation
 
     def apply(self, story_id: str) -> ToolResult:
         """Get a user story by ID.
@@ -80,7 +87,10 @@ class GetStoryTool(AgileTool):
         # Check if project is initialized
         self._check_project_initialized()
 
-        story = self.agent.story_service.get_story(story_id)
+        try:
+            story = self.agent.story_service.get_story(story_id)
+        except Exception as err:
+            raise RuntimeError("Failed to load story.") from err
 
         if story is None:
             raise ToolError(f"Story with ID {story_id} not found")
@@ -88,24 +98,25 @@ class GetStoryTool(AgileTool):
         # Format result with story data
         story_data = story.model_dump(mode="json")
 
-        return self.format_result(
-            f"Retrieved story: {story.title} (ID: {story.id})",
-            story_data
-        )
+        return self.format_result(f"Retrieved story: {story.title} (ID: {story.id})", story_data)
 
 
 class UpdateStoryTool(AgileTool):
-    """Update an existing user story."""
+    """Tool for updating existing user stories."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for story update."""
+        pass  # Default implementation - no validation
 
     def apply(
         self,
         story_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        priority: Optional[str] = None,
-        status: Optional[str] = None,
-        points: Optional[int] = None,
-        tags: Optional[str] = None,
+        title: str | None = None,
+        description: str | None = None,
+        priority: str | None = None,
+        status: str | None = None,
+        points: int | None = None,
+        tags: str | None = None,
     ) -> ToolResult:
         """Update an existing user story.
 
@@ -162,7 +173,10 @@ class UpdateStoryTool(AgileTool):
             update_params["tags"] = [tag.strip() for tag in tags.split(",")]
 
         # Update the story
-        updated_story = self.agent.story_service.update_story(story_id, **update_params)
+        try:
+            updated_story = self.agent.story_service.update_story(story_id, **update_params)
+        except Exception as err:
+            raise RuntimeError("Failed to update story.") from err
 
         if updated_story is None:
             raise ToolError(f"Story with ID {story_id} not found")
@@ -170,18 +184,17 @@ class UpdateStoryTool(AgileTool):
         # Format result with story data
         story_data = updated_story.model_dump(mode="json")
 
-        return self.format_result(
-            f"Story '{updated_story.title}' updated successfully",
-            story_data
-        )
+        return self.format_result(f"Story '{updated_story.title}' updated successfully", story_data)
 
 
 class ListStoriesTool(AgileTool):
-    """List user stories with optional filtering."""
+    """Tool for listing user stories with optional filtering."""
 
-    def apply(
-        self, status: Optional[str] = None, priority: Optional[str] = None, sprint_id: Optional[str] = None
-    ) -> ToolResult:
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for story listing."""
+        pass  # Default implementation - no validation
+
+    def apply(self, status: str | None = None, priority: str | None = None, sprint_id: str | None = None) -> ToolResult:
         """List user stories with optional filtering.
 
         Args:
@@ -221,7 +234,10 @@ class ListStoriesTool(AgileTool):
             filters["sprint_id"] = sprint_id
 
         # Get filtered stories
-        stories = self.agent.story_service.list_stories(**filters)
+        try:
+            stories = self.agent.story_service.list_stories(**filters)
+        except Exception as err:
+            raise RuntimeError("Failed to list stories.") from err
 
         # Convert stories to dict format
         stories_data = [story.model_dump(mode="json") for story in stories]
@@ -236,7 +252,7 @@ class ListStoriesTool(AgileTool):
             filter_parts.append(f"sprint '{sprint_id}'")
 
         filter_desc = f" matching {', '.join(filter_parts)}" if filter_parts else ""
-        
+
         # Return structured data
         data = {
             "stories": stories_data,
@@ -244,12 +260,9 @@ class ListStoriesTool(AgileTool):
             "filters": {"status": status, "priority": priority, "sprint_id": sprint_id},
         }
 
-        return self.format_result(
-            f"Found {len(stories)} stories{filter_desc}",
-            data
-        )
+        return self.format_result(f"Found {len(stories)} stories{filter_desc}", data)
 
-    def _format_message_from_data(self, data: Dict[str, Any]) -> str:
+    def _format_message_from_data(self, data: dict[str, Any]) -> str:
         """Format human-readable message from story list data.
 
         This method is deprecated and will be removed. Tools should format
@@ -290,7 +303,11 @@ class ListStoriesTool(AgileTool):
 
 
 class DeleteStoryTool(AgileTool):
-    """Delete a user story by its ID."""
+    """Tool for deleting user stories."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for story deletion."""
+        pass  # Default implementation - no validation
 
     def apply(self, story_id: str) -> ToolResult:
         """Delete a user story by ID.
@@ -305,17 +322,24 @@ class DeleteStoryTool(AgileTool):
         self._check_project_initialized()
 
         # Check if story exists first
-        story = self.agent.story_service.get_story(story_id)
+        try:
+            story = self.agent.story_service.get_story(story_id)
+        except Exception as err:
+            raise RuntimeError("Failed to load story.") from err
+
         if story is None:
             raise ToolError(f"Story with ID {story_id} not found")
 
         # Delete the story
-        success = self.agent.story_service.delete_story(story_id)
+        try:
+            success = self.agent.story_service.delete_story(story_id)
+        except Exception as err:
+            raise RuntimeError("Failed to delete story.") from err
 
         if not success:
             raise ToolError(f"Failed to delete story with ID {story_id}")
 
         return self.format_result(
             f"Story '{story.title}' with ID {story_id} deleted successfully",
-            {"deleted_story_id": story_id, "deleted_story_title": story.title}
+            {"deleted_story_id": story_id, "deleted_story_title": story.title},
         )

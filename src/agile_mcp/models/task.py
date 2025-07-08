@@ -2,8 +2,8 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator
+
+from pydantic import Field, field_validator
 
 from .base import AgileArtifact
 
@@ -31,20 +31,20 @@ class Task(AgileArtifact):
 
     title: str = Field(..., description="Task title")
     description: str = Field(..., description="Task description")
-    story_id: Optional[str] = Field(default=None, description="ID of the parent story")
+    story_id: str | None = Field(default=None, description="ID of the parent story")
     status: TaskStatus = Field(default=TaskStatus.TODO, description="Task status")
     priority: TaskPriority = Field(default=TaskPriority.MEDIUM, description="Task priority")
-    assignee: Optional[str] = Field(default=None, description="Person assigned to this task")
-    estimated_hours: Optional[float] = Field(default=None, description="Estimated hours to complete")
-    actual_hours: Optional[float] = Field(default=None, description="Actual hours spent")
-    due_date: Optional[datetime] = Field(default=None, description="Task due date")
-    dependencies: List[str] = Field(default_factory=list, description="List of task IDs this task depends on")
-    tags: List[str] = Field(default_factory=list, description="Task tags")
-    notes: List[str] = Field(default_factory=list, description="Task notes and updates")
+    assignee: str | None = Field(default=None, description="Person assigned to this task")
+    estimated_hours: float | None = Field(default=None, description="Estimated hours to complete")
+    actual_hours: float | None = Field(default=None, description="Actual hours spent")
+    due_date: datetime | None = Field(default=None, description="Task due date")
+    dependencies: list[str] = Field(default_factory=list, description="List of task IDs this task depends on")
+    tags: list[str] = Field(default_factory=list, description="Task tags")
+    notes: list[str] = Field(default_factory=list, description="Task notes and updates")
 
     @field_validator("estimated_hours", "actual_hours")
     @classmethod
-    def validate_hours(cls, v):
+    def validate_hours(cls, v: float) -> float:
         """Validate that hours are non-negative."""
         if v and v < 0:
             raise ValueError("Hours must be non-negative")
@@ -76,7 +76,7 @@ class Task(AgileArtifact):
         """
         return self.status == TaskStatus.DONE
 
-    def can_start(self, completed_tasks: List[str]) -> bool:
+    def can_start(self, completed_tasks: list[str]) -> bool:
         """Check if task can be started based on dependencies.
 
         Args:

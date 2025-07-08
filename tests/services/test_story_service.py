@@ -7,7 +7,7 @@ import pytest
 from datetime import datetime
 
 from agile_mcp.services.story_service import StoryService
-from agile_mcp.models.story import UserStory, StoryStatus, Priority
+from agile_mcp.models.story import StoryStatus, Priority
 from agile_mcp.storage.filesystem import AgileProjectManager
 
 

@@ -1,11 +1,10 @@
 """Tests for burndown chart tool."""
 
-import pytest
 from unittest.mock import MagicMock, patch
-from datetime import datetime, timedelta
 
-from agile_mcp.tools.burndown_chart_tool import GetSprintBurndownChartTool
+import pytest
 from agile_mcp.tools.base import ToolError
+from agile_mcp.tools.burndown_chart_tool import GetSprintBurndownChartTool
 
 
 class TestBurndownChartTool:
@@ -42,9 +41,10 @@ class TestBurndownChartTool:
         burndown_tool = GetSprintBurndownChartTool(mock_agent)
         result = burndown_tool.apply(sprint_id="SPRINT-1")
 
-        assert "Burndown Chart for Sprint: Sprint 1" in result
-        assert "Ideal Burn: 2.00 points/day" in result
-        assert "2025-01-01 | 10               | 10.00" in result
+        assert "Generated burndown chart for sprint: Sprint 1" in result.message
+        assert "Ideal Burn: 2.00 points/day" in result.data["chart"]
+        assert "2025-01-01 | 10               | 10.00" in result.data["chart"]
+
         mock_sprint_service.get_sprint_burndown_data.assert_called_once_with("SPRINT-1")
 
     @patch("agile_mcp.tools.burndown_chart_tool.SprintService")

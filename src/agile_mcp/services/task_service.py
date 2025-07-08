@@ -197,7 +197,9 @@ class TaskService:
             return False
 
         # Check if other tasks depend on this one
-        dependent_tasks = self.get_tasks_by_story(task.story_id)
+        dependent_tasks: List[Task] = []
+        if task.story_id:
+            dependent_tasks = self.get_tasks_by_story(task.story_id)
         for dep_task in dependent_tasks:
             if task_id in dep_task.dependencies:
                 raise ValueError(f"Cannot delete task {task_id} because task {dep_task.id} depends on it")

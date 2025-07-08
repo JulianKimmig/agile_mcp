@@ -1,10 +1,8 @@
 """Service layer for epic management."""
 
 import sys
-from pathlib import Path
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-import yaml
+from typing import Any
 
 from ..models.epic import Epic, EpicStatus
 from ..storage.filesystem import AgileProjectManager
@@ -28,8 +26,8 @@ class EpicService:
         title: str,
         description: str,
         status: EpicStatus = EpicStatus.PLANNING,
-        story_ids: Optional[List[str]] = None,
-        tags: Optional[List[str]] = None,
+        story_ids: list[str] | None = None,
+        tags: list[str] | None = None,
     ) -> Epic:
         """Create a new epic.
 
@@ -56,7 +54,7 @@ class EpicService:
 
         return epic
 
-    def get_epic(self, epic_id: str) -> Optional[Epic]:
+    def get_epic(self, epic_id: str) -> Epic | None:
         """Retrieve an epic by ID.
 
         Args:
@@ -74,12 +72,12 @@ class EpicService:
     def update_epic(
         self,
         epic_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        status: Optional[EpicStatus] = None,
-        story_ids: Optional[List[str]] = None,
-        tags: Optional[List[str]] = None,
-    ) -> Optional[Epic]:
+        title: str | None = None,
+        description: str | None = None,
+        status: EpicStatus | None = None,
+        story_ids: list[str] | None = None,
+        tags: list[str] | None = None,
+    ) -> Epic | None:
         """Update an existing epic.
 
         Args:
@@ -98,7 +96,7 @@ class EpicService:
             return None
 
         # Prepare update data
-        update_data = {}
+        update_data: dict[str, Any] = {}
         if title:
             update_data["title"] = title
         if description:
@@ -144,7 +142,7 @@ class EpicService:
 
         return deleted
 
-    def list_epics(self, status: Optional[EpicStatus] = None, include_story_ids: bool = False) -> List[Epic]:
+    def list_epics(self, status: EpicStatus | None = None, include_story_ids: bool = False) -> list[Epic]:
         """List epics with optional filtering.
 
         Args:
@@ -175,7 +173,7 @@ class EpicService:
 
         return filtered_epics
 
-    def add_story_to_epic(self, epic_id: str, story_id: str) -> Optional[Epic]:
+    def add_story_to_epic(self, epic_id: str, story_id: str) -> Epic | None:
         """Add a story to an epic.
 
         Args:
@@ -196,7 +194,7 @@ class EpicService:
 
         return self.update_epic(epic_id, story_ids=story_ids)
 
-    def remove_story_from_epic(self, epic_id: str, story_id: str) -> Optional[Epic]:
+    def remove_story_from_epic(self, epic_id: str, story_id: str) -> Epic | None:
         """Remove a story from an epic.
 
         Args:
@@ -215,7 +213,7 @@ class EpicService:
 
         return self.update_epic(epic_id, story_ids=story_ids)
 
-    def get_epic_progress(self, epic_id: str) -> Dict[str, Any]:
+    def get_epic_progress(self, epic_id: str) -> dict[str, Any]:
         """Get progress information for an epic.
 
         Args:

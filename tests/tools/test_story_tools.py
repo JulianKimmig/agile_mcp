@@ -1,17 +1,15 @@
 """Tests for story management tools."""
 
-import tempfile
+import json
 import shutil
+import tempfile
 from pathlib import Path
-import pytest
 from unittest.mock import Mock
 
-import json
-from agile_mcp.tools.story_tools import CreateStoryTool, GetStoryTool, UpdateStoryTool, ListStoriesTool, DeleteStoryTool
-from agile_mcp.tools.base import ToolResult, ToolError
-from agile_mcp.models.story import StoryStatus, Priority
-from agile_mcp.storage.filesystem import AgileProjectManager
+from agile_mcp.models.story import Priority, StoryStatus
 from agile_mcp.services.story_service import StoryService
+from agile_mcp.storage.filesystem import AgileProjectManager
+from agile_mcp.tools.story_tools import CreateStoryTool, DeleteStoryTool, GetStoryTool, ListStoriesTool, UpdateStoryTool
 
 
 class MockToolResult:
@@ -338,15 +336,15 @@ class TestListStoriesTool:
         # Test with no filters
         data = self.tool.apply()
 
-        assert isinstance(data, dict)
-        assert "stories" in data
-        assert "count" in data
-        assert "filters" in data
-        assert data["count"] == 2
-        assert len(data["stories"]) == 2
+        assert isinstance(data.data, dict)
+        assert "stories" in data.data
+        assert "count" in data.data
+        assert "filters" in data.data
+        assert data.data["count"] == 2
+        assert len(data.data["stories"]) == 2
 
         # Verify structured story data
-        story_data = data["stories"][0]
+        story_data = data.data["stories"][0]
         assert "id" in story_data
         assert "title" in story_data
         assert "description" in story_data
@@ -355,9 +353,9 @@ class TestListStoriesTool:
 
         # Test with filters
         filtered_data = self.tool.apply(status="in_progress")
-        assert filtered_data["count"] == 1
-        assert filtered_data["filters"]["status"] == "in_progress"
-        assert len(filtered_data["stories"]) == 1
+        assert filtered_data.data["count"] == 1
+        assert filtered_data.data["filters"]["status"] == "in_progress"
+        assert len(filtered_data.data["stories"]) == 1
 
     def test_message_formatting_from_structured_data(self) -> None:
         """Test that _format_message_from_data correctly formats messages from structured data."""
@@ -365,7 +363,7 @@ class TestListStoriesTool:
         data = self.tool.apply()
 
         # Test message formatting
-        message = self.tool._format_message_from_data(data)
+        message = self.tool._format_message_from_data(data.data)
 
         assert isinstance(message, str)
         assert "Found 2 stories" in message
@@ -374,7 +372,7 @@ class TestListStoriesTool:
 
         # Test with filtered data
         filtered_data = self.tool.apply(status="in_progress", priority="low")
-        filtered_message = self.tool._format_message_from_data(filtered_data)
+        filtered_message = self.tool._format_message_from_data(filtered_data.data)
 
         assert "Found 1 stories" in filtered_message
         assert "status 'in_progress'" in filtered_message

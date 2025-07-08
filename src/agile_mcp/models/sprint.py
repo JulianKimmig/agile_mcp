@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List
+from typing import Any
 
 from pydantic import Field, field_validator
 
@@ -22,15 +22,15 @@ class Sprint(AgileArtifact):
     """Sprint model."""
 
     name: str
-    goal: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    goal: str | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
     status: SprintStatus = SprintStatus.PLANNING
-    story_ids: List[str] = Field(default_factory=list, description="List of story IDs in this sprint")
+    story_ids: list[str] = Field(default_factory=list, description="List of story IDs in this sprint")
 
     @field_validator("end_date")
     @classmethod
-    def validate_end_date(cls, v: Optional[datetime], info) -> Optional[datetime]:
+    def validate_end_date(cls, v: datetime | None, info: Any) -> datetime | None:
         """Validate that end_date is after start_date if both are provided."""
         if v and hasattr(info, "data") and "start_date" in info.data:
             start_date = info.data["start_date"]
@@ -40,7 +40,7 @@ class Sprint(AgileArtifact):
 
     @field_validator("story_ids")
     @classmethod
-    def validate_story_ids(cls, v: List[str]) -> List[str]:
+    def validate_story_ids(cls, v: list[str]) -> list[str]:
         """Validate that all story IDs are strings."""
         if not isinstance(v, list):
             raise ValueError("story_ids must be a list")

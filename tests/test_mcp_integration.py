@@ -1,13 +1,12 @@
 """Tests for MCP server integration."""
 
-import pytest
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
+import pytest
 from agile_mcp.server import AgileMCPServer
-from agile_mcp.tools.story_tools import CreateStoryTool, GetStoryTool
 
 
 class TestMCPServerIntegration:
@@ -185,7 +184,7 @@ class TestMCPServerIntegration:
             assert "port" in kwargs
 
     @pytest.mark.asyncio
-    async def test_server_lifespan(self) -> None:
+    async def test_server_lifespan(self, mock_mcp: MagicMock) -> None:
         """Test server lifespan management."""
         mock_mcp = MagicMock()
         mock_mcp._tool_manager = MagicMock()
@@ -209,7 +208,7 @@ class TestMCPServerIntegration:
 
         # Test with missing required parameters
         result = create_tool.apply_ex()  # No parameters provided
-        assert "Unexpected error" in result or "missing" in result
+        assert "Unexpected error" in result.message or "missing" in result.message
 
     def test_tool_success_execution(self) -> None:
         """Test successful tool execution."""
@@ -220,7 +219,8 @@ class TestMCPServerIntegration:
         # Test with valid parameters
         result = create_tool.apply_ex(title="Test Story", description="This is a test story", priority="medium")
 
-        assert "created successfully" in result or "Test Story" in result
+        assert result.success
+        assert "created successfully" in result.message or "Test Story" in result.message
 
     def test_start_server_stdio(self) -> None:
         """Test starting server with stdio transport."""
@@ -261,5 +261,5 @@ class TestMCPServerIntegration:
 
         result = get_tool.apply_ex(story_id=story.id)
 
-        assert "Integration Test Story" in result
-        assert story.id in result
+        assert "Integration Test Story" in result.message
+        assert story.id in result.message

@@ -1,20 +1,20 @@
 """Tests for epic management tools."""
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+from agile_mcp.models.epic import EpicStatus
+from agile_mcp.models.story import Priority, StoryStatus
+from agile_mcp.tools.base import ToolError
 from agile_mcp.tools.epic_tools import (
     CreateEpicTool,
-    GetEpicTool,
-    UpdateEpicTool,
     DeleteEpicTool,
+    GetEpicTool,
+    GetProductBacklogTool,
     ListEpicsTool,
     ManageEpicStoriesTool,
-    GetProductBacklogTool,
+    UpdateEpicTool,
 )
-from agile_mcp.tools.base import ToolError
-from agile_mcp.models.epic import EpicStatus
-from agile_mcp.models.story import StoryStatus, Priority
 
 
 class TestEpicTools:
@@ -30,11 +30,15 @@ class TestEpicTools:
     def test_create_epic_success(self, mock_agent):
         """Test successful creation of an epic."""
         create_tool = CreateEpicTool(mock_agent)
-        mock_agent.epic_service.create_epic.return_value = MagicMock(id="EPIC-1", title="Test Epic")
+        mock_agent.epic_service.create_epic.return_value = MagicMock(
+            id="EPIC-1",
+            title="Test Epic",
+            model_dump=MagicMock(side_effect=lambda **kwargs: {"id": "EPIC-1", "title": "Test Epic"}),
+        )
 
         result = create_tool.apply(title="Test Epic", description="A test epic.")
 
-        assert "Epic 'Test Epic' created successfully with ID EPIC-1" in result
+        assert "Epic 'Test Epic' created successfully with ID EPIC-1" in result.message
         mock_agent.epic_service.create_epic.assert_called_once_with(
             title="Test Epic", description="A test epic.", status=EpicStatus.PLANNING, tags=[]
         )
@@ -42,13 +46,17 @@ class TestEpicTools:
     def test_create_epic_with_optional_params(self, mock_agent):
         """Test epic creation with all optional parameters."""
         create_tool = CreateEpicTool(mock_agent)
-        mock_agent.epic_service.create_epic.return_value = MagicMock(id="EPIC-2", title="Another Epic")
+        mock_agent.epic_service.create_epic.return_value = MagicMock(
+            id="EPIC-2",
+            title="Another Epic",
+            model_dump=MagicMock(return_value={"id": "EPIC-2", "title": "Another Epic"}),
+        )
 
         result = create_tool.apply(
             title="Another Epic", description="Another test epic.", status="in_progress", tags="feature, backend"
         )
 
-        assert "Epic 'Another Epic' created successfully with ID EPIC-2" in result
+        assert "Epic 'Another Epic' created successfully with ID EPIC-2" in result.message
         mock_agent.epic_service.create_epic.assert_called_once_with(
             title="Another Epic",
             description="Another test epic.",
@@ -70,7 +78,7 @@ class TestEpicTools:
 
         result = get_tool.apply(epic_id="EPIC-1")
 
-        assert "Retrieved epic: Test Epic (ID: EPIC-1)" in result
+        assert "Retrieved epic: Test Epic (ID: EPIC-1)" in result.message
         mock_agent.epic_service.get_epic.assert_called_once_with("EPIC-1")
 
     def test_get_epic_not_found(self, mock_agent):
@@ -84,11 +92,13 @@ class TestEpicTools:
     def test_update_epic_success(self, mock_agent):
         """Test successfully updating an epic."""
         update_tool = UpdateEpicTool(mock_agent)
-        mock_agent.epic_service.update_epic.return_value = MagicMock(id="EPIC-1", title="Updated Epic")
+        mock_agent.epic_service.update_epic.return_value = MagicMock(
+            id="EPIC-1", title="Updated Epic", model_dump=lambda: {"id": "EPIC-1", "title": "Updated Epic"}
+        )
 
         result = update_tool.apply(epic_id="EPIC-1", title="Updated Epic")
 
-        assert "Epic 'Updated Epic' updated successfully" in result
+        assert "Epic 'Updated Epic' updated successfully" in result.message
         mock_agent.epic_service.update_epic.assert_called_once_with("EPIC-1", title="Updated Epic")
 
     def test_update_epic_not_found(self, mock_agent):
@@ -107,7 +117,7 @@ class TestEpicTools:
 
         result = delete_tool.apply(epic_id="EPIC-1")
 
-        assert "Epic 'Test Epic' (ID: EPIC-1) deleted successfully" in result
+        assert "Epic 'Test Epic' (ID: EPIC-1) deleted successfully" in result.message
         mock_agent.epic_service.delete_epic.assert_called_once_with("EPIC-1")
 
     def test_delete_epic_not_found(self, mock_agent):
@@ -128,9 +138,9 @@ class TestEpicTools:
 
         result = list_tool.apply()
 
-        assert "Found 2 epics" in result
-        assert "- EPIC-1: Epic 1 (planning) (1 stories)" in result
-        assert "- EPIC-2: Epic 2 (in_progress)" in result
+        assert "Found 2 epics" in result.message
+        assert "- EPIC-1: Epic 1 (planning) (1 stories)" in result.message
+        assert "- EPIC-2: Epic 2 (in_progress)" in result.message
 
     def test_list_epics_no_epics_found(self, mock_agent):
         """Test listing epics when no epics are found."""
@@ -139,7 +149,7 @@ class TestEpicTools:
 
         result = list_tool.apply()
 
-        assert "No epics found matching the specified criteria" in result
+        assert "No epics found matching the specified criteria" in result.message
 
     def test_manage_epic_stories_add_success(self, mock_agent):
         """Test successfully adding a story to an epic."""
@@ -148,7 +158,7 @@ class TestEpicTools:
 
         result = manage_tool.apply(epic_id="EPIC-1", action="add", story_id="STORY-1")
 
-        assert "Story 'STORY-1' added to epic 'Test Epic'" in result
+        assert "Story 'STORY-1' added to epic 'Test Epic'" in result.message
         mock_agent.epic_service.add_story_to_epic.assert_called_once_with("EPIC-1", "STORY-1")
 
     def test_manage_epic_stories_remove_success(self, mock_agent):
@@ -158,7 +168,7 @@ class TestEpicTools:
 
         result = manage_tool.apply(epic_id="EPIC-1", action="remove", story_id="STORY-1")
 
-        assert "Story 'STORY-1' removed from epic 'Test Epic'" in result
+        assert "Story 'STORY-1' removed from epic 'Test Epic'" in result.message
         mock_agent.epic_service.remove_story_from_epic.assert_called_once_with("EPIC-1", "STORY-1")
 
     def test_manage_epic_stories_invalid_action(self, mock_agent):
@@ -202,9 +212,9 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply()
 
-        assert "Product Backlog (2 stories, 7 total points)" in result
-        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result
-        assert "- STORY-3: Story 3 (low) (2 pts) [todo]" in result
+        assert "Product Backlog (2 stories, 7 total points)" in result.message
+        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result.message
+        assert "- STORY-3: Story 3 (low) (2 pts) [todo]" in result.message
 
     def test_get_product_backlog_empty(self, mock_agent):
         """Test retrieving an empty product backlog."""
@@ -213,7 +223,7 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply()
 
-        assert "Product backlog is empty - no unassigned stories found" in result
+        assert "Product backlog is empty - no unassigned stories found" in result.message
 
     def test_get_product_backlog_with_priority_filter(self, mock_agent):
         """Test retrieving the product backlog with a priority filter."""
@@ -241,9 +251,9 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply(priority="high")
 
-        assert "Product Backlog (1 stories" in result
-        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result
-        assert "- STORY-3: Story 3 (low) (2 pts) [todo]" not in result
+        assert "Product Backlog (1 stories" in result.message
+        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result.message
+        assert "- STORY-3: Story 3 (low) (2 pts) [todo]" not in result.message
 
     def test_get_product_backlog_with_tags_filter(self, mock_agent):
         """Test retrieving the product backlog with a tags filter."""
@@ -273,9 +283,9 @@ class TestEpicTools:
 
         result = get_backlog_tool.apply(tags="backend")
 
-        assert "Product Backlog (1 stories" in result
-        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result
-        assert "- STORY-3: Story 3 (low) (2 pts) [todo]" not in result
+        assert "Product Backlog (1 stories" in result.message
+        assert "- STORY-1: Story 1 (high) (5 pts) [todo]" in result.message
+        assert "- STORY-3: Story 3 (low) (2 pts) [todo]" not in result.message
 
     def test_get_product_backlog_include_completed(self, mock_agent):
         """Test retrieving the product backlog including completed stories."""

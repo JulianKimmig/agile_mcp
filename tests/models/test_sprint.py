@@ -1,7 +1,7 @@
 """Tests for Sprint model."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from pydantic import ValidationError
 
 from agile_mcp.models.sprint import Sprint, SprintStatus

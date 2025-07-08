@@ -1,60 +1,59 @@
 """Agile MCP Server implementation."""
 
-import asyncio
 import logging
 import sys
+from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterator
+from typing import Any
 
 import docstring_parser
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.tools.base import Tool as MCPTool
-from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata, func_metadata
+from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata
 
-from .storage.filesystem import AgileProjectManager
-from .services.story_service import StoryService
-from .services.sprint_service import SprintService
-from .services.task_service import TaskService
-from .services.epic_service import EpicService
 from .services.config_service import ConfigurationService
+from .services.epic_service import EpicService
+from .services.sprint_service import SprintService
+from .services.story_service import StoryService
+from .services.task_service import TaskService
+from .storage.filesystem import AgileProjectManager
+from .tools.base import ToolResult
+from .tools.burndown_chart_tool import GetSprintBurndownChartTool
+from .tools.documentation_tools import GetAgileDocumentationTool
+from .tools.epic_tools import (
+    CreateEpicTool,
+    DeleteEpicTool,
+    GetEpicTool,
+    GetProductBacklogTool,
+    ListEpicsTool,
+    ManageEpicStoriesTool,
+    UpdateEpicTool,
+)
+from .tools.project_tools import GetProjectTool, SetProjectTool
+from .tools.sprint_tools import (
+    CreateSprintTool,
+    GetActiveSprintTool,
+    GetSprintProgressTool,
+    GetSprintTool,
+    ListSprintsTool,
+    ManageSprintStoriesTool,
+    UpdateSprintTool,
+)
 from .tools.story_tools import (
     CreateStoryTool,
-    GetStoryTool,
-    UpdateStoryTool,
-    ListStoriesTool,
     DeleteStoryTool,
+    GetStoryTool,
+    ListStoriesTool,
+    UpdateStoryTool,
 )
 from .tools.task_tools import (
     CreateTaskTool,
-    GetTaskTool,
-    UpdateTaskTool,
-    ListTasksTool,
     DeleteTaskTool,
+    GetTaskTool,
+    ListTasksTool,
+    UpdateTaskTool,
 )
-from .tools.epic_tools import (
-    CreateEpicTool,
-    GetEpicTool,
-    UpdateEpicTool,
-    ListEpicsTool,
-    DeleteEpicTool,
-    ManageEpicStoriesTool,
-    GetProductBacklogTool,
-)
-from .tools.sprint_tools import (
-    CreateSprintTool,
-    GetSprintTool,
-    ListSprintsTool,
-    UpdateSprintTool,
-    ManageSprintStoriesTool,
-    GetSprintProgressTool,
-    GetActiveSprintTool,
-)
-from .tools.project_tools import SetProjectTool, GetProjectTool
-from .tools.documentation_tools import GetAgileDocumentationTool
-from .tools.burndown_chart_tool import GetSprintBurndownChartTool
-
-from .tools.base import ToolResult
 
 # Configure logging for MCP
 logging.basicConfig(
@@ -249,6 +248,7 @@ class AgileMCPServer:
 
         def execute_fn(**kwargs) -> str:  # type: ignore
             return tool.apply_ex(**kwargs)
+
         return MCPTool(
             fn=execute_fn,
             name=func_name,

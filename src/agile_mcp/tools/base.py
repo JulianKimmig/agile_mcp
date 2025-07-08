@@ -3,9 +3,10 @@
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, TYPE_CHECKING,Union
-from pydantic import BaseModel, Field
+from typing import TYPE_CHECKING, Any
+
 from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata, func_metadata
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from ..server import AgileMCPServer
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 class ToolError(Exception):
     """Exception raised by tools for validation or execution errors."""
 
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
         """Initialize the tool error.
 
         Args:
@@ -27,9 +28,10 @@ class ToolError(Exception):
 
 class ToolResult(BaseModel):
     """Represents the result of a tool execution."""
+
     success: bool
     message: str
-    data: Optional[Dict[str, Any]] = Field(None)
+    data: dict[str, Any] | None = Field(None)
 
     # def __init__(self, success: bool, message: str, data: Optional[Dict[str, Any]] = None):
     #     """Initialize the tool result.
@@ -43,7 +45,7 @@ class ToolResult(BaseModel):
     #     self.message = message
     #     self.data = data
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary format.
 
         Returns:
@@ -68,10 +70,8 @@ class ToolResult(BaseModel):
 
 
 class ToolResultError(ToolResult):
-    def __init__(self, error:Exception):
+    def __init__(self, error: Exception):
         super().__init__(success=False, message=f"Tool Error: {str(error)}")
-
-
 
 
 class AgileTool(ABC):
@@ -156,7 +156,7 @@ class AgileTool(ABC):
 
         return func_metadata(apply_method, skip_names=["self"])
 
-    def get_parameters(self) -> Dict[str, Any]:
+    def get_parameters(self) -> dict[str, Any]:
         """Get the tool parameters specification.
 
         Override this method to specify tool parameters.
@@ -166,7 +166,8 @@ class AgileTool(ABC):
         """
         return {}
 
-    def validate_input(self, params: Dict[str, Any]) -> None:
+    @abstractmethod
+    def validate_input(self, input_data: dict) -> None:
         """Validate input parameters.
 
         Override this method to add custom validation.
@@ -196,7 +197,7 @@ class AgileTool(ABC):
                 "Project services are not initialized. Please use the 'set_project' tool to set a valid project directory first."
             )
 
-    def format_result(self, message: str, data: Optional[Dict[str, Any]] = None) -> ToolResult:
+    def format_result(self, message: str, data: dict[str, Any] | None = None) -> ToolResult:
         """Format a successful result.
 
         Args:
@@ -237,11 +238,13 @@ class AgileTool(ABC):
 
             # Execute the tool - now always returns ToolResult
             result = self.apply(**kwargs)
-            
+
             # Ensure we got a ToolResult
             if not isinstance(result, ToolResult):
-                raise ToolError(f"Tool {self.get_name()} apply method must return a ToolResult object, got {type(result)}")
-            
+                raise ToolError(
+                    f"Tool {self.get_name()} apply method must return a ToolResult object, got {type(result)}"
+                )
+
             return result
 
         except ToolError as e:
@@ -251,12 +254,10 @@ class AgileTool(ABC):
 
         except Exception as e:
             # Handle unexpected errors
-            error_result = ToolResultError(error=
-                            ToolError(f"Unexpected error in {self.get_name()}: {str(e)}")
-                            )
+            error_result = ToolResultError(error=ToolError(f"Unexpected error in {self.get_name()}: {str(e)}"))
             return error_result
 
-    def _format_message_from_data(self, data: Dict[str, Any]) -> str:
+    def _format_message_from_data(self, data: dict[str, Any]) -> str:
         """Format a human-readable message from structured data.
 
         This method is deprecated and will be removed. Tools should format

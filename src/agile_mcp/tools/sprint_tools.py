@@ -1,23 +1,26 @@
 """Sprint management tools for Agile MCP Server."""
 
 from datetime import datetime
-import json
-from typing import Dict, Any, Optional, List
+from typing import Any
 
-from .base import AgileTool, ToolError, ToolResult
 from ..models.sprint import SprintStatus
+from .base import AgileTool, ToolError, ToolResult
 
 
 class CreateSprintTool(AgileTool):
-    """Create a new sprint in the agile project."""
+    """Tool for creating new sprints."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for sprint creation."""
+        pass  # Default implementation - no validation
 
     def apply(
         self,
         name: str,
-        goal: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        tags: Optional[str] = None,
+        goal: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        tags: str | None = None,
     ) -> ToolResult:
         """Create a new sprint.
 
@@ -60,21 +63,25 @@ class CreateSprintTool(AgileTool):
             tags_list = [tag.strip() for tag in tags.split(",")]
 
         # Create the sprint
-        sprint = self.agent.sprint_service.create_sprint(
-            name=name, goal=goal, start_date=start_date_obj, end_date=end_date_obj, tags=tags_list
-        )
+        try:
+            sprint = self.agent.sprint_service.create_sprint(
+                name=name, goal=goal, start_date=start_date_obj, end_date=end_date_obj, tags=tags_list
+            )
+        except Exception as err:
+            raise RuntimeError("Failed to perform sprint operation.") from err
 
         # Format result with sprint data
         sprint_data = sprint.model_dump(mode="json")
 
-        return self.format_result(
-            f"Sprint '{sprint.name}' created successfully with ID {sprint.id}",
-            sprint_data
-        )
+        return self.format_result(f"Sprint '{sprint.name}' created successfully with ID {sprint.id}", sprint_data)
 
 
 class GetSprintTool(AgileTool):
-    """Retrieve a sprint by its ID."""
+    """Tool for retrieving sprints."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for sprint retrieval."""
+        pass  # Default implementation - no validation
 
     def apply(self, sprint_id: str) -> ToolResult:
         """Get a sprint by ID.
@@ -107,15 +114,18 @@ class GetSprintTool(AgileTool):
         data = {"sprint": sprint_data, "progress": progress}
 
         return self.format_result(
-            f"Retrieved sprint: {sprint.name} (ID: {sprint.id}, Status: {sprint.status.value})",
-            data
+            f"Retrieved sprint: {sprint.name} (ID: {sprint.id}, Status: {sprint.status.value})", data
         )
 
 
 class ListSprintsTool(AgileTool):
-    """List sprints with optional filtering."""
+    """Tool for listing sprints."""
 
-    def apply(self, status: Optional[str] = None, include_stories: Optional[bool] = False) -> ToolResult:
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for sprint listing."""
+        pass  # Default implementation - no validation
+
+    def apply(self, status: str | None = None, include_stories: bool | None = False) -> ToolResult:
         """List sprints with optional filtering.
 
         Args:
@@ -154,12 +164,9 @@ class ListSprintsTool(AgileTool):
             "filters": {"status": status_enum.value if status_enum else None, "include_stories": include_stories},
         }
 
-        return self.format_result(
-            f"Found {len(sprints_data)} sprints{status_filter_msg}{stories_msg}",
-            data
-        )
+        return self.format_result(f"Found {len(sprints_data)} sprints{status_filter_msg}{stories_msg}", data)
 
-    def _format_message_from_data(self, data: Dict[str, Any]) -> str:
+    def _format_message_from_data(self, data: dict[str, Any]) -> str:
         """Format human-readable message from sprint list data.
 
         This method is deprecated and will be removed. Tools should format
@@ -185,17 +192,21 @@ class ListSprintsTool(AgileTool):
 
 
 class UpdateSprintTool(AgileTool):
-    """Update an existing sprint."""
+    """Tool for updating existing sprints."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for sprint update."""
+        pass  # Default implementation - no validation
 
     def apply(
         self,
         sprint_id: str,
-        name: Optional[str] = None,
-        goal: Optional[str] = None,
-        status: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        tags: Optional[str] = None,
+        name: str | None = None,
+        goal: str | None = None,
+        status: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        tags: str | None = None,
     ) -> ToolResult:
         """Update an existing sprint.
 
@@ -246,7 +257,10 @@ class UpdateSprintTool(AgileTool):
             update_params["tags"] = [tag.strip() for tag in tags.split(",")]
 
         # Update the sprint
-        updated_sprint = self.agent.sprint_service.update_sprint(sprint_id, **update_params)
+        try:
+            updated_sprint = self.agent.sprint_service.update_sprint(sprint_id, **update_params)
+        except Exception as err:
+            raise RuntimeError("Failed to perform sprint operation.") from err
 
         if updated_sprint is None:
             raise ToolError(f"Sprint with ID {sprint_id} not found")
@@ -254,14 +268,15 @@ class UpdateSprintTool(AgileTool):
         # Format result with sprint data
         sprint_data = updated_sprint.model_dump(mode="json")
 
-        return self.format_result(
-            f"Sprint '{updated_sprint.name}' updated successfully",
-            sprint_data
-        )
+        return self.format_result(f"Sprint '{updated_sprint.name}' updated successfully", sprint_data)
 
 
 class ManageSprintStoriesTool(AgileTool):
-    """Add or remove stories from a sprint."""
+    """Tool for managing story assignments to sprints."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for sprint story management."""
+        pass  # Default implementation - no validation
 
     def apply(self, sprint_id: str, action: str, story_id: str) -> ToolResult:
         """Add or remove stories from a sprint.
@@ -282,10 +297,16 @@ class ManageSprintStoriesTool(AgileTool):
             raise ToolError("Action must be either 'add' or 'remove'")
 
         if action == "add":
-            updated_sprint = self.agent.sprint_service.add_story_to_sprint(sprint_id, story_id)
+            try:
+                updated_sprint = self.agent.sprint_service.add_story_to_sprint(sprint_id, story_id)
+            except Exception as err:
+                raise RuntimeError("Failed to perform sprint operation.") from err
             action_message = f"Story '{story_id}' added to sprint '{sprint_id}'"
         else:  # action == "remove"
-            updated_sprint = self.agent.sprint_service.remove_story_from_sprint(sprint_id, story_id)
+            try:
+                updated_sprint = self.agent.sprint_service.remove_story_from_sprint(sprint_id, story_id)
+            except Exception as err:
+                raise RuntimeError("Failed to perform sprint operation.") from err
             action_message = f"Story '{story_id}' removed from sprint '{sprint_id}'"
 
         if updated_sprint is None:
@@ -298,14 +319,18 @@ class ManageSprintStoriesTool(AgileTool):
             "story_ids": updated_sprint.story_ids,
             "story_count": len(updated_sprint.story_ids),
             "action": action,
-            "story_id": story_id
+            "story_id": story_id,
         }
 
         return self.format_result(action_message, sprint_data)
 
 
 class GetSprintProgressTool(AgileTool):
-    """Get detailed progress information for a sprint."""
+    """Tool for retrieving sprint progress."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for sprint progress retrieval."""
+        pass  # Default implementation - no validation
 
     def apply(self, sprint_id: str) -> ToolResult:
         """Get detailed progress information for a sprint.
@@ -348,7 +373,11 @@ class GetSprintProgressTool(AgileTool):
 
 
 class GetActiveSprintTool(AgileTool):
-    """Get the currently active sprint."""
+    """Tool for retrieving the active sprint."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters for active sprint retrieval."""
+        pass  # Default implementation - no validation
 
     def apply(self) -> ToolResult:
         """Get the currently active sprint.
@@ -362,10 +391,7 @@ class GetActiveSprintTool(AgileTool):
         active_sprint = self.agent.sprint_service.get_active_sprint()
 
         if active_sprint is None:
-            return self.format_result(
-                "No active sprint found",
-                {"active_sprint": None}
-            )
+            return self.format_result("No active sprint found", {"active_sprint": None})
 
         # Get progress information
         progress = self.agent.sprint_service.get_sprint_progress(active_sprint.id)
@@ -382,5 +408,5 @@ class GetActiveSprintTool(AgileTool):
 
         return self.format_result(
             f"Active sprint: {active_sprint.name} (ID: {active_sprint.id}, {len(active_sprint.story_ids)} stories)",
-            data
+            data,
         )
