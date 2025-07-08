@@ -2,24 +2,24 @@ repos:
 - hooks:
   - id: black
   repo: https://github.com/psf/black
-  rev: 23.3.0
+  rev: 25.1.0
 - hooks:
   - args:
     - --fix
     id: ruff
   repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: v0.0.270
+  rev: v0.12.2
 - hooks:
   - id: check-added-large-files
   - id: check-yaml
   - id: end-of-file-fixer
   - id: trailing-whitespace
   repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v5.0.0
 - hooks:
   - id: commitizen
   - id: commitizen-branch
     stages:
-    - push
+    - pre-push
   repo: https://github.com/commitizen-tools/commitizen
   rev: v4.8.3
