@@ -11,6 +11,12 @@
 - Resolve TOML parse errors and mypy import issues
 - Resolve critical TOML parse errors and type annotation issues
 
+## v0.2.2 (2025-07-08)
+
+### Refactor
+
+- encapsulate CLI call in main function
+
 ## v0.2.1 (2025-07-08)
 
 ### Fix
