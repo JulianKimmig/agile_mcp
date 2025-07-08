@@ -21,7 +21,7 @@ class GetSprintBurndownChartTool(AgileTool):
         sprint_service = SprintService(self.agent.project_manager)
         burndown_data = sprint_service.get_sprint_burndown_data(sprint_id)
 
-        if not burndown_data:
+        if burndown_data is None:
             raise ToolError(f"Could not generate burndown chart for sprint with ID {sprint_id}")
 
         return self._generate_chart(burndown_data)
