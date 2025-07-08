@@ -14,7 +14,7 @@ version_provider = "uv"
 update_changelog_on_bump = true
 [project]
 name = "agile-mcp-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "An Agile Project Management MCP Server that transforms LLMs into powerful agile assistants"
 authors = [{name = "Agile MCP Team", email = "team@agile-mcp.com"}]
 readme = "README.md"
