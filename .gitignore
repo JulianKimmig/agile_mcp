@@ -88,3 +88,4 @@ Thumbs.db
 *.orig
 .cursor/
 GEMINI.md
+*_codebase.*
