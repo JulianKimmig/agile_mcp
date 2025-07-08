@@ -3,8 +3,8 @@
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, TYPE_CHECKING
-
+from typing import Any, Dict, Optional, TYPE_CHECKING,Union
+from pydantic import BaseModel, Field
 from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata, func_metadata
 
 if TYPE_CHECKING:
@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 
 class ToolError(Exception):
     """Exception raised by tools for validation or execution errors."""
-    
+
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
         """Initialize the tool error.
-        
+
         Args:
             message: Error message
             details: Optional additional error details
@@ -25,95 +25,101 @@ class ToolError(Exception):
         self.details = details
 
 
-class ToolResult:
+class ToolResult(BaseModel):
     """Represents the result of a tool execution."""
-    
-    def __init__(self, success: bool, message: str, data: Optional[Dict[str, Any]] = None):
-        """Initialize the tool result.
-        
-        Args:
-            success: Whether the tool execution was successful
-            message: Result message
-            data: Optional data payload
-        """
-        self.success = success
-        self.message = message
-        self.data = data
-    
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = Field(None)
+
+    # def __init__(self, success: bool, message: str, data: Optional[Dict[str, Any]] = None):
+    #     """Initialize the tool result.
+
+    #     Args:
+    #         success: Whether the tool execution was successful
+    #         message: Result message
+    #         data: Optional data payload
+    #     """
+    #     self.success = success
+    #     self.message = message
+    #     self.data = data
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to dictionary format.
-        
+
         Returns:
             Dictionary representation of the result
         """
-        result = {
-            "success": self.success,
-            "message": self.message
-        }
-        if self.data is not None:
+        result = {"success": self.success, "message": self.message}
+        if self.data:
             result["data"] = self.data
         return result
-    
+
     def to_json(self) -> str:
         """Convert result to JSON string.
-        
+
         Returns:
             JSON string representation of the result
         """
         return json.dumps(self.to_dict(), indent=2)
-    
+
     def __str__(self) -> str:
         """String representation of the result."""
         return f"ToolResult(success={self.success}, message='{self.message}', data={self.data})"
 
 
+class ToolResultError(ToolResult):
+    def __init__(self, error:Exception):
+        super().__init__(success=False, message=f"Tool Error: {str(error)}")
+
+
+
+
 class AgileTool(ABC):
     """Base class for all Agile MCP tools."""
-    
+
     def __init__(self, agent: "AgileMCPServer"):
         """Initialize the tool.
-        
+
         Args:
             agent: The MCP server/agent instance
         """
         self.agent = agent
-    
+
     @abstractmethod
-    def apply(self, *args, **kwargs):
+    def apply(self, *args, **kwargs) -> ToolResult:
         """Apply the tool with given parameters.
-        
+
         This method must be implemented by subclasses with their specific parameter signatures.
-        For tools that return structured data, this should return a dict/object.
-        For tools that return simple results, this can return a string.
-        
+        All tools should return a ToolResult object with success status, message, and optional data.
+
         Returns:
-            Result data (string for simple tools, dict for structured tools)
+            ToolResult: Result of the tool execution
         """
         pass
-    
+
     def get_name(self) -> str:
         """Get the tool name from the class name.
-        
+
         Converts CamelCase to snake_case and removes 'Tool' suffix.
-        
+
         Returns:
             Tool name in snake_case
         """
         class_name = self.__class__.__name__
-        
+
         # Remove 'Tool' suffix if present
-        if class_name.endswith('Tool'):
+        if class_name.endswith("Tool"):
             class_name = class_name[:-4]
-        
+
         # Convert CamelCase to snake_case
-        snake_case = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', class_name)
-        snake_case = re.sub('([a-z0-9])([A-Z])', r'\1_\2', snake_case).lower()
-        
+        snake_case = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", class_name)
+        snake_case = re.sub("([a-z0-9])([A-Z])", r"\1_\2", snake_case).lower()
+
         return snake_case
-    
+
     def get_description(self) -> str:
         """Get the tool description from the class docstring.
-        
+
         Returns:
             Tool description string
         """
@@ -121,61 +127,61 @@ class AgileTool(ABC):
             return self.__class__.__doc__.strip()
         else:
             return f"Agile project management tool: {self.get_name()}"
-    
+
     def get_apply_docstring(self) -> str:
         """Get the docstring for the apply method.
-        
+
         This method is required for MCP tool registration.
-        
+
         Returns:
             Apply method docstring
         """
-        apply_method = getattr(self.__class__, 'apply', None)
+        apply_method = getattr(self.__class__, "apply", None)
         if apply_method and apply_method.__doc__:
             return apply_method.__doc__.strip()
         else:
             return f"Apply the {self.get_name()} tool."
-    
+
     def get_apply_fn_metadata(self) -> FuncMetadata:
         """Get the metadata for the apply method.
-        
+
         This method is required for MCP tool registration.
-        
+
         Returns:
             FuncMetadata for the apply method
         """
-        apply_method = getattr(self.__class__, 'apply', None)
+        apply_method = getattr(self.__class__, "apply", None)
         if apply_method is None:
             raise RuntimeError(f"apply method not defined in {self.__class__}")
-        
+
         return func_metadata(apply_method, skip_names=["self"])
-    
+
     def get_parameters(self) -> Dict[str, Any]:
         """Get the tool parameters specification.
-        
+
         Override this method to specify tool parameters.
-        
+
         Returns:
             Dictionary of parameter specifications
         """
         return {}
-    
+
     def validate_input(self, params: Dict[str, Any]) -> None:
         """Validate input parameters.
-        
+
         Override this method to add custom validation.
-        
+
         Args:
             params: Input parameters to validate
-            
+
         Raises:
             ToolError: If validation fails
         """
         pass  # Default implementation does nothing
-    
+
     def _check_project_initialized(self) -> None:
         """Check if the project is initialized and raise error if not.
-        
+
         Raises:
             ToolError: If project is not set or services not initialized
         """
@@ -184,95 +190,81 @@ class AgileTool(ABC):
                 "No project directory is set. Please use the 'set_project' tool to set a project directory first. "
                 "Usually this should be set to the current project directory as an absolute path."
             )
-        
+
         if not self.agent.project_manager or not self.agent.story_service or not self.agent.sprint_service:
             raise ToolError(
                 "Project services are not initialized. Please use the 'set_project' tool to set a valid project directory first."
             )
-    
+
     def format_result(self, message: str, data: Optional[Dict[str, Any]] = None) -> ToolResult:
         """Format a successful result.
-        
+
         Args:
             message: Success message
             data: Optional data payload
-            
+
         Returns:
             ToolResult object
         """
         return ToolResult(success=True, message=message, data=data)
-    
+
     def format_error(self, message: str) -> ToolResult:
         """Format an error result.
-        
+
         Args:
             message: Error message
-            
+
         Returns:
             ToolResult object
         """
         return ToolResult(success=False, message=message)
-    
-    def apply_ex(self, **kwargs: Any) -> str:
+
+    def apply_ex(self, **kwargs: Any) -> ToolResult:
         """Apply the tool with error handling for MCP compatibility.
-        
+
         This method is required for MCP tool registration and provides
         the standardized interface expected by the MCP system.
-        All results are returned as structured JSON.
-        
+
         Args:
             **kwargs: Tool parameters
-            
+
         Returns:
-            JSON string representing ToolResult
+            ToolResult
         """
         try:
             # Validate input parameters
             self.validate_input(kwargs)
+
+            # Execute the tool - now always returns ToolResult
+            result = self.apply(**kwargs)
             
-            # Execute the tool
-            apply_result = self.apply(**kwargs)
+            # Ensure we got a ToolResult
+            if not isinstance(result, ToolResult):
+                raise ToolError(f"Tool {self.get_name()} apply method must return a ToolResult object, got {type(result)}")
             
-            # Handle different result types
-            if isinstance(apply_result, dict):
-                # New pattern: apply() returns structured data
-                data = apply_result
-                message = self._format_message_from_data(data)
-            elif isinstance(apply_result, str):
-                # Backward compatibility: apply() returns formatted string
-                message = apply_result
-                data = None
-                # Check if tool stored result data (legacy pattern)
-                if hasattr(self, 'last_result_data'):
-                    data = self.last_result_data
-                    delattr(self, 'last_result_data')
-            else:
-                # Handle other types by converting to string
-                message = str(apply_result)
-                data = {"raw_result": apply_result}
-            
-            # Return structured JSON result
-            result = ToolResult(success=True, message=message, data=data)
-            return result.to_json()
-            
+            return result
+
         except ToolError as e:
-            # Handle tool-specific errors with "Tool Error:" prefix for backward compatibility
-            error_result = ToolResult(success=False, message=f"Tool Error: {str(e)}")
-            return error_result.to_json()
-            
+            # Handle tool-specific errors
+            error_result = ToolResultError(error=e)
+            return error_result
+
         except Exception as e:
-            # Handle unexpected errors with "Tool Error:" prefix for backward compatibility
-            error_result = ToolResult(success=False, message=f"Tool Error: Unexpected error in {self.get_name()}: {str(e)}")
-            return error_result.to_json()
-    
+            # Handle unexpected errors
+            error_result = ToolResultError(error=
+                            ToolError(f"Unexpected error in {self.get_name()}: {str(e)}")
+                            )
+            return error_result
+
     def _format_message_from_data(self, data: Dict[str, Any]) -> str:
         """Format a human-readable message from structured data.
-        
-        Override this method in subclasses to provide custom message formatting.
-        
+
+        This method is deprecated and will be removed. Tools should format
+        their own messages when creating ToolResult objects.
+
         Args:
             data: Structured data returned from apply()
-            
+
         Returns:
             Human-readable message string
         """
@@ -284,5 +276,5 @@ class AgileTool(ABC):
                 return f"Found {data['count']} items"
             elif "success" in data:
                 return "Operation completed successfully" if data["success"] else "Operation failed"
-        
-        return f"Tool {self.get_name()} completed successfully" 
+
+        return f"Tool {self.get_name()} completed successfully"

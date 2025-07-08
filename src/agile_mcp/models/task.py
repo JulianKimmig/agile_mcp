@@ -10,6 +10,7 @@ from .base import AgileArtifact
 
 class TaskStatus(str, Enum):
     """Task status enumeration."""
+
     TODO = "todo"
     IN_PROGRESS = "in_progress"
     DONE = "done"
@@ -18,6 +19,7 @@ class TaskStatus(str, Enum):
 
 class TaskPriority(str, Enum):
     """Task priority enumeration."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -26,7 +28,7 @@ class TaskPriority(str, Enum):
 
 class Task(AgileArtifact):
     """Task model representing a subtask within a user story."""
-    
+
     title: str = Field(..., description="Task title")
     description: str = Field(..., description="Task description")
     story_id: Optional[str] = Field(default=None, description="ID of the parent story")
@@ -39,58 +41,58 @@ class Task(AgileArtifact):
     dependencies: List[str] = Field(default_factory=list, description="List of task IDs this task depends on")
     tags: List[str] = Field(default_factory=list, description="Task tags")
     notes: List[str] = Field(default_factory=list, description="Task notes and updates")
-    
-    @field_validator('estimated_hours', 'actual_hours')
+
+    @field_validator("estimated_hours", "actual_hours")
     @classmethod
     def validate_hours(cls, v):
         """Validate that hours are non-negative."""
-        if v is not None and v < 0:
-            raise ValueError('Hours must be non-negative')
+        if v and v < 0:
+            raise ValueError("Hours must be non-negative")
         return v
-    
+
     def add_note(self, note: str) -> None:
         """Add a note to the task.
-        
+
         Args:
             note: Note content to add
         """
         timestamp = datetime.now().isoformat()
         self.notes.append(f"[{timestamp}] {note}")
         self.updated_at = datetime.now()
-    
+
     def is_blocked(self) -> bool:
         """Check if task is blocked.
-        
+
         Returns:
             True if task status is blocked
         """
         return self.status == TaskStatus.BLOCKED
-    
+
     def is_completed(self) -> bool:
         """Check if task is completed.
-        
+
         Returns:
             True if task status is done
         """
         return self.status == TaskStatus.DONE
-    
+
     def can_start(self, completed_tasks: List[str]) -> bool:
         """Check if task can be started based on dependencies.
-        
+
         Args:
             completed_tasks: List of completed task IDs
-            
+
         Returns:
             True if all dependencies are completed
         """
         if not self.dependencies:
             return True
-        
+
         return all(dep_id in completed_tasks for dep_id in self.dependencies)
-    
+
     def get_progress_percentage(self) -> float:
         """Get task progress as percentage.
-        
+
         Returns:
             Progress percentage (0-100)
         """
@@ -99,4 +101,4 @@ class Task(AgileArtifact):
         elif self.status == TaskStatus.IN_PROGRESS:
             return 50.0
         else:
-            return 0.0 
+            return 0.0

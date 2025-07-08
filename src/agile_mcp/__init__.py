@@ -9,8 +9,8 @@ from .server import AgileMCPServer
 
 __all__ = [
     "UserStory",
-    "Task", 
+    "Task",
     "Sprint",
     "Epic",
     "AgileMCPServer",
-] 
+]

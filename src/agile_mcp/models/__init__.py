@@ -9,11 +9,11 @@ from .epic import Epic
 __all__ = [
     "AgileArtifact",
     "UserStory",
-    "StoryStatus", 
+    "StoryStatus",
     "Priority",
     "Task",
     "TaskStatus",
     "Sprint",
     "SprintStatus",
     "Epic",
-] 
+]

@@ -4,4 +4,4 @@ from .filesystem import AgileProjectManager
 
 __all__ = [
     "AgileProjectManager",
-] 
+]

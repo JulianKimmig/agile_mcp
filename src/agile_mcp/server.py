@@ -48,18 +48,13 @@ from .tools.sprint_tools import (
     UpdateSprintTool,
     ManageSprintStoriesTool,
     GetSprintProgressTool,
-    GetActiveSprintTool
+    GetActiveSprintTool,
 )
-from .tools.project_tools import (
-    SetProjectTool,
-    GetProjectTool
-)
-from .tools.documentation_tools import (
-    GetAgileDocumentationTool
-)
-from .tools.burndown_chart_tool import (
-    GetSprintBurndownChartTool
-)
+from .tools.project_tools import SetProjectTool, GetProjectTool
+from .tools.documentation_tools import GetAgileDocumentationTool
+from .tools.burndown_chart_tool import GetSprintBurndownChartTool
+
+from .tools.base import ToolResult
 
 # Configure logging for MCP
 logging.basicConfig(
@@ -73,30 +68,30 @@ log = logging.getLogger(__name__)
 
 class AgileToolInterface:
     """Interface for agile tools to be compatible with MCP."""
-    
+
     def get_name(self) -> str:
         """Get the tool name."""
         pass
-    
+
     def get_apply_docstring(self) -> str:
         """Get the docstring for the apply method."""
         pass
-    
+
     def get_apply_fn_metadata(self) -> FuncMetadata:
         """Get the metadata for the apply method."""
         pass
-    
-    def apply_ex(self, **kwargs) -> str:
+
+    def apply_ex(self, **kwargs) -> ToolResult:
         """Apply the tool with error handling."""
         pass
 
 
 class AgileMCPServer:
     """Main MCP server for agile project management."""
-    
+
     def __init__(self, project_path: str | None = None):
         """Initialize the Agile MCP Server.
-        
+
         Args:
             project_path: Path to the project directory (optional)
         """
@@ -108,59 +103,59 @@ class AgileMCPServer:
         self.epic_service: EpicService | None = None
         self.config_service: ConfigurationService | None = None
         self.mcp_server: FastMCP | None = None
-        
+
         if self.project_path:
             log.info(f"Initializing Agile MCP Server for project: {self.project_path}")
         else:
             log.info("Initializing Agile MCP Server without project directory (use set_project tool to set one)")
-    
+
     def _initialize_services(self) -> None:
         """Initialize all services and dependencies."""
         if self.project_path is None:
             raise RuntimeError("Project path must be set before initializing services. Use set_project tool first.")
-        
+
         log.info("Initializing project services...")
-        
+
         # Initialize project manager and create .agile folder if needed
         self.project_manager = AgileProjectManager(self.project_path)
         self.project_manager.initialize()
-        
+
         # Initialize configuration service
         self.config_service = ConfigurationService(self.project_manager)
-        
+
         # Initialize story service
         self.story_service = StoryService(self.project_manager)
-        
+
         # Initialize sprint service
         self.sprint_service = SprintService(self.project_manager)
-        
+
         # Initialize task service
         self.task_service = TaskService(self.project_manager)
-        
+
         # Initialize epic service
         self.epic_service = EpicService(self.project_manager)
-        
+
         log.info("Project services initialized successfully")
-    
+
     def set_project_path(self, project_path: str) -> None:
         """Set the project path and re-initialize services.
-        
+
         Args:
             project_path: Path to the project directory
         """
         self.project_path = Path(project_path).resolve()
         log.info(f"Setting project path to: {self.project_path}")
-        
+
         # Re-initialize services with new project path
         self._initialize_services()
-        
+
         # Update tools in MCP server if it exists
         if self.mcp_server is not None:
             self._set_mcp_tools(self.mcp_server)
-    
+
     def _iter_tools(self) -> Iterator[AgileToolInterface]:
         """Iterate over all available agile tools.
-        
+
         Returns:
             Iterator of tool instances
         """
@@ -169,12 +164,12 @@ class AgileMCPServer:
             SetProjectTool(self),
             GetProjectTool(self),
         ]
-        
+
         # Documentation tools (always available)
         documentation_tools = [
             GetAgileDocumentationTool(self),
         ]
-        
+
         # Story, task, epic, and sprint tools (always exposed, but will error if no project is set)
         agile_tools = [
             # Story tools
@@ -207,20 +202,20 @@ class AgileMCPServer:
             GetActiveSprintTool(self),
             GetSprintBurndownChartTool(self),
         ]
-        
+
         all_tools = project_tools + documentation_tools + agile_tools
         log.info(f"Available tools: {[tool.get_name() for tool in all_tools]}")
         yield from all_tools
-    
+
     @staticmethod
     def make_mcp_tool(tool: AgileToolInterface) -> MCPTool:
         """Convert an agile tool to an MCP tool.
-        
+
         This follows the same pattern as Serena's SerenaMCPFactory.make_mcp_tool().
-        
+
         Args:
             tool: The agile tool instance
-            
+
         Returns:
             MCP tool instance
         """
@@ -254,7 +249,6 @@ class AgileMCPServer:
 
         def execute_fn(**kwargs) -> str:  # type: ignore
             return tool.apply_ex(**kwargs)
-
         return MCPTool(
             fn=execute_fn,
             name=func_name,
@@ -265,83 +259,73 @@ class AgileMCPServer:
             context_kwarg=None,
             annotations=None,
         )
-    
+
     def _set_mcp_tools(self, mcp: FastMCP) -> None:
         """Update the tools in the MCP server.
-        
+
         This follows the same pattern as Serena's SerenaMCPFactory._set_mcp_tools().
-        
+
         Args:
             mcp: The FastMCP server instance
         """
         if mcp is not None:
             # Clear existing tools
             mcp._tool_manager._tools = {}
-            
+
             # Register all agile tools
             for tool in self._iter_tools():
                 mcp_tool = self.make_mcp_tool(tool)
                 mcp._tool_manager._tools[tool.get_name()] = mcp_tool
-            
+
             tool_names = list(mcp._tool_manager._tools.keys())
             log.info(f"Registered {len(tool_names)} MCP tools: {tool_names}")
-    
+
     @asynccontextmanager
     async def _server_lifespan(self, mcp_server: FastMCP) -> AsyncIterator[None]:
         """Manage server startup and shutdown lifecycle."""
         log.info("Starting Agile MCP Server lifecycle...")
-        
+
         try:
             # Initialize services only if project path is set
             if self.project_path is not None:
                 self._initialize_services()
-            
+
             # Register tools with MCP server (includes project tools)
             self._set_mcp_tools(mcp_server)
-            
+
             log.info("MCP server lifecycle setup complete")
             yield
-            
+
         except Exception as e:
             log.error(f"Error during server lifecycle: {e}")
             raise
         finally:
             log.info("Shutting down Agile MCP Server...")
-    
-    def create_mcp_server(
-        self,
-        host: str = "0.0.0.0",
-        port: int = 8000,
-        transport: str = "stdio"
-    ) -> FastMCP:
+
+    def create_mcp_server(self, host: str = "0.0.0.0", port: int = 8000, transport: str = "stdio") -> FastMCP:
         """Create and configure the FastMCP server.
-        
+
         Args:
             host: Server host (for SSE transport)
             port: Server port (for SSE transport)
             transport: Transport type (stdio or sse)
-            
+
         Returns:
             Configured FastMCP server instance
         """
         log.info(f"Creating MCP server with transport: {transport}")
-        
+
         # Create FastMCP server with lifespan management
         if transport == "stdio":
             self.mcp_server = FastMCP("Agile MCP Server", lifespan=self._server_lifespan)
         else:  # sse
-            self.mcp_server = FastMCP(
-                "Agile MCP Server",
-                lifespan=self._server_lifespan,
-                host=host,
-                port=port
-            )
-        
+            self.mcp_server = FastMCP("Agile MCP Server", lifespan=self._server_lifespan, host=host, port=port)
+
         return self.mcp_server
-    
+
     def start(self, transport: str = "stdio", host: str = "0.0.0.0", port: int = 8000) -> None:
         """Start the MCP server.
-        
+
         Args:
             transport: Transport protocol (stdio or sse)
             host: Server host for SSE transport
@@ -349,16 +333,16 @@ class AgileMCPServer:
         """
         try:
             server = self.create_mcp_server(host=host, port=port, transport=transport)
-            
+
             log.info(f"Starting MCP server with {transport} transport")
-            
+
             if transport == "stdio":
                 # For stdio transport, just call run() without parameters
                 server.run()
             else:  # sse
                 # For sse transport, call run() with transport parameters
-                server.run(transport="sse", host=host, port=port)
-                
+                server.run(transport="sse")
+
         except KeyboardInterrupt:
             log.info("Server stopped by user")
         except Exception as e:
@@ -369,10 +353,10 @@ class AgileMCPServer:
 # Compatibility class for tools that expect an agent
 class AgileAgent:
     """Agent wrapper for backward compatibility with tool interfaces."""
-    
+
     def __init__(self, server: AgileMCPServer):
         """Initialize the agent.
-        
+
         Args:
             server: The MCP server instance
         """
@@ -381,4 +365,4 @@ class AgileAgent:
         self.story_service = server.story_service
         self.sprint_service = server.sprint_service
         self.task_service = server.task_service
-        self.epic_service = server.epic_service 
+        self.epic_service = server.epic_service

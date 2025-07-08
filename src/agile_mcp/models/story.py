@@ -8,6 +8,7 @@ from .base import AgileArtifact
 
 class StoryStatus(str, Enum):
     """Status enum for user stories."""
+
     TODO = "todo"
     IN_PROGRESS = "in_progress"
     IN_REVIEW = "in_review"
@@ -17,6 +18,7 @@ class StoryStatus(str, Enum):
 
 class Priority(str, Enum):
     """Priority enum for user stories."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -25,10 +27,10 @@ class Priority(str, Enum):
 
 class UserStory(AgileArtifact):
     """User story model."""
-    
+
     title: str
     description: str
     status: StoryStatus = StoryStatus.TODO
     priority: Priority = Priority.MEDIUM
     points: Optional[int] = None
-    sprint_id: Optional[str] = None 
+    sprint_id: Optional[str] = None

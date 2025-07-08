@@ -5,64 +5,73 @@ import os
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from .base import AgileTool, ToolError
+from .base import AgileTool, ToolError, ToolResult
 import yaml
 import json
 
+
 class GetAgileDocumentationTool(AgileTool):
     """Retrieve comprehensive machine-readable agile methodology documentation."""
-    
-    def apply(self, topic: Optional[str] = None, format: str = "json", detail_level: str = "comprehensive") -> str:
+
+    def apply(self, topic: Optional[str] = None, format: str = "json", detail_level: str = "comprehensive") -> ToolResult:
         """Get machine-readable agile methodology documentation.
-        
+
         Args:
             topic: Specific topic to retrieve (optional). Options: "principles", "tools", "workflows", "best_practices", "all"
-            format: Output format (optional, default: "json"). Options: "json", "yaml"
-            detail_level: Detail level (optional, default: "comprehensive"). Options: "summary", "comprehensive"
-            
+            format: Output format. Options: Literal["json", "yaml"]
+            detail_level: Detail level. Options: Literal["summary", "comprehensive"]
+
         Returns:
             Machine-readable agile documentation in requested format
         """
         # Validate parameters
-        valid_topics = ["principles", "tools", "workflows", "best_practices", "methodologies", "decision_trees", "all", None]
+        valid_topics = [
+            "principles",
+            "tools",
+            "workflows",
+            "best_practices",
+            "methodologies",
+            "decision_trees",
+            "all",
+            None,
+        ]
         if topic not in valid_topics:
             raise ToolError(f"Invalid topic. Must be one of: {[t for t in valid_topics if t is not None]}")
-        
+
         valid_formats = ["json", "yaml"]
         if format not in valid_formats:
             raise ToolError(f"Invalid format. Must be one of: {valid_formats}")
-        
+
         valid_detail_levels = ["summary", "comprehensive"]
         if detail_level not in valid_detail_levels:
             raise ToolError(f"Invalid detail_level. Must be one of: {valid_detail_levels}")
-        
+
         # Generate the documentation
         documentation = self._generate_agile_documentation()
-        
+
         # Filter by topic if specified
         if topic and topic != "all":
             # Map topic names to documentation keys
             topic_mapping = {
                 "principles": "agile_principles",
                 "tools": "tools",
-                "workflows": "workflow_patterns", 
+                "workflows": "workflow_patterns",
                 "best_practices": "best_practices",
                 "methodologies": "methodologies",
-                "decision_trees": "decision_trees"
+                "decision_trees": "decision_trees",
             }
-            
+
             mapped_topic = topic_mapping.get(topic, topic)
             if mapped_topic not in documentation:
-                raise ToolError(f"Topic '{topic}' not found in documentation, available topics: {list(topic_mapping.keys())}")
-            documentation = {
-                "metadata": documentation["metadata"],
-                mapped_topic: documentation[mapped_topic]
-            }
-        
+                raise ToolError(
+                    f"Topic '{topic}' not found in documentation, available topics: {list(topic_mapping.keys())}"
+                )
+            documentation = {"metadata": documentation["metadata"], mapped_topic: documentation[mapped_topic]}
+
         # Adjust detail level
         if detail_level == "summary":
             documentation = self._create_summary_documentation(documentation)
-        
+
         # Format output
         if format == "yaml":
             try:
@@ -71,17 +80,19 @@ class GetAgileDocumentationTool(AgileTool):
                 raise ToolError("YAML format requires PyYAML package. Install with: pip install PyYAML")
         else:
             output = json.dumps(documentation, indent=2)
-        
-        # Store result data for MCP response
-        self.last_result_data = {
-            "topic": topic or "all",
-            "format": format,
-            "detail_level": detail_level,
-            "documentation": documentation
-        }
-        
-        return output
-    
+
+        # Return ToolResult with structured data
+        return self.format_result(
+            f"Retrieved agile documentation for topic: {topic or 'all'} in {format} format",
+            {
+                "topic": topic or "all",
+                "format": format,
+                "detail_level": detail_level,
+                "documentation": documentation,
+                "formatted_output": output
+            }
+        )
+
     def _generate_agile_documentation(self) -> Dict[str, Any]:
         """Generate comprehensive agile methodology documentation."""
         return {
@@ -89,7 +100,7 @@ class GetAgileDocumentationTool(AgileTool):
                 "version": "1.0.0",
                 "schema_version": "1.0",
                 "created_at": "2025-01-07T12:00:00Z",
-                "updated_at": "2025-01-07T12:00:00Z"
+                "updated_at": "2025-01-07T12:00:00Z",
             },
             "agile_principles": {
                 "manifesto": {
@@ -97,41 +108,41 @@ class GetAgileDocumentationTool(AgileTool):
                         {
                             "primary": "Individuals and interactions",
                             "secondary": "processes and tools",
-                            "explanation": "While processes and tools are important, the focus should be on people and how they work together. Communication, collaboration, and human relationships drive successful software development."
+                            "explanation": "While processes and tools are important, the focus should be on people and how they work together. Communication, collaboration, and human relationships drive successful software development.",
                         },
                         {
                             "primary": "Working software",
                             "secondary": "comprehensive documentation",
-                            "explanation": "Documentation has value, but working software that delivers value to users is more important. Focus on building functional software that meets user needs."
+                            "explanation": "Documentation has value, but working software that delivers value to users is more important. Focus on building functional software that meets user needs.",
                         },
                         {
                             "primary": "Customer collaboration",
                             "secondary": "contract negotiation",
-                            "explanation": "While contracts define scope and expectations, ongoing collaboration with customers ensures the product meets their evolving needs and provides real value."
+                            "explanation": "While contracts define scope and expectations, ongoing collaboration with customers ensures the product meets their evolving needs and provides real value.",
                         },
                         {
                             "primary": "Responding to change",
                             "secondary": "following a plan",
-                            "explanation": "Plans provide direction, but the ability to adapt and respond to change is more valuable. Embrace change as an opportunity to deliver better solutions."
-                        }
+                            "explanation": "Plans provide direction, but the ability to adapt and respond to change is more valuable. Embrace change as an opportunity to deliver better solutions.",
+                        },
                     ],
                     "principles": [
                         {
                             "title": "Satisfy the customer through early and continuous delivery",
                             "description": "Our highest priority is to satisfy the customer through early and continuous delivery of valuable software.",
-                            "practical_application": "Implement short development cycles, frequent releases, and regular customer feedback loops."
+                            "practical_application": "Implement short development cycles, frequent releases, and regular customer feedback loops.",
                         },
                         {
                             "title": "Welcome changing requirements",
                             "description": "Welcome changing requirements, even late in development. Agile processes harness change for the customer's competitive advantage.",
-                            "practical_application": "Build flexible systems, maintain open communication channels, and view change requests as opportunities for improvement."
+                            "practical_application": "Build flexible systems, maintain open communication channels, and view change requests as opportunities for improvement.",
                         },
                         {
                             "title": "Deliver working software frequently",
                             "description": "Deliver working software frequently, from a couple of weeks to a couple of months, with a preference to the shorter timescale.",
-                            "practical_application": "Use time-boxed sprints, continuous integration, and incremental delivery to provide regular value."
-                        }
-                    ]
+                            "practical_application": "Use time-boxed sprints, continuous integration, and incremental delivery to provide regular value.",
+                        },
+                    ],
                 }
             },
             "methodologies": {
@@ -144,13 +155,13 @@ class GetAgileDocumentationTool(AgileTool):
                                 "Define and prioritize product backlog",
                                 "Communicate vision and requirements",
                                 "Accept or reject work results",
-                                "Represent stakeholder interests"
+                                "Represent stakeholder interests",
                             ],
                             "interactions": [
                                 "Works closely with development team on clarifications",
                                 "Collaborates with stakeholders on requirements",
-                                "Partners with Scrum Master on process optimization"
-                            ]
+                                "Partners with Scrum Master on process optimization",
+                            ],
                         },
                         {
                             "name": "Scrum Master",
@@ -158,13 +169,13 @@ class GetAgileDocumentationTool(AgileTool):
                                 "Facilitate Scrum events",
                                 "Remove impediments",
                                 "Coach team on Scrum practices",
-                                "Protect team from external disruptions"
+                                "Protect team from external disruptions",
                             ],
                             "interactions": [
                                 "Serves the development team as a facilitator",
                                 "Helps Product Owner with backlog management",
-                                "Works with organization to improve agile adoption"
-                            ]
+                                "Works with organization to improve agile adoption",
+                            ],
                         },
                         {
                             "name": "Development Team",
@@ -172,9 +183,9 @@ class GetAgileDocumentationTool(AgileTool):
                                 "Deliver potentially shippable product increment",
                                 "Self-organize to accomplish sprint goals",
                                 "Collaborate on technical decisions",
-                                "Estimate and commit to sprint work"
-                            ]
-                        }
+                                "Estimate and commit to sprint work",
+                            ],
+                        },
                     ],
                     "events": [
                         {
@@ -183,7 +194,7 @@ class GetAgileDocumentationTool(AgileTool):
                             "duration": "2-4 hours for 2-week sprint",
                             "participants": ["Product Owner", "Scrum Master", "Development Team"],
                             "outcomes": ["Sprint goal", "Sprint backlog", "Team commitment"],
-                            "tools_used": ["create_sprint", "list_stories", "manage_sprint_stories"]
+                            "tools_used": ["create_sprint", "list_stories", "manage_sprint_stories"],
                         },
                         {
                             "name": "Daily Scrum",
@@ -191,7 +202,7 @@ class GetAgileDocumentationTool(AgileTool):
                             "duration": "15 minutes",
                             "participants": ["Development Team", "Scrum Master (optional)"],
                             "outcomes": ["Updated task status", "Identified impediments", "Daily plan"],
-                            "tools_used": ["get_active_sprint", "list_stories", "update_story"]
+                            "tools_used": ["get_active_sprint", "list_stories", "update_story"],
                         },
                         {
                             "name": "Sprint Review",
@@ -199,7 +210,7 @@ class GetAgileDocumentationTool(AgileTool):
                             "duration": "1-2 hours for 2-week sprint",
                             "participants": ["Scrum Team", "Stakeholders"],
                             "outcomes": ["Demonstrated increment", "Updated product backlog", "Stakeholder feedback"],
-                            "tools_used": ["get_sprint_progress", "list_stories", "update_story"]
+                            "tools_used": ["get_sprint_progress", "list_stories", "update_story"],
                         },
                         {
                             "name": "Sprint Retrospective",
@@ -207,29 +218,29 @@ class GetAgileDocumentationTool(AgileTool):
                             "duration": "1-1.5 hours for 2-week sprint",
                             "participants": ["Scrum Team"],
                             "outcomes": ["Process improvements", "Action items", "Team agreements"],
-                            "tools_used": ["get_sprint_progress", "update_sprint"]
-                        }
+                            "tools_used": ["get_sprint_progress", "update_sprint"],
+                        },
                     ],
                     "artifacts": [
                         {
                             "name": "Product Backlog",
                             "description": "Ordered list of features, functions, requirements, enhancements, and fixes",
                             "owner": "Product Owner",
-                            "creation_tools": ["create_story", "update_story", "list_stories"]
+                            "creation_tools": ["create_story", "update_story", "list_stories"],
                         },
                         {
                             "name": "Sprint Backlog",
                             "description": "Set of product backlog items selected for the sprint plus a plan for delivering them",
                             "owner": "Development Team",
-                            "creation_tools": ["create_sprint", "manage_sprint_stories"]
+                            "creation_tools": ["create_sprint", "manage_sprint_stories"],
                         },
                         {
                             "name": "Increment",
                             "description": "Sum of all product backlog items completed during a sprint and all previous sprints",
                             "owner": "Development Team",
-                            "creation_tools": ["update_story", "get_sprint_progress"]
-                        }
-                    ]
+                            "creation_tools": ["update_story", "get_sprint_progress"],
+                        },
+                    ],
                 }
             },
             "workflow_patterns": [
@@ -242,22 +253,22 @@ class GetAgileDocumentationTool(AgileTool):
                             "sequence": 1,
                             "action": "Set up project directory",
                             "tool": "set_project",
-                            "parameters": {"project_path": "."}
+                            "parameters": {"project_path": "."},
                         },
                         {
                             "sequence": 2,
                             "action": "Create initial user stories",
                             "tool": "create_story",
-                            "parameters": {"title": "Example Story", "description": "Initial backlog item"}
+                            "parameters": {"title": "Example Story", "description": "Initial backlog item"},
                         },
                         {
                             "sequence": 3,
                             "action": "Create first sprint",
                             "tool": "create_sprint",
-                            "parameters": {"name": "Sprint 1", "goal": "Initial implementation"}
-                        }
+                            "parameters": {"name": "Sprint 1", "goal": "Initial implementation"},
+                        },
                     ],
-                    "outcomes": ["Initialized project structure", "Basic backlog", "First sprint ready"]
+                    "outcomes": ["Initialized project structure", "Basic backlog", "First sprint ready"],
                 },
                 {
                     "name": "Sprint Planning Workflow",
@@ -268,13 +279,13 @@ class GetAgileDocumentationTool(AgileTool):
                             "sequence": 1,
                             "action": "Review available stories",
                             "tool": "list_stories",
-                            "parameters": {"status": "todo"}
+                            "parameters": {"status": "todo"},
                         },
                         {
                             "sequence": 2,
                             "action": "Create new sprint",
                             "tool": "create_sprint",
-                            "parameters": {"name": "Sprint X", "goal": "Sprint objective"}
+                            "parameters": {"name": "Sprint X", "goal": "Sprint objective"},
                         },
                         {
                             "sequence": 3,
@@ -285,19 +296,19 @@ class GetAgileDocumentationTool(AgileTool):
                                 {
                                     "condition": "Story fits in sprint capacity",
                                     "action_if_true": "Add story to sprint",
-                                    "action_if_false": "Leave story in backlog for future sprint"
+                                    "action_if_false": "Leave story in backlog for future sprint",
                                 }
-                            ]
+                            ],
                         },
                         {
                             "sequence": 4,
                             "action": "Activate sprint",
                             "tool": "update_sprint",
-                            "parameters": {"status": "active"}
-                        }
+                            "parameters": {"status": "active"},
+                        },
                     ],
-                    "outcomes": ["Active sprint with committed stories", "Clear sprint goal", "Team alignment"]
-                }
+                    "outcomes": ["Active sprint with committed stories", "Clear sprint goal", "Team alignment"],
+                },
             ],
             "tools": {
                 "categories": [
@@ -314,41 +325,41 @@ class GetAgileDocumentationTool(AgileTool):
                                         "type": "string",
                                         "required": True,
                                         "description": "Path to the project directory. Can be relative or absolute. Use '.' for current directory.",
-                                        "examples": [".", "/path/to/project", "../my-project"]
+                                        "examples": [".", "/path/to/project", "../my-project"],
                                     }
                                 ],
                                 "use_cases": [
                                     {
                                         "scenario": "Starting a new agile project",
                                         "example": {"project_path": "."},
-                                        "workflow_context": "First step in project initialization workflow"
+                                        "workflow_context": "First step in project initialization workflow",
                                     },
                                     {
                                         "scenario": "Switching between multiple projects",
                                         "example": {"project_path": "/path/to/different/project"},
-                                        "workflow_context": "Project context switching for multi-project teams"
-                                    }
+                                        "workflow_context": "Project context switching for multi-project teams",
+                                    },
                                 ],
                                 "best_practices": [
                                     "Always set project directory before using other tools",
                                     "Use absolute paths for consistency across environments",
-                                    "Verify project directory exists and is accessible"
+                                    "Verify project directory exists and is accessible",
                                 ],
                                 "common_errors": [
                                     {
                                         "error": "Project path does not exist",
                                         "cause": "Specified directory doesn't exist on filesystem",
-                                        "solution": "Create directory first or use existing directory path"
+                                        "solution": "Create directory first or use existing directory path",
                                     }
                                 ],
                                 "related_tools": [
                                     {
                                         "tool": "get_project",
-                                        "relationship": "complementary - use to verify current project"
+                                        "relationship": "complementary - use to verify current project",
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        ],
                     },
                     {
                         "name": "Story Management",
@@ -363,22 +374,28 @@ class GetAgileDocumentationTool(AgileTool):
                                         "type": "string",
                                         "required": True,
                                         "description": "Story title - should be concise and descriptive",
-                                        "examples": ["User Authentication", "Payment Processing", "Data Export Feature"]
+                                        "examples": [
+                                            "User Authentication",
+                                            "Payment Processing",
+                                            "Data Export Feature",
+                                        ],
                                     },
                                     {
                                         "name": "description",
                                         "type": "string",
                                         "required": True,
                                         "description": "Detailed story description explaining what and why",
-                                        "examples": ["As a user, I want to log in securely so that I can access my account"]
+                                        "examples": [
+                                            "As a user, I want to log in securely so that I can access my account"
+                                        ],
                                     },
                                     {
                                         "name": "priority",
                                         "type": "string",
                                         "required": False,
                                         "description": "Story priority level",
-                                        "examples": ["low", "medium", "high", "critical"]
-                                    }
+                                        "examples": ["low", "medium", "high", "critical"],
+                                    },
                                 ],
                                 "use_cases": [
                                     {
@@ -386,19 +403,19 @@ class GetAgileDocumentationTool(AgileTool):
                                         "example": {
                                             "title": "User Profile Management",
                                             "description": "As a user, I want to update my profile information so that my account details stay current",
-                                            "priority": "medium"
+                                            "priority": "medium",
                                         },
-                                        "workflow_context": "Backlog building and requirement capture"
+                                        "workflow_context": "Backlog building and requirement capture",
                                     }
                                 ],
                                 "best_practices": [
                                     "Write stories from user perspective using 'As a... I want... So that...' format",
                                     "Keep stories small and focused on single functionality",
-                                    "Include acceptance criteria in description when possible"
-                                ]
+                                    "Include acceptance criteria in description when possible",
+                                ],
                             }
-                        ]
-                    }
+                        ],
+                    },
                 ]
             },
             "best_practices": {
@@ -410,9 +427,9 @@ class GetAgileDocumentationTool(AgileTool):
                             {
                                 "good": "As a customer, I want to track my order status so that I know when to expect delivery",
                                 "bad": "Implement order tracking system",
-                                "why": "The good example explains who benefits and why, while the bad example is just a technical task"
+                                "why": "The good example explains who benefits and why, while the bad example is just a technical task",
                             }
-                        ]
+                        ],
                     },
                     {
                         "principle": "Independent and negotiable",
@@ -421,24 +438,24 @@ class GetAgileDocumentationTool(AgileTool):
                             {
                                 "good": "User can reset password via email",
                                 "bad": "User can reset password via email and SMS and security questions",
-                                "why": "The good example is focused and can be implemented independently, while the bad example bundles multiple features"
+                                "why": "The good example is focused and can be implemented independently, while the bad example bundles multiple features",
                             }
-                        ]
-                    }
+                        ],
+                    },
                 ],
                 "sprint_planning": [
                     {
                         "practice": "Capacity-based planning",
                         "description": "Plan sprints based on team capacity and historical velocity, not wishful thinking",
                         "tools_involved": ["list_stories", "create_sprint", "manage_sprint_stories"],
-                        "metrics": ["Team velocity", "Story points", "Historical completion rates"]
+                        "metrics": ["Team velocity", "Story points", "Historical completion rates"],
                     },
                     {
                         "practice": "Clear sprint goals",
                         "description": "Each sprint should have a clear, achievable goal that provides focus and direction",
                         "tools_involved": ["create_sprint", "update_sprint"],
-                        "metrics": ["Goal achievement rate", "Scope changes during sprint"]
-                    }
+                        "metrics": ["Goal achievement rate", "Scope changes during sprint"],
+                    },
                 ],
                 "estimation": {
                     "techniques": [
@@ -446,51 +463,71 @@ class GetAgileDocumentationTool(AgileTool):
                             "name": "Planning Poker",
                             "description": "Team-based estimation using Fibonacci sequence for relative sizing",
                             "when_to_use": "When team has diverse perspectives and you want consensus",
-                            "implementation": "Use story points with Fibonacci scale (1, 2, 3, 5, 8, 13, 21)"
+                            "implementation": "Use story points with Fibonacci scale (1, 2, 3, 5, 8, 13, 21)",
                         },
                         {
                             "name": "T-shirt sizing",
                             "description": "High-level estimation using size categories (XS, S, M, L, XL)",
                             "when_to_use": "For initial rough estimation or large number of items",
-                            "implementation": "Map sizes to story points later for sprint planning"
-                        }
+                            "implementation": "Map sizes to story points later for sprint planning",
+                        },
                     ],
                     "story_points": {
                         "scale": [
                             {
                                 "value": 1,
                                 "meaning": "Very small, simple task",
-                                "typical_tasks": ["Minor bug fix", "Simple configuration change", "Documentation update"]
+                                "typical_tasks": [
+                                    "Minor bug fix",
+                                    "Simple configuration change",
+                                    "Documentation update",
+                                ],
                             },
                             {
                                 "value": 2,
                                 "meaning": "Small task with some complexity",
-                                "typical_tasks": ["Simple feature addition", "Basic UI component", "Simple API endpoint"]
+                                "typical_tasks": [
+                                    "Simple feature addition",
+                                    "Basic UI component",
+                                    "Simple API endpoint",
+                                ],
                             },
                             {
                                 "value": 3,
                                 "meaning": "Medium task with moderate complexity",
-                                "typical_tasks": ["Feature with business logic", "Database schema changes", "Integration with external service"]
+                                "typical_tasks": [
+                                    "Feature with business logic",
+                                    "Database schema changes",
+                                    "Integration with external service",
+                                ],
                             },
                             {
                                 "value": 5,
                                 "meaning": "Larger task requiring significant work",
-                                "typical_tasks": ["Complex feature development", "Major refactoring", "Multi-component integration"]
+                                "typical_tasks": [
+                                    "Complex feature development",
+                                    "Major refactoring",
+                                    "Multi-component integration",
+                                ],
                             },
                             {
                                 "value": 8,
                                 "meaning": "Large task with high complexity",
-                                "typical_tasks": ["Major feature with multiple components", "Complex algorithm implementation", "Significant architectural changes"]
-                            }
+                                "typical_tasks": [
+                                    "Major feature with multiple components",
+                                    "Complex algorithm implementation",
+                                    "Significant architectural changes",
+                                ],
+                            },
                         ],
                         "guidelines": [
                             "Use relative sizing - compare stories to each other, not absolute time",
                             "Consider complexity, uncertainty, and effort in estimation",
                             "Stories larger than 8 points should be broken down into smaller stories",
-                            "Re-estimate stories if new information changes understanding"
-                        ]
-                    }
-                }
+                            "Re-estimate stories if new information changes understanding",
+                        ],
+                    },
+                },
             },
             "decision_trees": [
                 {
@@ -505,25 +542,25 @@ class GetAgileDocumentationTool(AgileTool):
                                 {
                                     "condition": "Create new story",
                                     "next_node": "create_story_node",
-                                    "tools": ["create_story"]
+                                    "tools": ["create_story"],
                                 },
                                 {
                                     "condition": "Find existing stories",
                                     "next_node": "find_stories_node",
-                                    "tools": ["list_stories", "get_story"]
+                                    "tools": ["list_stories", "get_story"],
                                 },
                                 {
                                     "condition": "Modify existing story",
                                     "next_node": "modify_story_node",
-                                    "tools": ["update_story"]
+                                    "tools": ["update_story"],
                                 },
                                 {
                                     "condition": "Remove story",
                                     "next_node": "END",
                                     "action": "Use delete_story tool",
-                                    "tools": ["delete_story"]
-                                }
-                            ]
+                                    "tools": ["delete_story"],
+                                },
+                            ],
                         },
                         {
                             "id": "create_story_node",
@@ -533,15 +570,15 @@ class GetAgileDocumentationTool(AgileTool):
                                     "condition": "Yes, I have title, description, and priority",
                                     "next_node": "END",
                                     "action": "Use create_story with all parameters",
-                                    "tools": ["create_story"]
+                                    "tools": ["create_story"],
                                 },
                                 {
                                     "condition": "Only have basic information",
                                     "next_node": "END",
                                     "action": "Use create_story with minimal parameters, update later",
-                                    "tools": ["create_story", "update_story"]
-                                }
-                            ]
+                                    "tools": ["create_story", "update_story"],
+                                },
+                            ],
                         },
                         {
                             "id": "find_stories_node",
@@ -551,36 +588,36 @@ class GetAgileDocumentationTool(AgileTool):
                                     "condition": "Yes, I have the story ID",
                                     "next_node": "END",
                                     "action": "Use get_story with story_id",
-                                    "tools": ["get_story"]
+                                    "tools": ["get_story"],
                                 },
                                 {
                                     "condition": "No, I need to search or filter",
                                     "next_node": "END",
                                     "action": "Use list_stories with appropriate filters",
-                                    "tools": ["list_stories"]
-                                }
-                            ]
-                        }
-                    ]
+                                    "tools": ["list_stories"],
+                                },
+                            ],
+                        },
+                    ],
                 }
-            ]
+            ],
         }
-    
+
     def _create_summary_documentation(self, documentation: Dict[str, Any]) -> Dict[str, Any]:
         """Create a summarized version of the documentation."""
         summary = {
             "metadata": documentation["metadata"],
         }
-        
+
         # Add summarized sections
         if "agile_principles" in documentation:
             summary["agile_principles"] = {
                 "manifesto": {
                     "values_count": len(documentation["agile_principles"]["manifesto"]["values"]),
-                    "principles_count": len(documentation["agile_principles"]["manifesto"]["principles"])
+                    "principles_count": len(documentation["agile_principles"]["manifesto"]["principles"]),
                 }
             }
-        
+
         if "methodologies" in documentation:
             summary["methodologies"] = {}
             for method_name, method_data in documentation["methodologies"].items():
@@ -588,23 +625,19 @@ class GetAgileDocumentationTool(AgileTool):
                     "description": method_data.get("description", ""),
                     "roles_count": len(method_data.get("roles", [])),
                     "events_count": len(method_data.get("events", [])),
-                    "artifacts_count": len(method_data.get("artifacts", []))
+                    "artifacts_count": len(method_data.get("artifacts", [])),
                 }
-        
+
         if "workflow_patterns" in documentation:
             summary["workflow_patterns"] = [
-                {
-                    "name": pattern["name"],
-                    "description": pattern["description"],
-                    "steps_count": len(pattern["steps"])
-                }
+                {"name": pattern["name"], "description": pattern["description"], "steps_count": len(pattern["steps"])}
                 for pattern in documentation["workflow_patterns"]
             ]
-        
+
         if "tools" in documentation:
             summary["tools"] = {
                 "categories_count": len(documentation["tools"]["categories"]),
-                "total_tools": sum(len(cat["tools"]) for cat in documentation["tools"]["categories"])
+                "total_tools": sum(len(cat["tools"]) for cat in documentation["tools"]["categories"]),
             }
-        
-        return summary 
+
+        return summary

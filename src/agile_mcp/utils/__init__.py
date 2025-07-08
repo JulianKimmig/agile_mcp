@@ -14,8 +14,8 @@ from .id_generator import (
 
 __all__ = [
     "generate_id",
-    "generate_story_id", 
+    "generate_story_id",
     "generate_task_id",
     "generate_sprint_id",
     "generate_epic_id",
-] 
+]
