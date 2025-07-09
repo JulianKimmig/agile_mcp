@@ -11,6 +11,12 @@
 - Resolve TOML parse errors and mypy import issues
 - Resolve critical TOML parse errors and type annotation issues
 
+## v0.3.0 (2025-07-09)
+
+### Feat
+
+- add project overview tool and update available tools list
+
 ## v0.2.2 (2025-07-08)
 
 ### Refactor
