@@ -64,20 +64,20 @@ class TestCreateStoryTool:
     def test_create_story_with_minimal_params(self) -> None:
         """Test creating a story with only required parameters."""
         result = parse_tool_result(
-            self.tool.apply_ex(title="As a user, I want to login", description="User authentication functionality")
+            self.tool.apply_ex(name="As a user, I want to login", description="User authentication functionality")
         )
         assert isinstance(result, MockToolResult)
         assert result.success is True
         assert "created successfully" in result.message.lower()
         assert result.data is not None
         assert "id" in result.data
-        assert result.data["title"] == "As a user, I want to login"
+        assert result.data["name"] == "As a user, I want to login"
 
     def test_create_story_with_all_params(self) -> None:
         """Test creating a story with all parameters."""
         result = parse_tool_result(
             self.tool.apply_ex(
-                title="As a user, I want to logout",
+                name="As a user, I want to logout",
                 description="User logout functionality",
                 priority="high",
                 points=5,
@@ -93,13 +93,13 @@ class TestCreateStoryTool:
 
     def test_create_story_validates_required_fields(self) -> None:
         """Test that required fields are validated."""
-        # Missing title
+        # Missing name
         result = parse_tool_result(self.tool.apply_ex(description="Test description"))
         assert result.success is False
-        assert "title" in result.message.lower()
+        assert "name" in result.message.lower()
 
         # Missing description
-        result = parse_tool_result(self.tool.apply_ex(title="Test title"))
+        result = parse_tool_result(self.tool.apply_ex(name="Test name"))
         assert result.success is False
         assert "description" in result.message.lower()
 
@@ -107,7 +107,7 @@ class TestCreateStoryTool:
         """Test that story points are validated to be Fibonacci numbers."""
         result = parse_tool_result(
             self.tool.apply_ex(
-                title="Test story",
+                name="Test story",
                 description="Test description",
                 points=4,  # Invalid Fibonacci number
             )
@@ -118,7 +118,7 @@ class TestCreateStoryTool:
     def test_create_story_validates_priority(self) -> None:
         """Test that priority values are validated."""
         result = parse_tool_result(
-            self.tool.apply_ex(title="Test story", description="Test description", priority="invalid")
+            self.tool.apply_ex(name="Test story", description="Test description", priority="invalid")
         )
         assert result.success is False
         assert "priority" in result.message.lower()
@@ -126,9 +126,9 @@ class TestCreateStoryTool:
     def test_create_story_parses_tags(self) -> None:
         """Test that tags string is properly parsed."""
         result = parse_tool_result(
-            self.tool.apply_ex(title="Test story", description="Test description", tags="tag1, tag2,tag3 , tag4")
+            self.tool.apply_ex(name="Test story", description="Test description", tags="tag1, tag2,tag3 , tag4")
         )
-        assert result.success is True
+        assert result.success is True, f"Failed to create story: {result.message}"
         assert result.data["tags"] == ["tag1", "tag2", "tag3", "tag4"]
 
 
@@ -151,7 +151,7 @@ class TestGetStoryTool:
 
         # Create test story
         self.test_story = self.mock_agent.story_service.create_story(
-            title="Test Story", description="Test Description", priority=Priority.HIGH
+            name="Test Story", description="Test Description", priority=Priority.HIGH
         )
 
         # Create tool instance
@@ -172,7 +172,7 @@ class TestGetStoryTool:
         assert result.success is True
         assert result.data is not None
         assert result.data["id"] == self.test_story.id
-        assert result.data["title"] == "Test Story"
+        assert result.data["name"] == "Test Story"
         assert result.data["priority"] == "high"
 
     def test_get_nonexistent_story(self) -> None:
@@ -208,7 +208,7 @@ class TestUpdateStoryTool:
 
         # Create test story
         self.test_story = self.mock_agent.story_service.create_story(
-            title="Original Title", description="Original Description"
+            name="Original name", description="Original Description"
         )
 
         # Create tool instance
@@ -222,11 +222,11 @@ class TestUpdateStoryTool:
         """Test that the tool name is correct."""
         assert self.tool.get_name() == "update_story"
 
-    def test_update_story_title(self) -> None:
-        """Test updating a story title."""
-        result = parse_tool_result(self.tool.apply_ex(story_id=self.test_story.id, title="Updated Title"))
+    def test_update_story_name(self) -> None:
+        """Test updating a story name."""
+        result = parse_tool_result(self.tool.apply_ex(story_id=self.test_story.id, name="Updated name"))
         assert result.success is True
-        assert result.data["title"] == "Updated Title"
+        assert result.data["name"] == "Updated name"
         assert result.data["description"] == "Original Description"  # Unchanged
 
     def test_update_story_multiple_fields(self) -> None:
@@ -234,7 +234,7 @@ class TestUpdateStoryTool:
         result = parse_tool_result(
             self.tool.apply_ex(
                 story_id=self.test_story.id,
-                title="New Title",
+                name="New name",
                 description="New Description",
                 priority="high",
                 status="in_progress",
@@ -242,7 +242,7 @@ class TestUpdateStoryTool:
             )
         )
         assert result.success is True
-        assert result.data["title"] == "New Title"
+        assert result.data["name"] == "New name"
         assert result.data["description"] == "New Description"
         assert result.data["priority"] == "high"
         assert result.data["status"] == "in_progress"
@@ -250,13 +250,13 @@ class TestUpdateStoryTool:
 
     def test_update_nonexistent_story(self) -> None:
         """Test updating a non-existent story."""
-        result = parse_tool_result(self.tool.apply_ex(story_id="STORY-NONEXISTENT", title="Updated Title"))
+        result = parse_tool_result(self.tool.apply_ex(story_id="STORY-NONEXISTENT", name="Updated name"))
         assert result.success is False
         assert "not found" in result.message.lower()
 
     def test_update_story_validates_story_id_required(self) -> None:
         """Test that story_id is required."""
-        result = parse_tool_result(self.tool.apply_ex(title="Updated Title"))
+        result = parse_tool_result(self.tool.apply_ex(name="Updated name"))
         assert result.success is False
         assert "story_id" in result.message.lower()
 
@@ -280,10 +280,10 @@ class TestListStoriesTool:
 
         # Create test stories
         self.story1 = self.mock_agent.story_service.create_story(
-            title="Story 1", description="Description 1", priority=Priority.HIGH
+            name="Story 1", description="Description 1", priority=Priority.HIGH
         )
         self.story2 = self.mock_agent.story_service.create_story(
-            title="Story 2", description="Description 2", priority=Priority.LOW
+            name="Story 2", description="Description 2", priority=Priority.LOW
         )
         self.mock_agent.story_service.update_story(self.story2.id, status=StoryStatus.IN_PROGRESS)
 
@@ -345,7 +345,7 @@ class TestListStoriesTool:
         # Verify structured story data
         story_data = data.data["stories"][0]
         assert "id" in story_data
-        assert "title" in story_data
+        assert "name" in story_data
         assert "description" in story_data
         assert "status" in story_data
         assert "priority" in story_data
@@ -402,7 +402,7 @@ class TestDeleteStoryTool:
 
         # Create test story
         self.test_story = self.mock_agent.story_service.create_story(
-            title="Story to Delete", description="This story will be deleted"
+            name="Story to Delete", description="This story will be deleted"
         )
 
         # Create tool instance

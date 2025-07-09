@@ -23,7 +23,7 @@ class EpicService:
 
     def create_epic(
         self,
-        title: str,
+        name: str,
         description: str,
         status: EpicStatus = EpicStatus.PLANNING,
         story_ids: list[str] | None = None,
@@ -32,7 +32,7 @@ class EpicService:
         """Create a new epic.
 
         Args:
-            title: Epic title
+            name: Epic name
             description: Epic description
             status: Epic status (default: PLANNING)
             story_ids: List of story IDs assigned to this epic
@@ -46,7 +46,12 @@ class EpicService:
 
         # Create epic instance
         epic = Epic(
-            id=epic_id, title=title, description=description, status=status, story_ids=story_ids or [], tags=tags or []
+            id=epic_id,
+            name=name,
+            description=description,
+            status=status,
+            story_ids=story_ids or [],
+            tags=tags or [],
         )
 
         # Persist to file using storage layer
@@ -72,7 +77,7 @@ class EpicService:
     def update_epic(
         self,
         epic_id: str,
-        title: str | None = None,
+        name: str | None = None,
         description: str | None = None,
         status: EpicStatus | None = None,
         story_ids: list[str] | None = None,
@@ -82,7 +87,7 @@ class EpicService:
 
         Args:
             epic_id: ID of the epic to update
-            title: New title (optional)
+            name: New name (optional)
             description: New description (optional)
             status: New status (optional)
             story_ids: New story IDs (optional)
@@ -97,8 +102,8 @@ class EpicService:
 
         # Prepare update data
         update_data: dict[str, Any] = {}
-        if title:
-            update_data["title"] = title
+        if name:
+            update_data["name"] = name
         if description:
             update_data["description"] = description
         if status:
@@ -228,7 +233,7 @@ class EpicService:
 
         progress = {
             "epic_id": epic_id,
-            "title": epic.title,
+            "name": epic.name,
             "status": epic.status.value,
             "story_count": len(epic.story_ids),
             "description": epic.description,

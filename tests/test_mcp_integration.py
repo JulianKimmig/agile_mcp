@@ -61,8 +61,8 @@ class TestMCPServerIntegration:
         tools = list(self.server._iter_tools())
 
         assert (
-            len(tools) == 29
-        )  # We have 2 project tools + 1 documentation tool + 5 story tools + 5 task tools + 7 epic tools + 7 sprint tools + 1 burndown chart tool
+            len(tools) == 34
+        )  # We have 2 project tools + 1 documentation tool + 5 story tools + 5 task tools + 7 epic tools + 7 sprint tools + 1 burndown chart tool + 5 dependency tools
         tool_names = [tool.get_name() for tool in tools]
 
         # Check for project tools
@@ -136,7 +136,7 @@ class TestMCPServerIntegration:
         self.server._set_mcp_tools(mock_mcp)
 
         # Check that tools were registered
-        assert len(mock_mcp._tool_manager._tools) == 29
+        assert len(mock_mcp._tool_manager._tools) == 34
         tool_names = list(mock_mcp._tool_manager._tools.keys())
 
         # Check for project tools
@@ -206,7 +206,7 @@ class TestMCPServerIntegration:
             assert self.server.sprint_service is not None
 
             # Check that tools were set
-            assert len(mock_mcp._tool_manager._tools) == 29
+            assert len(mock_mcp._tool_manager._tools) == 34
 
     def test_tool_error_handling(self) -> None:
         """Test that tools handle errors properly."""
@@ -225,7 +225,7 @@ class TestMCPServerIntegration:
         create_tool = next(tool for tool in tools if tool.get_name() == "create_story")
 
         # Test with valid parameters
-        result = create_tool.apply_ex(title="Test Story", description="This is a test story", priority="medium")
+        result = create_tool.apply_ex(name="Test Story", description="This is a test story", priority="medium")
 
         assert result.success
         assert "created successfully" in result.message or "Test Story" in result.message
@@ -260,7 +260,7 @@ class TestMCPServerIntegration:
 
         # Create a story using the service directly
         story = self.server.story_service.create_story(
-            title="Integration Test Story", description="This story tests the integration"
+            name="Integration Test Story", description="This story tests the integration"
         )
 
         # Now try to retrieve it using the tool

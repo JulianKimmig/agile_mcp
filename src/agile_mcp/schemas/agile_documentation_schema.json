@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Agile Methodology Documentation Schema",
+    "name": "Agile Methodology Documentation Schema",
     "description": "Schema for machine-readable agile methodology documentation including principles, workflows, and tool specifications",
     "type": "object",
     "properties": {
@@ -67,9 +67,9 @@
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "title": {
+                                    "name": {
                                         "type": "string",
-                                        "description": "Principle title"
+                                        "description": "Principle name"
                                     },
                                     "description": {
                                         "type": "string",
@@ -81,7 +81,7 @@
                                     }
                                 },
                                 "required": [
-                                    "title",
+                                    "name",
                                     "description",
                                     "practical_application"
                                 ]

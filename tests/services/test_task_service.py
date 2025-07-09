@@ -34,9 +34,9 @@ class TestTaskService:
 
     def test_create_task_minimal(self, task_service):
         """Test creating a task with minimal information."""
-        task = task_service.create_task(title="Fix login bug", description="The login form is not validating properly")
+        task = task_service.create_task(name="Fix login bug", description="The login form is not validating properly")
 
-        assert task.title == "Fix login bug"
+        assert task.name == "Fix login bug"
         assert task.description == "The login form is not validating properly"
         assert task.status == TaskStatus.TODO
         assert task.assignee is None
@@ -49,7 +49,7 @@ class TestTaskService:
     def test_create_task_complete(self, task_service):
         """Test creating a task with all fields."""
         task = task_service.create_task(
-            title="Implement user registration",
+            name="Implement user registration",
             description="Create registration form with validation",
             status=TaskStatus.IN_PROGRESS,
             assignee="john.doe",
@@ -58,7 +58,7 @@ class TestTaskService:
             tags=["frontend", "authentication"],
         )
 
-        assert task.title == "Implement user registration"
+        assert task.name == "Implement user registration"
         assert task.description == "Create registration form with validation"
         assert task.status == TaskStatus.IN_PROGRESS
         assert task.assignee == "john.doe"
@@ -69,19 +69,19 @@ class TestTaskService:
     def test_create_task_invalid_hours(self, task_service):
         """Test that creating a task with negative hours raises ValueError."""
         with pytest.raises(ValueError, match="Estimated hours must be non-negative"):
-            task_service.create_task(title="Test task", description="Test description", estimated_hours=-1.0)
+            task_service.create_task(name="Test task", description="Test description", estimated_hours=-1.0)
 
     def test_get_task_exists(self, task_service):
         """Test retrieving an existing task."""
         # Create a task
-        created_task = task_service.create_task(title="Test Task", description="Test Description")
+        created_task = task_service.create_task(name="Test Task", description="Test Description")
 
         # Retrieve it
         retrieved_task = task_service.get_task(created_task.id)
 
         assert retrieved_task is not None
         assert retrieved_task.id == created_task.id
-        assert retrieved_task.title == created_task.title
+        assert retrieved_task.name == created_task.name
         assert retrieved_task.description == created_task.description
 
     def test_get_task_not_exists(self, task_service):
@@ -92,28 +92,28 @@ class TestTaskService:
     def test_update_task_single_field(self, task_service):
         """Test updating a single field of a task."""
         # Create a task
-        task = task_service.create_task(title="Original Title", description="Original Description")
+        task = task_service.create_task(name="Original name", description="Original Description")
 
-        # Update only the title
-        updated_task = task_service.update_task(task.id, title="Updated Title")
+        # Update only the name
+        updated_task = task_service.update_task(task.id, name="Updated name")
 
         assert updated_task is not None
-        assert updated_task.title == "Updated Title"
+        assert updated_task.name == "Updated name"
         assert updated_task.description == "Original Description"  # Unchanged
         assert updated_task.id == task.id
 
     def test_update_task_multiple_fields(self, task_service):
         """Test updating multiple fields of a task."""
         # Create a task
-        task = task_service.create_task(title="Original Title", description="Original Description")
+        task = task_service.create_task(name="Original name", description="Original Description")
 
         # Update multiple fields
         updated_task = task_service.update_task(
-            task.id, title="Updated Title", status=TaskStatus.IN_PROGRESS, assignee="jane.doe", estimated_hours=2.5
+            task.id, name="Updated name", status=TaskStatus.IN_PROGRESS, assignee="jane.doe", estimated_hours=2.5
         )
 
         assert updated_task is not None
-        assert updated_task.title == "Updated Title"
+        assert updated_task.name == "Updated name"
         assert updated_task.status == TaskStatus.IN_PROGRESS
         assert updated_task.assignee == "jane.doe"
         assert updated_task.estimated_hours == 2.5
@@ -121,13 +121,13 @@ class TestTaskService:
 
     def test_update_task_not_exists(self, task_service):
         """Test updating a non-existent task."""
-        result = task_service.update_task("TASK-XXXX", title="New Title")
+        result = task_service.update_task("TASK-XXXX", name="New name")
         assert result is None
 
     def test_update_task_invalid_hours(self, task_service):
         """Test that updating with negative hours raises ValueError."""
         # Create a task
-        task = task_service.create_task(title="Test Task", description="Test Description")
+        task = task_service.create_task(name="Test Task", description="Test Description")
 
         # Try to update with negative hours
         with pytest.raises(ValueError, match="Estimated hours must be non-negative"):
@@ -136,7 +136,7 @@ class TestTaskService:
     def test_delete_task_exists(self, task_service):
         """Test deleting an existing task."""
         # Create a task
-        task = task_service.create_task(title="Test Task", description="Test Description")
+        task = task_service.create_task(name="Test Task", description="Test Description")
 
         # Delete it
         result = task_service.delete_task(task.id)
@@ -286,7 +286,7 @@ class TestTaskService:
     def test_assign_task(self, task_service):
         """Test assigning a task to someone."""
         # Create a task
-        task = task_service.create_task(title="Test Task", description="Test Description")
+        task = task_service.create_task(name="Test Task", description="Test Description")
         assert task.assignee is None
 
         # Assign it
@@ -302,7 +302,7 @@ class TestTaskService:
     def test_change_task_status(self, task_service):
         """Test changing task status."""
         # Create a task
-        task = task_service.create_task(title="Test Task", description="Test Description")
+        task = task_service.create_task(name="Test Task", description="Test Description")
         assert task.status == TaskStatus.TODO
 
         # Change status
@@ -319,7 +319,7 @@ class TestTaskService:
         """Test that tasks are properly persisted to filesystem."""
         # Create a task
         task = task_service.create_task(
-            title="Persistence Test",
+            name="Persistence Test",
             description="Test task persistence",
             status=TaskStatus.IN_PROGRESS,
             assignee="test.user",
@@ -339,7 +339,7 @@ class TestTaskService:
         retrieved_task = new_service.get_task(task.id)
 
         assert retrieved_task is not None
-        assert retrieved_task.title == "Persistence Test"
+        assert retrieved_task.name == "Persistence Test"
         assert retrieved_task.description == "Test task persistence"
         assert retrieved_task.status == TaskStatus.IN_PROGRESS
         assert retrieved_task.assignee == "test.user"

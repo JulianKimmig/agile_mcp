@@ -34,10 +34,10 @@ class TestStoryService:
     def test_create_story_with_minimal_data(self) -> None:
         """Test creating a story with minimal required data."""
         story = self.story_service.create_story(
-            title="As a user, I want to login", description="User authentication functionality"
+            name="As a user, I want to login", description="User authentication functionality"
         )
 
-        assert story.title == "As a user, I want to login"
+        assert story.name == "As a user, I want to login"
         assert story.description == "User authentication functionality"
         assert story.status == StoryStatus.TODO
         assert story.priority == Priority.MEDIUM
@@ -49,14 +49,14 @@ class TestStoryService:
     def test_create_story_with_all_data(self) -> None:
         """Test creating a story with all optional data."""
         story = self.story_service.create_story(
-            title="As a user, I want to logout",
+            name="As a user, I want to logout",
             description="User logout functionality",
             priority=Priority.HIGH,
             points=5,
             tags=["auth", "security"],
         )
 
-        assert story.title == "As a user, I want to logout"
+        assert story.name == "As a user, I want to logout"
         assert story.description == "User logout functionality"
         assert story.priority == Priority.HIGH
         assert story.points == 5
@@ -64,8 +64,8 @@ class TestStoryService:
 
     def test_create_story_auto_generates_id(self) -> None:
         """Test that story creation auto-generates unique IDs."""
-        story1 = self.story_service.create_story("Title 1", "Description 1")
-        story2 = self.story_service.create_story("Title 2", "Description 2")
+        story1 = self.story_service.create_story("name 1", "Description 1")
+        story2 = self.story_service.create_story("name 2", "Description 2")
 
         assert story1.id != story2.id
         assert story1.id.startswith("STORY-")
@@ -73,7 +73,7 @@ class TestStoryService:
 
     def test_create_story_persists_to_filesystem(self) -> None:
         """Test that created stories are persisted to the filesystem."""
-        story = self.story_service.create_story(title="Test persistence", description="Test description")
+        story = self.story_service.create_story(name="Test persistence", description="Test description")
 
         # Check that file exists in the correct status subfolder
         story_file = self.project_manager.get_stories_dir() / story.status.value / f"{story.id}.yml"
@@ -82,14 +82,14 @@ class TestStoryService:
         # Verify file content can be loaded
         loaded_story = self.story_service.get_story(story.id)
         assert loaded_story is not None
-        assert loaded_story.title == story.title
+        assert loaded_story.name == story.name
         assert loaded_story.description == story.description
 
     def test_get_story_returns_existing_story(self) -> None:
         """Test retrieving an existing story by ID."""
         # Create a story
         original_story = self.story_service.create_story(
-            title="Test story", description="Test description", priority=Priority.HIGH
+            name="Test story", description="Test description", priority=Priority.HIGH
         )
 
         # Retrieve it
@@ -97,7 +97,7 @@ class TestStoryService:
 
         assert retrieved_story is not None
         assert retrieved_story.id == original_story.id
-        assert retrieved_story.title == original_story.title
+        assert retrieved_story.name == original_story.name
         assert retrieved_story.description == original_story.description
         assert retrieved_story.priority == original_story.priority
 
@@ -109,16 +109,16 @@ class TestStoryService:
     def test_update_story_modifies_existing_story(self) -> None:
         """Test updating an existing story."""
         # Create a story
-        story = self.story_service.create_story(title="Original title", description="Original description")
+        story = self.story_service.create_story(name="Original name", description="Original description")
 
         # Update it
         updated_story = self.story_service.update_story(
-            story.id, title="Updated title", description="Updated description", priority=Priority.HIGH, points=8
+            story.id, name="Updated name", description="Updated description", priority=Priority.HIGH, points=8
         )
 
         assert updated_story is not None
         assert updated_story.id == story.id
-        assert updated_story.title == "Updated title"
+        assert updated_story.name == "Updated name"
         assert updated_story.description == "Updated description"
         assert updated_story.priority == Priority.HIGH
         assert updated_story.points == 8
@@ -129,17 +129,17 @@ class TestStoryService:
         story = self.story_service.create_story("Original", "Original")
 
         # Update it
-        self.story_service.update_story(story.id, title="Updated", description="Updated")
+        self.story_service.update_story(story.id, name="Updated", description="Updated")
 
         # Retrieve it again
         retrieved_story = self.story_service.get_story(story.id)
         assert retrieved_story is not None
-        assert retrieved_story.title == "Updated"
+        assert retrieved_story.name == "Updated"
         assert retrieved_story.description == "Updated"
 
     def test_update_nonexistent_story_returns_none(self) -> None:
         """Test that updating a non-existent story returns None."""
-        result = self.story_service.update_story("STORY-NONEXISTENT", title="Updated title")
+        result = self.story_service.update_story("STORY-NONEXISTENT", name="Updated name")
         assert result is None
 
     def test_delete_story_removes_story(self) -> None:

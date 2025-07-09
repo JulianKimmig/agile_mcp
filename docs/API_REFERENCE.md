@@ -33,7 +33,7 @@ Current project directory path or message if not set.
 Create a new user story in the agile project.
 
 **Parameters:**
-- `title` (string, required): Story title
+- `name` (string, required): Story name
 - `description` (string, required): Story description
 - `priority` (string, optional): Story priority (default: "medium"). Valid values: "low", "medium", "high", "critical"
 - `points` (integer, optional): Story points - must be Fibonacci number (1, 2, 3, 5, 8, 13, 21)
@@ -44,7 +44,7 @@ Success message with story details and generated ID.
 
 **Example:**
 ```
-title: "User Authentication"
+name: "User Authentication"
 description: "Implement secure user login and registration"
 priority: "high"
 points: 8
@@ -70,7 +70,7 @@ Update an existing user story.
 
 **Parameters:**
 - `story_id` (string, required): The ID of the story to update
-- `title` (string, optional): New story title
+- `name` (string, optional): New story name
 - `description` (string, optional): New story description
 - `priority` (string, optional): New priority ("low", "medium", "high", "critical")
 - `status` (string, optional): New status ("todo", "in_progress", "done", "blocked")
@@ -125,6 +125,7 @@ Create a new sprint.
 
 **Parameters:**
 - `name` (string, required): Sprint name
+- `description`: (string, required): Sprint description
 - `goal` (string, optional): Sprint goal or objective
 - `start_date` (string, optional): Start date in YYYY-MM-DD format
 - `end_date` (string, optional): End date in YYYY-MM-DD format
@@ -240,7 +241,7 @@ Success message with active sprint details and progress, or message if no active
 Create a new task.
 
 **Parameters:**
-- `title` (string, required): Task title
+- `name` (string, required): Task name
 - `description` (string, required): Task description
 - `story_id` (string, optional): ID of the parent story
 - `assignee` (string, optional): Person assigned to this task
@@ -254,7 +255,7 @@ Success message with task details.
 
 **Example:**
 ```
-title: "Implement User Login UI"
+name: "Implement User Login UI"
 description: "Develop the frontend UI for user login."
 story_id: "STORY-ABC123"
 assignee: "John Doe"
@@ -283,7 +284,7 @@ Update an existing task.
 
 **Parameters:**
 - `task_id` (string, required): The ID of the task to update
-- `title` (string, optional): New task title
+- `name` (string, optional): New task name
 - `description` (string, optional): New task description
 - `status` (string, optional): New status ("todo", "in_progress", "done", "blocked")
 - `priority` (string, optional): New priority ("low", "medium", "high", "critical")
@@ -343,7 +344,7 @@ task_id: "TASK-XYZ789"
 Create a new epic.
 
 **Parameters:**
-- `title` (string, required): Epic title
+- `name` (string, required): Epic name
 - `description` (string, required): Epic description
 - `status` (string, optional): Epic status (default: "planning"). Valid values: "planning", "in_progress", "completed", "on_hold"
 - `tags` (string, optional): Comma-separated tags
@@ -353,7 +354,7 @@ Success message with epic details.
 
 **Example:**
 ```
-title: "User Management System"
+name: "User Management System"
 description: "Develop a complete system for user registration, login, and profile management."
 status: "in_progress"
 tags: "backend, security"
@@ -378,7 +379,7 @@ Update an existing epic.
 
 **Parameters:**
 - `epic_id` (string, required): The ID of the epic to update
-- `title` (string, optional): New epic title
+- `name` (string, optional): New epic name
 - `description` (string, optional): New epic description
 - `status` (string, optional): New status ("planning", "in_progress", "completed", "on_hold")
 - `tags` (string, optional): New comma-separated tags
@@ -530,7 +531,7 @@ All tools return descriptive error messages when:
 
 ### Basic Workflow
 1. Set up project: `set_project` with project directory
-2. Create stories: `create_story` with title and description
+2. Create stories: `create_story` with name and description
 3. Create sprint: `create_sprint` with name and goal
 4. Add stories to sprint: `manage_sprint_stories` to add stories
 5. Start sprint: `update_sprint` to set status to "active"

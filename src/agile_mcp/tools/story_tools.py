@@ -15,7 +15,7 @@ class CreateStoryTool(AgileTool):
 
     def apply(
         self,
-        title: str,
+        name: str,
         description: str,
         priority: str = "medium",
         points: int | None = None,
@@ -24,7 +24,7 @@ class CreateStoryTool(AgileTool):
         """Create a new user story.
 
         Args:
-            title: Story title (required)
+            name: Story name (required)
             description: Story description (required)
             priority: Story priority. Options: critical, high, medium, low
             points: Story points - must be Fibonacci number (optional)
@@ -57,7 +57,7 @@ class CreateStoryTool(AgileTool):
         # Create the story
         try:
             story_data = {
-                "title": title,
+                "name": name,
                 "description": description,
                 "priority": priority_enum,
                 "points": points,
@@ -74,7 +74,7 @@ class CreateStoryTool(AgileTool):
         # Format result with story data
         story_data = story.model_dump(mode="json")
 
-        return self.format_result(f"User story '{story.title}' created successfully with ID {story.id}", story_data)
+        return self.format_result(f"User story '{story.name}' created successfully with ID {story.id}", story_data)
 
 
 class GetStoryTool(AgileTool):
@@ -111,7 +111,7 @@ class GetStoryTool(AgileTool):
         # Format result with story data
         story_data = story.model_dump(mode="json")
 
-        return self.format_result(f"Retrieved story: {story.title} (ID: {story.id})", story_data)
+        return self.format_result(f"Retrieved story: {story.name} (ID: {story.id})", story_data)
 
 
 class UpdateStoryTool(AgileTool):
@@ -124,7 +124,7 @@ class UpdateStoryTool(AgileTool):
     def apply(
         self,
         story_id: str,
-        title: str | None = None,
+        name: str | None = None,
         description: str | None = None,
         priority: str | None = None,
         status: str | None = None,
@@ -135,7 +135,7 @@ class UpdateStoryTool(AgileTool):
 
         Args:
             story_id: The ID of the story to update (required)
-            title: New story title (optional)
+            name: New story name (optional)
             description: New story description (optional)
             priority: New priority. Options: critical, high, medium, low
             status: New status. Options: todo, in_progress, in_review, done, blocked
@@ -172,8 +172,8 @@ class UpdateStoryTool(AgileTool):
 
         # Prepare update parameters
         update_data = {}
-        if title:
-            update_data["title"] = title
+        if name:
+            update_data["name"] = name
         if description:
             update_data["description"] = description
         if priority:
@@ -197,7 +197,7 @@ class UpdateStoryTool(AgileTool):
         # Format result with story data
         story_data = updated_story.model_dump(mode="json")
 
-        return self.format_result(f"Story '{updated_story.title}' updated successfully", story_data)
+        return self.format_result(f"Story '{updated_story.name}' updated successfully", story_data)
 
 
 class ListStoriesTool(AgileTool):
@@ -313,7 +313,7 @@ class ListStoriesTool(AgileTool):
             status_str = story.get("status", "unknown")
             points_str = f" ({story.get('points')} pts)" if story.get("points") else ""
             sprint_str = f" [Sprint: {story.get('sprint_id')}]" if story.get("sprint_id") else ""
-            story_summary.append(f"- {story.get('id')}: {story.get('title')} ({status_str}){points_str}{sprint_str}")
+            story_summary.append(f"- {story.get('id')}: {story.get('name')} ({status_str}){points_str}{sprint_str}")
 
         return f"Found {count} stories{filter_desc}:\n" + "\n".join(story_summary)
 
@@ -364,6 +364,6 @@ class DeleteStoryTool(AgileTool):
             raise ToolError(f"Failed to delete story with ID {story_id}")
 
         return self.format_result(
-            f"Story '{story.title}' with ID {story_id} deleted successfully",
-            {"deleted_story_id": story_id, "deleted_story_title": story.title},
+            f"Story '{story.name}' with ID {story_id} deleted successfully",
+            {"deleted_story_id": story_id, "deleted_story_name": story.name},
         )

@@ -135,7 +135,7 @@ class TestAgileTool:
                 return "test"
 
         tool = TestTool(self.mock_agent)
-        test_data = {"id": "STORY-001", "title": "Test Story"}
+        test_data = {"id": "STORY-001", "name": "Test Story"}
         result = tool.format_result("Story created", data=test_data)
 
         assert isinstance(result, ToolResult)
@@ -267,7 +267,7 @@ class TestToolError:
 
     def test_tool_error_with_details(self) -> None:
         """Test creating a ToolError with additional details."""
-        details = {"field": "title", "reason": "too short"}
+        details = {"field": "name", "reason": "too short"}
         error = ToolError("Validation failed", details=details)
 
         assert str(error) == "Validation failed"

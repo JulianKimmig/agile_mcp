@@ -194,7 +194,7 @@ class ProjectStatusService:
                 stories = self.story_service.list_stories()
                 if stories:
                     for story in stories:
-                        all_items.append(("Story", story.title, story.updated_at))
+                        all_items.append(("Story", story.name, story.updated_at))
             except Exception:
                 pass
 
@@ -203,7 +203,7 @@ class ProjectStatusService:
                 tasks = self.task_service.list_tasks()
                 if tasks:
                     for task in tasks:
-                        all_items.append(("Task", task.title, task.updated_at))
+                        all_items.append(("Task", task.name, task.updated_at))
             except Exception:
                 pass
 
@@ -212,7 +212,7 @@ class ProjectStatusService:
                 epics = self.epic_service.list_epics()
                 if epics:
                     for epic in epics:
-                        all_items.append(("Epic", epic.title, epic.updated_at))
+                        all_items.append(("Epic", epic.name, epic.updated_at))
             except Exception:
                 pass
 
@@ -230,8 +230,8 @@ class ProjectStatusService:
 
             return {
                 "items": [
-                    {"type": item_type, "title": title, "updated_at": updated_at}
-                    for item_type, title, updated_at in recent_items
+                    {"type": item_type, "name": name, "updated_at": updated_at}
+                    for item_type, name, updated_at in recent_items
                 ],
                 "available": True,
             }

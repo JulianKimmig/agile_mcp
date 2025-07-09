@@ -53,17 +53,17 @@ class TestStoryCascadingCleanup:
 
         # Create 3 test stories
         story1 = story_service.create_story(
-            title="Story 1", description="First test story", priority=Priority.HIGH, points=5
+            name="Story 1", description="First test story", priority=Priority.HIGH, points=5
         )
         stories.append(story1)
 
         story2 = story_service.create_story(
-            title="Story 2", description="Second test story", priority=Priority.MEDIUM, points=3
+            name="Story 2", description="Second test story", priority=Priority.MEDIUM, points=3
         )
         stories.append(story2)
 
         story3 = story_service.create_story(
-            title="Story 3", description="Third test story", priority=Priority.LOW, points=8
+            name="Story 3", description="Third test story", priority=Priority.LOW, points=8
         )
         stories.append(story3)
 
@@ -73,7 +73,10 @@ class TestStoryCascadingCleanup:
     def sample_sprint_with_stories(self, sprint_service, sample_stories):
         """Create a sprint containing test stories."""
         sprint = sprint_service.create_sprint(
-            name="Test Sprint", goal="Test sprint with stories", status=SprintStatus.ACTIVE
+            name="Test Sprint",
+            goal="Test sprint with stories",
+            status=SprintStatus.ACTIVE,
+            description="Test Sprint description",
         )
 
         # Add all sample stories to the sprint
@@ -86,7 +89,7 @@ class TestStoryCascadingCleanup:
     def sample_epic_with_stories(self, epic_service, sample_stories):
         """Create an epic containing test stories."""
         epic = epic_service.create_epic(
-            title="Test Epic", description="Test epic with stories", status=EpicStatus.PLANNING
+            name="Test Epic", description="Test epic with stories", status=EpicStatus.PLANNING
         )
 
         # Add all sample stories to the epic
@@ -198,9 +201,15 @@ class TestStoryCascadingCleanup:
     def test_delete_story_from_multiple_sprints(self, story_service, sprint_service, sample_stories):
         """Test that deleting a story removes it from multiple sprints."""
         # Create multiple sprints
-        sprint1 = sprint_service.create_sprint(name="Sprint 1", status=SprintStatus.ACTIVE)
-        sprint2 = sprint_service.create_sprint(name="Sprint 2", status=SprintStatus.PLANNING)
-        sprint3 = sprint_service.create_sprint(name="Sprint 3", status=SprintStatus.COMPLETED)
+        sprint1 = sprint_service.create_sprint(
+            name="Sprint 1", status=SprintStatus.ACTIVE, description="Sprint 1 description"
+        )
+        sprint2 = sprint_service.create_sprint(
+            name="Sprint 2", status=SprintStatus.PLANNING, description="Sprint 2 description"
+        )
+        sprint3 = sprint_service.create_sprint(
+            name="Sprint 3", status=SprintStatus.COMPLETED, description="Sprint 3 description"
+        )
 
         story_to_delete = sample_stories[0]
 
@@ -239,9 +248,9 @@ class TestStoryCascadingCleanup:
     def test_delete_story_from_multiple_epics(self, story_service, epic_service, sample_stories):
         """Test that deleting a story removes it from multiple epics."""
         # Create multiple epics
-        epic1 = epic_service.create_epic(title="Epic 1", description="First epic")
-        epic2 = epic_service.create_epic(title="Epic 2", description="Second epic")
-        epic3 = epic_service.create_epic(title="Epic 3", description="Third epic")
+        epic1 = epic_service.create_epic(name="Epic 1", description="First epic")
+        epic2 = epic_service.create_epic(name="Epic 2", description="Second epic")
+        epic3 = epic_service.create_epic(name="Epic 3", description="Third epic")
 
         story_to_delete = sample_stories[1]
 
@@ -285,8 +294,10 @@ class TestStoryCascadingCleanup:
     def test_delete_story_preserves_other_artifacts(self, story_service, sprint_service, epic_service, sample_stories):
         """Test that deleting a story doesn't affect unrelated artifacts."""
         # Create additional artifacts not containing the story to delete
-        unrelated_sprint = sprint_service.create_sprint(name="Unrelated Sprint")
-        unrelated_epic = epic_service.create_epic(title="Unrelated Epic", description="No stories")
+        unrelated_sprint = sprint_service.create_sprint(
+            name="Unrelated Sprint", description="Unrelated Sprint description"
+        )
+        unrelated_epic = epic_service.create_epic(name="Unrelated Epic", description="No stories")
 
         story_to_delete = sample_stories[0]
 
@@ -316,7 +327,7 @@ class TestStoryCascadingCleanup:
     def test_cleanup_methods_robustness(self, story_service, project_manager):
         """Test that cleanup methods handle edge cases gracefully."""
         # Test with empty artifacts
-        story = story_service.create_story(title="Test Story", description="Test")
+        story = story_service.create_story(name="Test Story", description="Test")
 
         # Delete with no sprints or epics existing
         result = story_service.delete_story(story.id)

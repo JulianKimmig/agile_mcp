@@ -3,6 +3,8 @@
 from enum import Enum
 from typing import Optional
 
+from pydantic import Field
+
 from .base import AgileArtifact
 
 
@@ -28,9 +30,11 @@ class Priority(str, Enum):
 class UserStory(AgileArtifact):
     """User story model."""
 
-    title: str
-    description: str
     status: StoryStatus = StoryStatus.TODO
-    priority: Priority = Priority.MEDIUM
-    points: Optional[int] = None
-    sprint_id: Optional[str] = None
+    priority: Priority = Field(default="medium", description="Story priority")
+    points: Optional[int] = Field(default=None, description="Story points (Fibonacci)")
+    sprint_id: Optional[str] = Field(default=None, description="ID of the sprint this story is in")
+
+    def is_completed(self) -> bool:
+        """Check if story is completed."""
+        return self.status == StoryStatus.DONE

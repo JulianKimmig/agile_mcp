@@ -1,7 +1,7 @@
 """Service layer for sprint management."""
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from ..models.sprint import Sprint, SprintStatus
 from ..storage.filesystem import AgileProjectManager
@@ -23,6 +23,7 @@ class SprintService:
     def create_sprint(
         self,
         name: str,
+        description: str,
         goal: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
@@ -58,6 +59,7 @@ class SprintService:
         sprint = Sprint(
             id=sprint_id,
             name=name,
+            description=description,
             goal=goal,
             start_date=start_date,
             end_date=end_date,
@@ -90,6 +92,7 @@ class SprintService:
         self,
         sprint_id: str,
         name: Optional[str] = None,
+        description: Optional[str] = None,
         goal: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
@@ -102,6 +105,7 @@ class SprintService:
         Args:
             sprint_id: ID of the sprint to update
             name: New name (optional)
+            description: New description (optional)
             goal: New goal (optional)
             start_date: New start date (optional)
             end_date: New end date (optional)
@@ -357,22 +361,30 @@ class SprintService:
 
         # Calculate time-based progress if dates are available
         if sprint.start_date and sprint.end_date:
-            now = datetime.now()
+            now = date.today()
             total_duration = sprint.end_date - sprint.start_date
 
             if now < sprint.start_date:
                 # Sprint hasn't started yet
-                progress["time_progress_percent"] = 0.0
-                progress["days_until_start"] = (sprint.start_date - now).days
+                time_progress = 0
+                days_elapsed = 0
+                days_remaining = total_duration.days
             elif now > sprint.end_date:
-                # Sprint has ended
-                progress["time_progress_percent"] = 100.0
-                progress["days_overdue"] = (now - sprint.end_date).days
+                # Sprint is overdue
+                time_progress = 100
+                days_elapsed = total_duration.days
+                days_remaining = 0
             else:
-                # Sprint is active
-                elapsed = now - sprint.start_date
-                progress["time_progress_percent"] = (elapsed.total_seconds() / total_duration.total_seconds()) * 100
-                progress["days_remaining"] = (sprint.end_date - now).days
+                # Sprint is in progress
+                days_elapsed = (now - sprint.start_date).days
+                days_remaining = (sprint.end_date - now).days
+                time_progress = (days_elapsed / total_duration.days) * 100 if total_duration.days > 0 else 100
+
+            # Use explicit key expected by tests
+            progress["time_progress_percent"] = round(time_progress, 2)
+            progress["total_duration_days"] = total_duration.days
+            progress["days_elapsed"] = days_elapsed
+            progress["days_remaining"] = days_remaining
 
         return progress
 

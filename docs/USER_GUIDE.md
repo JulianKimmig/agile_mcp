@@ -23,7 +23,7 @@ User stories are the foundation of agile project management. Create your first s
 ```
 Tool: create_story
 Parameters:
-  title: "User Authentication System"
+  name: "User Authentication System"
   description: "Implement secure user login and registration functionality"
   priority: "high"
   tags: "authentication, security"
@@ -108,7 +108,7 @@ Tasks are smaller, actionable items that make up a user story. They help break d
 ```
 Tool: create_task
 Parameters:
-  title: "Design UI Mockups"
+  name: "Design UI Mockups"
   description: "Create wireframes and mockups for the user authentication flow."
   story_id: "STORY-XYZ789" # Link to a parent story
   assignee: "Jane Doe"
@@ -160,7 +160,7 @@ Epics are large bodies of work that can be broken down into several stories. The
 ```
 Tool: create_epic
 Parameters:
-  title: "User Profile Management"
+  name: "User Profile Management"
   description: "Implement all features related to user profiles, including creation, editing, and viewing."
   status: "in_progress"
 ```
@@ -287,7 +287,7 @@ This will set up the hooks to run automatically on `git commit`. If any checks f
 
 
 ### 1. Story Writing
-- Use clear, descriptive titles
+- Use clear, descriptive names
 - Write detailed descriptions explaining the "what" and "why"
 - Add relevant tags for easy filtering
 - Estimate with story points for planning

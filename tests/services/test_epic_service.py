@@ -28,9 +28,9 @@ class TestEpicService:
         """Test successful creation of an epic."""
         mock_project_manager.save_epic.return_value = None
 
-        epic = epic_service.create_epic(title="Test Epic", description="Test Description")
+        epic = epic_service.create_epic(name="Test Epic", description="Test Description")
 
-        assert epic.title == "Test Epic"
+        assert epic.name == "Test Epic"
         assert epic.description == "Test Description"
         assert epic.status == EpicStatus.PLANNING
         assert epic.story_ids == []
@@ -59,26 +59,26 @@ class TestEpicService:
     def test_update_epic_success(self, epic_service, mock_project_manager):
         """Test successful update of an epic."""
         mock_epic = MagicMock(
-            spec=Epic, id="EPIC-1", title="Old Title", description="Old Desc", status=EpicStatus.PLANNING, story_ids=[]
+            spec=Epic, id="EPIC-1", name="Old name", description="Old Desc", status=EpicStatus.PLANNING, story_ids=[]
         )
         mock_project_manager.get_epic.return_value = mock_epic
 
         # Create a new mock for the updated epic
         updated_mock = MagicMock(spec=Epic)
-        updated_mock.title = "New Title"
+        updated_mock.name = "New name"
         mock_epic.model_copy.return_value = updated_mock
         mock_project_manager.save_epic.return_value = None
 
-        updated_epic = epic_service.update_epic("EPIC-1", title="New Title")
+        updated_epic = epic_service.update_epic("EPIC-1", name="New name")
 
-        assert updated_epic.title == "New Title"
+        assert updated_epic.name == "New name"
         mock_project_manager.save_epic.assert_called_once()
 
     def test_update_epic_not_found(self, epic_service, mock_project_manager):
         """Test update of a non-existent epic."""
         mock_project_manager.get_epic.return_value = None
 
-        updated_epic = epic_service.update_epic("NON-EXISTENT", title="New Title")
+        updated_epic = epic_service.update_epic("NON-EXISTENT", name="New name")
 
         assert updated_epic is None
         mock_project_manager.save_epic.assert_not_called()
@@ -88,7 +88,7 @@ class TestEpicService:
         mock_epic = MagicMock(
             spec=Epic,
             id="EPIC-1",
-            title="Test Epic",
+            name="Test Epic",
             description="Desc",
             status=EpicStatus.PLANNING,
             story_ids=["STORY-1"],

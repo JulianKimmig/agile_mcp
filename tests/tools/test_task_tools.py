@@ -21,14 +21,14 @@ class TestTaskTools:
     def test_create_task_success(self, mock_agent):
         """Test successful creation of a task."""
         create_tool = CreateTaskTool(mock_agent)
-        mock_task = Task(id="TASK-1", title="Test Task", description="A test task.")
+        mock_task = Task(id="TASK-1", name="Test Task", description="A test task.")
         mock_agent.task_service.create_task.return_value = mock_task
 
-        result = create_tool.apply(title="Test Task", description="A test task.")
+        result = create_tool.apply(name="Test Task", description="A test task.")
 
         assert "Task 'Test Task' created successfully with ID TASK-1" in result.message
         mock_agent.task_service.create_task.assert_called_once_with(
-            title="Test Task",
+            name="Test Task",
             description="A test task.",
             priority=TaskPriority.MEDIUM,
             story_id=None,
@@ -42,11 +42,11 @@ class TestTaskTools:
     def test_create_task_with_optional_params(self, mock_agent):
         """Test task creation with all optional parameters."""
         create_tool = CreateTaskTool(mock_agent)
-        mock_task = Task(id="TASK-2", title="Another Task", description="Another test task.")
+        mock_task = Task(id="TASK-2", name="Another Task", description="Another test task.")
         mock_agent.task_service.create_task.return_value = mock_task
 
         result = create_tool.apply(
-            title="Another Task",
+            name="Another Task",
             description="Another test task.",
             priority="high",
             story_id="STORY-1",
@@ -55,7 +55,7 @@ class TestTaskTools:
 
         assert "Task 'Another Task' created successfully with ID TASK-2" in result.message
         mock_agent.task_service.create_task.assert_called_once_with(
-            title="Another Task",
+            name="Another Task",
             description="Another test task.",
             priority=TaskPriority.HIGH,
             story_id="STORY-1",
@@ -71,12 +71,12 @@ class TestTaskTools:
         create_tool = CreateTaskTool(mock_agent)
 
         with pytest.raises(ToolError, match="Invalid priority"):
-            create_tool.apply(title="Test", description="Test", priority="invalid")
+            create_tool.apply(name="Test", description="Test", priority="invalid")
 
     def test_get_task_success(self, mock_agent):
         """Test successfully retrieving a task."""
         get_tool = GetTaskTool(mock_agent)
-        mock_task = Task(id="TASK-1", title="Test Task", description="A test task.")
+        mock_task = Task(id="TASK-1", name="Test Task", description="A test task.")
         mock_agent.task_service.get_task.return_value = mock_task
 
         result = get_tool.apply(task_id="TASK-1")
@@ -95,13 +95,13 @@ class TestTaskTools:
     def test_update_task_success(self, mock_agent):
         """Test successfully updating a task."""
         update_tool = UpdateTaskTool(mock_agent)
-        mock_task = Task(id="TASK-1", title="Updated Task", description="A test task.")
+        mock_task = Task(id="TASK-1", name="Updated Task", description="A test task.")
         mock_agent.task_service.update_task.return_value = mock_task
 
-        result = update_tool.apply(task_id="TASK-1", title="Updated Task")
+        result = update_tool.apply(task_id="TASK-1", name="Updated Task")
 
         assert "Task 'Updated Task' updated successfully" in result.message
-        mock_agent.task_service.update_task.assert_called_once_with("TASK-1", title="Updated Task")
+        mock_agent.task_service.update_task.assert_called_once_with("TASK-1", name="Updated Task")
 
     def test_update_task_not_found(self, mock_agent):
         """Test updating a task that does not exist."""
@@ -109,12 +109,12 @@ class TestTaskTools:
         mock_agent.task_service.update_task.return_value = None
 
         with pytest.raises(ToolError, match="Task with ID NOT-FOUND not found"):
-            update_tool.apply(task_id="NOT-FOUND", title="Does not exist")
+            update_tool.apply(task_id="NOT-FOUND", name="Does not exist")
 
     def test_delete_task_success(self, mock_agent):
         """Test successfully deleting a task."""
         delete_tool = DeleteTaskTool(mock_agent)
-        mock_agent.task_service.get_task.return_value = Task(id="TASK-1", title="Test Task", description="A test task.")
+        mock_agent.task_service.get_task.return_value = Task(id="TASK-1", name="Test Task", description="A test task.")
         mock_agent.task_service.delete_task.return_value = True
 
         result = delete_tool.apply(task_id="TASK-1")
@@ -136,7 +136,7 @@ class TestTaskTools:
         mock_agent.task_service.list_tasks.return_value = [
             Task(
                 id="TASK-1",
-                title="Task 1",
+                name="Task 1",
                 description="A test task.",
                 status=TaskStatus.TODO,
                 priority=TaskPriority.HIGH,
@@ -145,7 +145,7 @@ class TestTaskTools:
             ),
             Task(
                 id="TASK-2",
-                title="Task 2",
+                name="Task 2",
                 description="A test task.",
                 status=TaskStatus.IN_PROGRESS,
                 priority=TaskPriority.MEDIUM,

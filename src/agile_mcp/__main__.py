@@ -54,9 +54,11 @@ def _display_connection_info(transport: str, host: str, port: int, project_path:
         print(f"   You can also test it in a browser: http://{host}:{port}", file=sys.stderr)
 
     print(f"\n📁 Project Directory: {project_path or 'Not set (use set_project tool)'}", file=sys.stderr)
-    print("🛠️  Available Tools: 15 agile project management tools", file=sys.stderr)
+    print("🛠️  Available Tools: 20 agile project management tools", file=sys.stderr)
     print("   • 2 Project tools: set_project, get_project", file=sys.stderr)
     print("   • 1 Overview tool: get_project_overview", file=sys.stderr)
+    print("   • 5 Dependency tools: add_dependency, remove_dependency, get_dependencies,", file=sys.stderr)
+    print("     check_can_start, get_dependency_graph", file=sys.stderr)
     print("   • 5 Story tools: create_story, get_story, update_story, list_stories, delete_story", file=sys.stderr)
     print("   • 7 Sprint tools: create_sprint, get_sprint, list_sprints, update_sprint,", file=sys.stderr)
     print("     manage_sprint_stories, get_sprint_progress, get_active_sprint", file=sys.stderr)
@@ -371,9 +373,9 @@ def status(project: Path | None) -> None:
         if recent_items:
             for item in recent_items:
                 item_type = item["type"]
-                title = item["title"][:40]
+                name = item["name"][:40]
                 updated_at = item["updated_at"].strftime("%Y-%m-%d %H:%M")
-                print(f"{item_type:8} {title:40} {updated_at}")
+                print(f"{item_type:8} {name:40} {updated_at}")
         else:
             print("No recent activity found.")
 

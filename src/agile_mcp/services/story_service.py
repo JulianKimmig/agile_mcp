@@ -24,7 +24,7 @@ class StoryService:
 
     def create_story(
         self,
-        title: str,
+        name: str,
         description: str,
         priority: Priority = Priority.MEDIUM,
         status: StoryStatus = StoryStatus.TODO,
@@ -35,7 +35,7 @@ class StoryService:
         """Create a new user story.
 
         Args:
-            title: Story title
+            name: Story name
             description: Story description
             priority: Story priority (default: MEDIUM)
             status: Story status (default: TODO)
@@ -61,7 +61,7 @@ class StoryService:
         # Create story instance
         story = UserStory(
             id=story_id,
-            title=title,
+            name=name,
             description=description,
             priority=priority,
             status=status,
@@ -89,7 +89,7 @@ class StoryService:
     def update_story(
         self,
         story_id: str,
-        title: str | None = None,
+        name: str | None = None,
         description: str | None = None,
         priority: Priority | None = None,
         status: StoryStatus | None = None,
@@ -101,7 +101,7 @@ class StoryService:
 
         Args:
             story_id: ID of the story to update
-            title: New title (optional)
+            name: New name (optional)
             description: New description (optional)
             priority: New priority (optional)
             status: New status (optional)
@@ -125,8 +125,8 @@ class StoryService:
 
         # Update fields that were provided
         update_data = {}
-        if title:
-            update_data["title"] = title
+        if name:
+            update_data["name"] = name
         if description:
             update_data["description"] = description
         if priority:

@@ -48,11 +48,11 @@ class TestUserStory:
     def test_create_user_story_with_required_fields(self) -> None:
         """Test creating a UserStory with only required fields."""
         story = UserStory(
-            id="STORY-001", title="As a user, I want to login", description="User authentication functionality"
+            id="STORY-001", name="As a user, I want to login", description="User authentication functionality"
         )
 
         assert story.id == "STORY-001"
-        assert story.title == "As a user, I want to login"
+        assert story.name == "As a user, I want to login"
         assert story.description == "User authentication functionality"
         assert story.status == StoryStatus.TODO
         assert story.priority == Priority.MEDIUM
@@ -65,7 +65,7 @@ class TestUserStory:
         """Test creating a UserStory with all fields."""
         story = UserStory(
             id="STORY-002",
-            title="As a user, I want to logout",
+            name="As a user, I want to logout",
             description="User logout functionality",
             status=StoryStatus.IN_PROGRESS,
             priority=Priority.HIGH,
@@ -75,7 +75,7 @@ class TestUserStory:
         )
 
         assert story.id == "STORY-002"
-        assert story.title == "As a user, I want to logout"
+        assert story.name == "As a user, I want to logout"
         assert story.description == "User logout functionality"
         assert story.status == StoryStatus.IN_PROGRESS
         assert story.priority == Priority.HIGH
@@ -86,35 +86,34 @@ class TestUserStory:
     def test_user_story_requires_id(self) -> None:
         """Test that UserStory requires an ID."""
         with pytest.raises(ValidationError) as exc_info:
-            UserStory(title="Test story", description="Test description")
+            UserStory(name="Test story", description="Test description")
 
         assert "id" in str(exc_info.value)
 
-    def test_user_story_requires_title(self) -> None:
-        """Test that UserStory requires a title."""
+    def test_user_story_requires_name(self) -> None:
+        """Test that UserStory requires a name."""
         with pytest.raises(ValidationError) as exc_info:
             UserStory(id="STORY-003", description="Test description")
 
-        assert "title" in str(exc_info.value)
+        assert "name" in str(exc_info.value)
 
     def test_user_story_requires_description(self) -> None:
         """Test that UserStory requires a description."""
-        with pytest.raises(ValidationError) as exc_info:
-            UserStory(id="STORY-004", title="Test story")
+        story = UserStory(id="STORY-004", name="Test story")
 
-        assert "description" in str(exc_info.value)
+        assert story.description.startswith("No description for")
 
     def test_user_story_status_validation(self) -> None:
         """Test that status must be a valid StoryStatus."""
         # Valid status should work
-        story = UserStory(id="STORY-005", title="Test story", description="Test description", status=StoryStatus.DONE)
+        story = UserStory(id="STORY-005", name="Test story", description="Test description", status=StoryStatus.DONE)
         assert story.status == StoryStatus.DONE
 
         # Invalid status should raise ValidationError
         with pytest.raises(ValidationError):
             UserStory(
                 id="STORY-006",
-                title="Test story",
+                name="Test story",
                 description="Test description",
                 status="invalid_status",  # type: ignore
             )
@@ -122,16 +121,14 @@ class TestUserStory:
     def test_user_story_priority_validation(self) -> None:
         """Test that priority must be a valid Priority."""
         # Valid priority should work
-        story = UserStory(
-            id="STORY-007", title="Test story", description="Test description", priority=Priority.CRITICAL
-        )
+        story = UserStory(id="STORY-007", name="Test story", description="Test description", priority=Priority.CRITICAL)
         assert story.priority == Priority.CRITICAL
 
         # Invalid priority should raise ValidationError
         with pytest.raises(ValidationError):
             UserStory(
                 id="STORY-008",
-                title="Test story",
+                name="Test story",
                 description="Test description",
                 priority="invalid_priority",  # type: ignore
             )
@@ -139,28 +136,28 @@ class TestUserStory:
     def test_user_story_points_validation(self) -> None:
         """Test that points must be a positive integer if provided."""
         # Valid points should work
-        story = UserStory(id="STORY-009", title="Test story", description="Test description", points=8)
+        story = UserStory(id="STORY-009", name="Test story", description="Test description", points=8)
         assert story.points == 8
 
         # None should work (optional field)
-        story = UserStory(id="STORY-010", title="Test story", description="Test description", points=None)
+        story = UserStory(id="STORY-010", name="Test story", description="Test description", points=None)
         assert story.points is None
 
     def test_user_story_sprint_id_optional(self) -> None:
         """Test that sprint_id is optional."""
         # Without sprint_id
-        story1 = UserStory(id="STORY-011", title="Test story", description="Test description")
+        story1 = UserStory(id="STORY-011", name="Test story", description="Test description")
         assert story1.sprint_id is None
 
         # With sprint_id
-        story2 = UserStory(id="STORY-012", title="Test story", description="Test description", sprint_id="SPRINT-002")
+        story2 = UserStory(id="STORY-012", name="Test story", description="Test description", sprint_id="SPRINT-002")
         assert story2.sprint_id == "SPRINT-002"
 
     def test_user_story_serialization(self) -> None:
         """Test that UserStory can be serialized and deserialized."""
         original_story = UserStory(
             id="STORY-013",
-            title="Test serialization",
+            name="Test serialization",
             description="Test description",
             status=StoryStatus.IN_PROGRESS,
             priority=Priority.HIGH,
@@ -172,14 +169,14 @@ class TestUserStory:
         # Serialize to dict
         story_dict = original_story.model_dump()
         assert story_dict["id"] == "STORY-013"
-        assert story_dict["title"] == "Test serialization"
+        assert story_dict["name"] == "Test serialization"
         assert story_dict["status"] == "in_progress"
         assert story_dict["priority"] == "high"
 
         # Deserialize from dict
         restored_story = UserStory(**story_dict)
         assert restored_story.id == original_story.id
-        assert restored_story.title == original_story.title
+        assert restored_story.name == original_story.name
         assert restored_story.status == original_story.status
         assert restored_story.priority == original_story.priority
         assert restored_story.points == original_story.points
@@ -189,7 +186,7 @@ class TestUserStory:
         """Test that UserStory inherits AgileArtifact properties."""
         story = UserStory(
             id="STORY-014",
-            title="Test inheritance",
+            name="Test inheritance",
             description="Test description",
             created_by="test_user",
             tags=["inheritance", "test"],

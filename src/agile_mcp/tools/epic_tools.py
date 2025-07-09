@@ -13,11 +13,11 @@ class CreateEpicTool(AgileTool):
 
     """Create a new epic in the agile project."""
 
-    def apply(self, title: str, description: str, status: str = "planning", tags: str | None = None) -> ToolResult:
+    def apply(self, name: str, description: str, status: str = "planning", tags: str | None = None) -> ToolResult:
         """Create a new epic.
 
         Args:
-            title: Epic title (required)
+            name: Epic name (required)
             description: Epic description (required)
             status: Epic status. Options: planning, in_progress, completed, cancelled
             tags: Comma-separated tags (optional)
@@ -45,15 +45,16 @@ class CreateEpicTool(AgileTool):
             if self.agent.epic_service is None:
                 raise ToolError("Epic service is not initialized.")
             epic = self.agent.epic_service.create_epic(
-                title=title, description=description, status=status_enum, tags=tags_list
+                name=name, description=description, status=status_enum, tags=tags_list
             )
         except Exception as err:
             raise RuntimeError("Failed to perform epic operation.") from err
 
         # Format result with epic data
         epic_data = epic.model_dump(mode="json")
+        epic_data["status"] = epic.status.value
 
-        return self.format_result(f"Epic '{epic.title}' created successfully with ID {epic.id}", epic_data)
+        return self.format_result(f"Epic '{epic.name}' created successfully with ID {epic.id}", epic_data)
 
 
 class GetEpicTool(AgileTool):
@@ -81,13 +82,12 @@ class GetEpicTool(AgileTool):
             raise ToolError("Epic service is not initialized.")
         epic = self.agent.epic_service.get_epic(epic_id)
 
-        if epic is None:
-            raise ToolError(f"Epic with ID {epic_id} not found")
-
-        # Format result with epic data
-        epic_data = epic.model_dump(mode="json")
-
-        return self.format_result(f"Retrieved epic: {epic.title} (ID: {epic.id})", epic_data)
+        if epic:
+            epic_data = epic.model_dump(mode="json")
+            epic_data["status"] = epic.status.value
+            return self.format_result(f"Retrieved epic: {epic.name} (ID: {epic.id})", epic_data)
+        else:
+            return self.format_error(f"Epic with ID {epic_id} not found")
 
 
 class UpdateEpicTool(AgileTool):
@@ -102,7 +102,7 @@ class UpdateEpicTool(AgileTool):
     def apply(
         self,
         epic_id: str,
-        title: str | None = None,
+        name: str | None = None,
         description: str | None = None,
         status: str | None = None,
         tags: str | None = None,
@@ -111,7 +111,7 @@ class UpdateEpicTool(AgileTool):
 
         Args:
             epic_id: The ID of the epic to update (required)
-            title: New epic title (optional)
+            name: New epic name (optional)
             description: New epic description (optional)
             status: New status. Options: planning, in_progress, completed, cancelled
             tags: New comma-separated tags (optional)
@@ -132,8 +132,8 @@ class UpdateEpicTool(AgileTool):
 
         # Prepare update parameters
         update_params = {}
-        if title:
-            update_params["title"] = title
+        if name:
+            update_params["name"] = name
         if description:
             update_params["description"] = description
         if status:
@@ -149,13 +149,12 @@ class UpdateEpicTool(AgileTool):
         except Exception as err:
             raise RuntimeError("Failed to perform epic operation.") from err
 
-        if updated_epic is None:
-            raise ToolError(f"Epic with ID {epic_id} not found")
-
-        # Format result with epic data
-        epic_data = updated_epic.model_dump(mode="json")
-
-        return self.format_result(f"Epic '{updated_epic.title}' updated successfully", epic_data)
+        if updated_epic:
+            epic_data = updated_epic.model_dump(mode="json")
+            epic_data["status"] = updated_epic.status.value
+            return self.format_result(f"Epic '{updated_epic.name}' updated successfully", epic_data)
+        else:
+            return self.format_error(f"Failed to update epic with ID {epic_id}")
 
 
 class DeleteEpicTool(AgileTool):
@@ -198,8 +197,8 @@ class DeleteEpicTool(AgileTool):
             raise ToolError(f"Failed to delete epic with ID {epic_id}")
 
         return self.format_result(
-            f"Epic '{epic.title}' (ID: {epic_id}) deleted successfully",
-            {"deleted_epic_id": epic_id, "deleted_epic_title": epic.title},
+            f"Epic '{epic.name}' (ID: {epic_id}) deleted successfully",
+            {"epic_id": epic_id, "deleted": True},
         )
 
 
@@ -241,7 +240,12 @@ class ListEpicsTool(AgileTool):
         epics = self.agent.epic_service.list_epics(status=status_enum)
 
         # Format result
-        epics_data = [epic.model_dump(mode="json") for epic in epics]
+        epic_list = []
+        for epic in epics:
+            epic_line = f"- {epic.id}: {epic.name} ({epic.status.value})"
+            if include_stories and epic.story_ids:
+                epic_line += f" (Stories: {', '.join(epic.story_ids)})"
+            epic_list.append(epic_line)
 
         # Build message with epic details
         if not epics:
@@ -251,7 +255,7 @@ class ListEpicsTool(AgileTool):
             epic_lines = []
             for epic in epics:
                 story_count = len(epic.story_ids) if epic.story_ids else 0
-                epic_line = f"- {epic.id}: {epic.title} ({epic.status.value})"
+                epic_line = f"- {epic.id}: {epic.name} ({epic.status.value})"
                 if story_count > 0:
                     epic_line += f" ({story_count} stories)"
                 epic_lines.append(epic_line)
@@ -262,7 +266,7 @@ class ListEpicsTool(AgileTool):
 
             message = f"Found {len(epics)} epics{filter_desc}{stories_desc}\n" + "\n".join(epic_lines)
 
-        data = {"epics": epics_data, "count": len(epics)}
+        data = {"epics": [epic.model_dump(mode="json") for epic in epics], "count": len(epics)}
 
         return self.format_result(message, data)
 
@@ -309,16 +313,13 @@ class ManageEpicStoriesTool(AgileTool):
         except Exception as err:
             raise RuntimeError("Failed to perform epic operation.") from err
 
-        if updated_epic is None:
-            raise ToolError(f"Epic with ID {epic_id} not found")
-
-        # Format result with epic data
-        epic_data = updated_epic.model_dump(mode="json")
-
-        return self.format_result(
-            f"Story '{story_id}' {action_msg} epic '{updated_epic.title}'",
-            {"epic": epic_data, "action": action, "story_id": story_id},
-        )
+        if updated_epic:
+            return self.format_result(
+                f"Story '{story_id}' {action_msg} epic '{updated_epic.name}'",
+                {"epic_id": epic_id, "story_id": story_id, "action": action},
+            )
+        else:
+            return self.format_error(f"Failed to update epic with ID {epic_id}")
 
 
 class GetProductBacklogTool(AgileTool):
@@ -403,7 +404,7 @@ class GetProductBacklogTool(AgileTool):
             story_lines = []
             for story in backlog_stories:
                 points_text = f" ({story.points} pts)" if story.points else ""
-                story_line = f"- {story.id}: {story.title} ({story.priority.value}){points_text} [{story.status.value}]"
+                story_line = f"- {story.id}: {story.name} ({story.priority.value}){points_text} [{story.status.value}]"
                 story_lines.append(story_line)
 
             message = (

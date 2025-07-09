@@ -130,7 +130,7 @@ class TestAgileProjectManager:
         # Create some test data
         stories_dir = manager.get_stories_dir()
         test_story_file = stories_dir / "STORY-001.yml"
-        test_content = "id: STORY-001\ntitle: Test Story"
+        test_content = "id: STORY-001\nname: Test Story"
         test_story_file.write_text(test_content)
 
         # Test backup creation
@@ -155,7 +155,7 @@ class TestAgileProjectManager:
 
         # Create a story in TODO status
         story = UserStory(
-            id="STORY-MIGRATE", title="Migration Test", description="Test migration", status=StoryStatus.TODO
+            id="STORY-MIGRATE", name="Migration Test", description="Test migration", status=StoryStatus.TODO
         )
         manager.save_story(story)
 
@@ -186,7 +186,7 @@ class TestAgileProjectManager:
 
         story_data = {
             "id": "STORY-LEGACY",
-            "title": "Legacy Story",
+            "name": "Legacy Story",
             "description": "Legacy description",
             "status": "todo",
             "priority": "medium",
@@ -201,7 +201,7 @@ class TestAgileProjectManager:
         # Should be able to load the legacy story
         loaded_story = manager.get_story("STORY-LEGACY")
         assert loaded_story is not None
-        assert loaded_story.title == "Legacy Story"
+        assert loaded_story.name == "Legacy Story"
         assert loaded_story.status == StoryStatus.TODO
 
         # After loading and saving, it should move to status folder
@@ -230,7 +230,7 @@ class TestAgileProjectManager:
         # Create story data with DONE status but place it in TODO folder
         story_data = {
             "id": "STORY-MISMATCH",
-            "title": "Mismatched Story",
+            "name": "Mismatched Story",
             "description": "Status mismatch test",
             "status": "done",  # This doesn't match the "todo" folder
             "priority": "medium",
@@ -261,11 +261,11 @@ class TestAgileProjectManager:
 
         # Create stories with different statuses
         stories = [
-            UserStory(id="STORY-TODO", title="TODO Story", description="Test", status=StoryStatus.TODO),
+            UserStory(id="STORY-TODO", name="TODO Story", description="Test", status=StoryStatus.TODO),
             UserStory(
-                id="STORY-PROGRESS", title="In Progress Story", description="Test", status=StoryStatus.IN_PROGRESS
+                id="STORY-PROGRESS", name="In Progress Story", description="Test", status=StoryStatus.IN_PROGRESS
             ),
-            UserStory(id="STORY-DONE", title="Done Story", description="Test", status=StoryStatus.DONE),
+            UserStory(id="STORY-DONE", name="Done Story", description="Test", status=StoryStatus.DONE),
         ]
 
         for story in stories:
@@ -289,9 +289,9 @@ class TestAgileProjectManager:
 
         # Create tasks with different statuses
         tasks = [
-            Task(id="TASK-TODO", title="TODO Task", description="Test", status=TaskStatus.TODO),
-            Task(id="TASK-PROGRESS", title="In Progress Task", description="Test", status=TaskStatus.IN_PROGRESS),
-            Task(id="TASK-DONE", title="Done Task", description="Test", status=TaskStatus.DONE),
+            Task(id="TASK-TODO", name="TODO Task", description="Test", status=TaskStatus.TODO),
+            Task(id="TASK-PROGRESS", name="In Progress Task", description="Test", status=TaskStatus.IN_PROGRESS),
+            Task(id="TASK-DONE", name="Done Task", description="Test", status=TaskStatus.DONE),
         ]
 
         for task in tasks:
@@ -316,9 +316,24 @@ class TestAgileProjectManager:
 
         # Create sprints with different statuses
         sprints = [
-            Sprint(id="SPRINT-PLAN", name="Planning Sprint", status=SprintStatus.PLANNING),
-            Sprint(id="SPRINT-ACTIVE", name="Active Sprint", status=SprintStatus.ACTIVE),
-            Sprint(id="SPRINT-DONE", name="Completed Sprint", status=SprintStatus.COMPLETED),
+            Sprint(
+                id="SPRINT-PLAN",
+                name="Planning Sprint",
+                status=SprintStatus.PLANNING,
+                description="Test Sprint description",
+            ),
+            Sprint(
+                id="SPRINT-ACTIVE",
+                name="Active Sprint",
+                status=SprintStatus.ACTIVE,
+                description="Test Sprint description",
+            ),
+            Sprint(
+                id="SPRINT-DONE",
+                name="Completed Sprint",
+                status=SprintStatus.COMPLETED,
+                description="Test Sprint description",
+            ),
         ]
 
         for sprint in sprints:

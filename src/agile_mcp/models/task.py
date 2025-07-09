@@ -2,8 +2,9 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from .base import AgileArtifact
 
@@ -29,8 +30,6 @@ class TaskPriority(str, Enum):
 class Task(AgileArtifact):
     """Task model representing a subtask within a user story."""
 
-    title: str = Field(..., description="Task title")
-    description: str = Field(..., description="Task description")
     story_id: str | None = Field(default=None, description="ID of the parent story")
     status: TaskStatus = Field(default=TaskStatus.TODO, description="Task status")
     priority: TaskPriority = Field(default=TaskPriority.MEDIUM, description="Task priority")
@@ -38,9 +37,21 @@ class Task(AgileArtifact):
     estimated_hours: float | None = Field(default=None, description="Estimated hours to complete")
     actual_hours: float | None = Field(default=None, description="Actual hours spent")
     due_date: datetime | None = Field(default=None, description="Task due date")
-    dependencies: list[str] = Field(default_factory=list, description="List of task IDs this task depends on")
     tags: list[str] = Field(default_factory=list, description="Task tags")
     notes: list[str] = Field(default_factory=list, description="Task notes and updates")
+
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_dependencies(cls, data: Any) -> Any:
+        """Migrate old list-based dependencies to new dict-based format."""
+        if isinstance(data, dict) and "dependencies" in data:
+            deps = data["dependencies"]
+            if isinstance(deps, list):
+                # This is the old format, migrate it.
+                # Assuming old dependencies are always on other tasks.
+                migrated_deps = {dep_id: "task" for dep_id in deps}
+                data["dependencies"] = migrated_deps
+        return data
 
     @field_validator("estimated_hours", "actual_hours")
     @classmethod
@@ -75,20 +86,6 @@ class Task(AgileArtifact):
             True if task status is done
         """
         return self.status == TaskStatus.DONE
-
-    def can_start(self, completed_tasks: list[str]) -> bool:
-        """Check if task can be started based on dependencies.
-
-        Args:
-            completed_tasks: List of completed task IDs
-
-        Returns:
-            True if all dependencies are completed
-        """
-        if not self.dependencies:
-            return True
-
-        return all(dep_id in completed_tasks for dep_id in self.dependencies)
 
     def get_progress_percentage(self) -> float:
         """Get task progress as percentage.

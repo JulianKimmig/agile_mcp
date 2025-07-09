@@ -17,6 +17,7 @@ class CreateSprintTool(AgileTool):
     def apply(
         self,
         name: str,
+        description: str,
         goal: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
@@ -26,6 +27,7 @@ class CreateSprintTool(AgileTool):
 
         Args:
             name: Sprint name (required)
+            description: Sprint description (required)
             goal: Sprint goal or objective (optional)
             start_date: Start date in YYYY-MM-DD format (optional)
             end_date: End date in YYYY-MM-DD format (optional)
@@ -69,7 +71,12 @@ class CreateSprintTool(AgileTool):
                 raise ToolError("Sprint service not available")
 
             sprint = self.agent.sprint_service.create_sprint(
-                name=name, goal=goal, start_date=start_date_obj, end_date=end_date_obj, tags=tags_list
+                name=name,
+                goal=goal,
+                start_date=start_date_obj,
+                end_date=end_date_obj,
+                tags=tags_list,
+                description=description,
             )
         except Exception as err:
             raise RuntimeError("Failed to perform sprint operation.") from err
@@ -213,6 +220,7 @@ class UpdateSprintTool(AgileTool):
         self,
         sprint_id: str,
         name: str | None = None,
+        description: str | None = None,
         goal: str | None = None,
         status: str | None = None,
         start_date: str | None = None,
@@ -224,6 +232,7 @@ class UpdateSprintTool(AgileTool):
         Args:
             sprint_id: The ID of the sprint to update (required)
             name: New sprint name (optional)
+            description: New sprint description (optional)
             goal: New sprint goal (optional)
             status: New status. Options: SprintStatus.PLANNING, SprintStatus.ACTIVE, SprintStatus.COMPLETED, SprintStatus.CANCELLED
             start_date: New start date in YYYY-MM-DD format (optional)
@@ -241,6 +250,9 @@ class UpdateSprintTool(AgileTool):
 
         if name:
             update_data["name"] = name
+
+        if description:
+            update_data["description"] = description
 
         if goal:
             update_data["goal"] = goal

@@ -131,17 +131,17 @@ class GetAgileDocumentationTool(AgileTool):
                         ],
                         "principles": [
                             {
-                                "title": "Satisfy the customer through early and continuous delivery",
+                                "name": "Satisfy the customer through early and continuous delivery",
                                 "description": "Our highest priority is to satisfy the customer through early and continuous delivery of valuable software.",
                                 "practical_application": "Implement short development cycles, frequent releases, and regular customer feedback loops.",
                             },
                             {
-                                "title": "Welcome changing requirements",
+                                "name": "Welcome changing requirements",
                                 "description": "Welcome changing requirements, even late in development. Agile processes harness change for the customer's competitive advantage.",
                                 "practical_application": "Build flexible systems, maintain open communication channels, and view change requests as opportunities for improvement.",
                             },
                             {
-                                "title": "Deliver working software frequently",
+                                "name": "Deliver working software frequently",
                                 "description": "Deliver working software frequently, from a couple of weeks to a couple of months, with a preference to the shorter timescale.",
                                 "practical_application": "Use time-boxed sprints, continuous integration, and incremental delivery to provide regular value.",
                             },
@@ -266,7 +266,7 @@ class GetAgileDocumentationTool(AgileTool):
                                 "sequence": 2,
                                 "action": "Create initial user stories",
                                 "tool": "create_story",
-                                "parameters": {"title": "Example Story", "description": "Initial backlog item"},
+                                "parameters": {"name": "Example Story", "description": "Initial backlog item"},
                             },
                             {
                                 "sequence": 3,
@@ -377,7 +377,7 @@ class GetAgileDocumentationTool(AgileTool):
                                     "description": "Create a new user story in the agile project",
                                     "parameters": [
                                         {
-                                            "name": "title",
+                                            "name": "name",
                                             "type": "string",
                                             "required": True,
                                             "description": "Story title - should be concise and descriptive",
@@ -408,7 +408,7 @@ class GetAgileDocumentationTool(AgileTool):
                                         {
                                             "scenario": "Capturing new requirements from stakeholders",
                                             "example": {
-                                                "title": "User Profile Management",
+                                                "name": "User Profile Management",
                                                 "description": "As a user, I want to update my profile information so that my account details stay current",
                                                 "priority": "medium",
                                             },

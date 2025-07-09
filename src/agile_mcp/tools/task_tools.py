@@ -15,7 +15,7 @@ class CreateTaskTool(AgileTool):
 
     def apply(
         self,
-        title: str,
+        name: str,
         description: str,
         story_id: str | None = None,
         priority: str = "medium",
@@ -28,7 +28,7 @@ class CreateTaskTool(AgileTool):
         """Create a new task.
 
         Args:
-            title: Task title (required)
+            name: Task name (required)
             description: Task description (required)
             story_id: ID of the parent story (optional)
             priority: Task priority. Options: low, medium, high, critical
@@ -80,7 +80,7 @@ class CreateTaskTool(AgileTool):
                 raise ToolError("Task service not available")
 
             task = self.agent.task_service.create_task(
-                title=title,
+                name=name,
                 description=description,
                 story_id=story_id,
                 priority=priority_enum,
@@ -96,7 +96,7 @@ class CreateTaskTool(AgileTool):
         # Format result with task data
         task_data = task.model_dump(mode="json")
 
-        return self.format_result(f"Task '{task.title}' created successfully with ID {task.id}", task_data)
+        return self.format_result(f"Task '{task.name}' created successfully with ID {task.id}", task_data)
 
 
 class GetTaskTool(AgileTool):
@@ -130,7 +130,7 @@ class GetTaskTool(AgileTool):
         # Format result with task data
         task_data = task.model_dump(mode="json")
 
-        return self.format_result(f"Retrieved task: {task.title} (ID: {task.id})", task_data)
+        return self.format_result(f"Retrieved task: {task.name} (ID: {task.id})", task_data)
 
 
 class UpdateTaskTool(AgileTool):
@@ -143,7 +143,7 @@ class UpdateTaskTool(AgileTool):
     def apply(
         self,
         task_id: str,
-        title: str | None = None,
+        name: str | None = None,
         description: str | None = None,
         status: str | None = None,
         priority: str | None = None,
@@ -158,7 +158,7 @@ class UpdateTaskTool(AgileTool):
 
         Args:
             task_id: The ID of the task to update (required)
-            title: New task title (optional)
+            name: New task name (optional)
             description: New task description (optional)
             status: New status. Options: todo, in_progress, done, blocked
             priority: New priority. Options: low, medium, high, critical
@@ -201,8 +201,8 @@ class UpdateTaskTool(AgileTool):
 
         # Prepare update parameters
         update_params = {}
-        if title:
-            update_params["title"] = title
+        if name:
+            update_params["name"] = name
         if description:
             update_params["description"] = description
         if status:
@@ -241,7 +241,7 @@ class UpdateTaskTool(AgileTool):
         # Format result with task data
         task_data = updated_task.model_dump(mode="json")
 
-        return self.format_result(f"Task '{updated_task.title}' updated successfully", task_data)
+        return self.format_result(f"Task '{updated_task.name}' updated successfully", task_data)
 
 
 class DeleteTaskTool(AgileTool):
@@ -282,8 +282,8 @@ class DeleteTaskTool(AgileTool):
             raise ToolError(f"Failed to delete task with ID {task_id}")
 
         return self.format_result(
-            f"Task '{task.title}' (ID: {task_id}) deleted successfully",
-            {"deleted_task_id": task_id, "deleted_task_title": task.title},
+            f"Task '{task.name}' (ID: {task_id}) deleted successfully",
+            {"deleted_task_id": task_id, "deleted_task_name": task.name},
         )
 
 
@@ -372,7 +372,7 @@ class ListTasksTool(AgileTool):
             # Build task listings
             task_lines = []
             for task in tasks:
-                task_line = f"- {task.id}: {task.title} ({task.status.value})"
+                task_line = f"- {task.id}: {task.name} ({task.status.value})"
                 task_lines.append(task_line)
 
             message = f"Found {len(tasks)} tasks{filter_desc}\n" + "\n".join(task_lines)

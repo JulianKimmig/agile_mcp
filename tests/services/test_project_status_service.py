@@ -281,9 +281,9 @@ class TestProjectStatusService:
         now = datetime.now(timezone.utc)
 
         # Mock data from different services
-        stories = [Mock(title="Story 1", updated_at=now)]
-        tasks = [Mock(title="Task 1", updated_at=now)]
-        epics = [Mock(title="Epic 1", updated_at=now)]
+        stories = [Mock(name="Story 1", updated_at=now)]
+        tasks = [Mock(name="Task 1", updated_at=now)]
+        epics = [Mock(name="Epic 1", updated_at=now)]
         sprints = [Mock(name="Sprint 1", updated_at=now)]
 
         service.story_service.list_stories.return_value = stories
@@ -306,7 +306,7 @@ class TestProjectStatusService:
     def test_recent_activity_with_service_errors(self, service):
         """Test recent activity when some services fail."""
         # Mock one service working, others failing
-        service.story_service.list_stories.return_value = [Mock(title="Story 1", updated_at=datetime.now(timezone.utc))]
+        service.story_service.list_stories.return_value = [Mock(name="Story 1", updated_at=datetime.now(timezone.utc))]
         service.task_service.list_tasks.side_effect = Exception("Task error")
         service.epic_service.list_epics.side_effect = Exception("Epic error")
         service.sprint_service.list_sprints.side_effect = Exception("Sprint error")
@@ -363,17 +363,17 @@ class TestProjectStatusService:
         story_mock = Mock()
         story_mock.status.value = "todo"
         story_mock.points = 5
-        story_mock.title = "Test Story"
+        story_mock.name = "Test Story"
         story_mock.updated_at = datetime.now(timezone.utc)
 
         task_mock = Mock()
         task_mock.status.value = "done"
-        task_mock.title = "Test Task"
+        task_mock.name = "Test Task"
         task_mock.updated_at = datetime.now(timezone.utc)
 
         epic_mock = Mock()
         epic_mock.status.value = "planning"
-        epic_mock.title = "Test Epic"
+        epic_mock.name = "Test Epic"
         epic_mock.updated_at = datetime.now(timezone.utc)
 
         # Mock all services to return data

@@ -75,11 +75,12 @@ class GetProjectOverviewTool(AgileTool):
             for epic in epics:
                 epic_data = {
                     "id": epic.id,
-                    "title": epic.title,
+                    "name": epic.name,
                     "description": epic.description,
                     "status": epic.status,
                     "tags": epic.tags,
                     "story_ids": epic.story_ids,
+                    "dependencies": epic.dependencies,
                     "created_at": epic.created_at.isoformat(),
                     "updated_at": epic.updated_at.isoformat(),
                 }
@@ -97,6 +98,7 @@ class GetProjectOverviewTool(AgileTool):
                     "end_date": sprint.end_date.isoformat() if sprint.end_date else None,
                     "tags": sprint.tags,
                     "story_ids": sprint.story_ids,
+                    "dependencies": sprint.dependencies,
                     "created_at": sprint.created_at.isoformat(),
                     "updated_at": sprint.updated_at.isoformat(),
                 }
@@ -114,7 +116,7 @@ class GetProjectOverviewTool(AgileTool):
 
                 story_data = {
                     "id": story.id,
-                    "title": story.title,
+                    "name": story.name,
                     "description": story.description,
                     "status": story.status,
                     "priority": story.priority,
@@ -122,6 +124,7 @@ class GetProjectOverviewTool(AgileTool):
                     "tags": story.tags,
                     "epic_id": epic_id,
                     "sprint_id": story.sprint_id,
+                    "dependencies": story.dependencies,
                     "created_at": story.created_at.isoformat(),
                     "updated_at": story.updated_at.isoformat(),
                 }
@@ -135,7 +138,7 @@ class GetProjectOverviewTool(AgileTool):
             for task in tasks:
                 task_data = {
                     "id": task.id,
-                    "title": task.title,
+                    "name": task.name,
                     "description": task.description,
                     "status": task.status,
                     "priority": task.priority,
@@ -171,6 +174,7 @@ class GetProjectOverviewTool(AgileTool):
             return self.format_result(message, overview_data)
 
         except Exception as e:
+            raise e
             return self.format_error(f"Failed to get project overview: {str(e)}")
 
     def _get_status_breakdown(self, statuses: List[str]) -> Dict[str, int]:
@@ -212,13 +216,13 @@ class GetProjectOverviewTool(AgileTool):
         """
         summary = overview_data["summary"]
 
-        message = f"""📋 Project Overview: {overview_data['project_path']}
+        message = f"""📋 Project Overview: {overview_data["project_path"]}
 
 📊 Summary:
-• Epics: {summary['total_epics']}
-• Sprints: {summary['total_sprints']}
-• Stories: {summary['total_stories']}
-• Tasks: {summary['total_tasks']}
+• Epics: {summary["total_epics"]}
+• Sprints: {summary["total_sprints"]}
+• Stories: {summary["total_stories"]}
+• Tasks: {summary["total_tasks"]}
 
 📈 Status Breakdown:
 """
@@ -247,9 +251,9 @@ class GetProjectOverviewTool(AgileTool):
 
         message += f"""
 🔗 Relationships:
-• Epics with stories: {epics_with_stories}/{summary['total_epics']}
-• Sprints with stories: {sprints_with_stories}/{summary['total_sprints']}
-• Stories with tasks: {stories_with_tasks}/{summary['total_stories']}
+• Epics with stories: {epics_with_stories}/{summary["total_epics"]}
+• Sprints with stories: {sprints_with_stories}/{summary["total_sprints"]}
+• Stories with tasks: {stories_with_tasks}/{summary["total_stories"]}
 
 Use the 'data' field for detailed information about all artifacts and their relationships."""
 

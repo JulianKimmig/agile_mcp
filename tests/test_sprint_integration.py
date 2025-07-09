@@ -38,7 +38,10 @@ class TestSprintIntegration:
 
         # Test creating a basic sprint
         result = tool.apply_ex(
-            name="Sprint 1", goal="Implement authentication features", tags="authentication,security"
+            name="Sprint 1",
+            goal="Implement authentication features",
+            tags="authentication,security",
+            description="Sprint 1 description",
         )
 
         assert "Sprint 'Sprint 1' created successfully" in result.message
@@ -50,7 +53,11 @@ class TestSprintIntegration:
 
         # First create a sprint
         create_tool = CreateSprintTool(server)
-        create_result = parse_tool_result(create_tool.apply_ex(name="Test Sprint", goal="Test sprint for retrieval"))
+        create_result = parse_tool_result(
+            create_tool.apply_ex(
+                name="Test Sprint", goal="Test sprint for retrieval", description="Test Sprint description"
+            )
+        )
 
         assert create_result.success
         sprint_id = create_result.data["id"]
@@ -69,8 +76,8 @@ class TestSprintIntegration:
 
         # Create a few sprints
         create_tool = CreateSprintTool(server)
-        create_tool.apply_ex(name="Sprint 1", goal="First sprint")
-        create_tool.apply_ex(name="Sprint 2", goal="Second sprint")
+        create_tool.apply_ex(name="Sprint 1", goal="First sprint", description="Sprint 1 description")
+        create_tool.apply_ex(name="Sprint 2", goal="Second sprint", description="Sprint 2 description")
 
         # List all sprints
         list_tool = ListSprintsTool(server)
@@ -84,14 +91,24 @@ class TestSprintIntegration:
 
         # Create a sprint
         create_tool = CreateSprintTool(server)
-        create_result = parse_tool_result(create_tool.apply_ex(name="Original Sprint", goal="Original goal"))
+        create_result = parse_tool_result(
+            create_tool.apply_ex(
+                name="Original Sprint", goal="Original goal", description="Original Sprint description"
+            )
+        )
 
         assert create_result.success
         sprint_id = create_result.data["id"]
 
         # Update the sprint
         update_tool = UpdateSprintTool(server)
-        result = update_tool.apply_ex(sprint_id=sprint_id, name="Updated Sprint", goal="Updated goal", status="active")
+        result = update_tool.apply_ex(
+            sprint_id=sprint_id,
+            name="Updated Sprint",
+            goal="Updated goal",
+            status="active",
+            description="Updated Sprint description",
+        )
 
         assert "Sprint 'Updated Sprint' updated successfully" in result.message
 
@@ -102,12 +119,14 @@ class TestSprintIntegration:
 
         # Create a sprint and a story
         sprint_tool = CreateSprintTool(server)
-        sprint_result = parse_tool_result(sprint_tool.apply_ex(name="Test Sprint"))
+        sprint_result = parse_tool_result(
+            sprint_tool.apply_ex(name="Test Sprint", description="Test Sprint description")
+        )
         assert sprint_result.success
         sprint_id = sprint_result.data["id"]
 
         story_tool = CreateStoryTool(server)
-        story_result = parse_tool_result(story_tool.apply_ex(title="Test Story", description="A test story"))
+        story_result = parse_tool_result(story_tool.apply_ex(name="Test Story", description="A test story"))
         assert story_result.success
         story_id = story_result.data["id"]
 
@@ -129,7 +148,11 @@ class TestSprintIntegration:
         # Create a sprint
         create_tool = CreateSprintTool(server)
         create_result = parse_tool_result(
-            create_tool.apply_ex(name="Progress Test Sprint", goal="Test progress tracking")
+            create_tool.apply_ex(
+                name="Progress Test Sprint",
+                goal="Test progress tracking",
+                description="Progress Test Sprint description",
+            )
         )
 
         assert create_result.success
@@ -153,7 +176,9 @@ class TestSprintIntegration:
 
         # Create and activate a sprint
         create_tool = CreateSprintTool(server)
-        create_result = parse_tool_result(create_tool.apply_ex(name="Active Sprint"))
+        create_result = parse_tool_result(
+            create_tool.apply_ex(name="Active Sprint", description="Active Sprint description")
+        )
         assert create_result.success
         sprint_id = create_result.data["id"]
 
@@ -181,6 +206,7 @@ class TestSprintIntegration:
         sprint_result = parse_tool_result(
             sprint_tool.apply_ex(
                 name="Integration Test Sprint",
+                description="Integration Test Sprint description",
                 goal="Test complete workflow",
                 start_date="2024-01-15",
                 end_date="2024-01-29",
@@ -192,10 +218,10 @@ class TestSprintIntegration:
         # 2. Create some stories
         story_tool = CreateStoryTool(server)
         story1_result = parse_tool_result(
-            story_tool.apply_ex(title="User Authentication", description="Implement user login and registration")
+            story_tool.apply_ex(name="User Authentication", description="Implement user login and registration")
         )
         story2_result = parse_tool_result(
-            story_tool.apply_ex(title="Dashboard UI", description="Create user dashboard interface")
+            story_tool.apply_ex(name="Dashboard UI", description="Create user dashboard interface")
         )
         assert story1_result.success and story2_result.success
         story1_id = story1_result.data["id"]
@@ -238,12 +264,19 @@ class TestSprintIntegration:
         tool = CreateSprintTool(server)
 
         # Test invalid date format
-        result = tool.apply_ex(name="Bad Date Sprint", start_date="invalid-date")
+        result = tool.apply_ex(
+            name="Bad Date Sprint", start_date="invalid-date", description="Bad Date Sprint description"
+        )
         assert "Tool Error:" in result.message
         assert "Invalid start_date format" in result.message
 
         # Test end date before start date
-        result = tool.apply_ex(name="Bad Range Sprint", start_date="2024-01-29", end_date="2024-01-15")
+        result = tool.apply_ex(
+            name="Bad Range Sprint",
+            start_date="2024-01-29",
+            end_date="2024-01-15",
+            description="Bad Range Sprint description",
+        )
         assert "Tool Error:" in result.message
         assert "End date must be after start date" in result.message
 
@@ -259,6 +292,8 @@ class TestSprintIntegration:
 
         # Test updating non-existent sprint
         update_tool = UpdateSprintTool(server)
-        result = update_tool.apply_ex(sprint_id="SPRINT-NONEXISTENT", name="New Name")
+        result = update_tool.apply_ex(
+            sprint_id="SPRINT-NONEXISTENT", name="New Name", description="New Name description"
+        )
         assert "Tool Error:" in result.message
         assert "not found" in result.message

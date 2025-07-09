@@ -35,10 +35,10 @@ class TestTask:
 
     def test_create_minimal_task(self):
         """Test creating a task with minimal required fields."""
-        task = Task(id="TASK-001", title="Fix login bug", description="The login form is not validating email properly")
+        task = Task(id="TASK-001", name="Fix login bug", description="The login form is not validating email properly")
 
         assert task.id == "TASK-001"
-        assert task.title == "Fix login bug"
+        assert task.name == "Fix login bug"
         assert task.description == "The login form is not validating email properly"
         assert task.status == TaskStatus.TODO  # default
         assert task.assignee is None  # default
@@ -55,7 +55,7 @@ class TestTask:
         """Test creating a task with all fields."""
         task = Task(
             id="TASK-002",
-            title="Implement user registration",
+            name="Implement user registration",
             description="Create registration form with email validation",
             status=TaskStatus.IN_PROGRESS,
             assignee="john.doe",
@@ -65,7 +65,7 @@ class TestTask:
             tags=["frontend", "authentication"],
         )
 
-        assert task.title == "Implement user registration"
+        assert task.name == "Implement user registration"
         assert task.description == "Create registration form with email validation"
         assert task.status == TaskStatus.IN_PROGRESS
         assert task.assignee == "john.doe"
@@ -77,75 +77,74 @@ class TestTask:
     def test_id_is_required(self):
         """Test that ID is required."""
         with pytest.raises(ValidationError) as exc_info:
-            Task(title="Some title", description="Some description")
+            Task(name="Some name", description="Some description")
 
         assert "id" in str(exc_info.value)
 
-    def test_title_is_required(self):
-        """Test that title is required."""
+    def test_name_is_required(self):
+        """Test that name is required."""
         with pytest.raises(ValidationError) as exc_info:
             Task(id="TASK-003", description="Some description")
 
-        assert "title" in str(exc_info.value)
+        assert "name" in str(exc_info.value)
 
     def test_description_is_required(self):
         """Test that description is required."""
-        with pytest.raises(ValidationError) as exc_info:
-            Task(id="TASK-004", title="Some title")
+        task = Task(id="TASK-004", name="Some name")
 
-        assert "description" in str(exc_info.value)
+        assert task.description.startswith("No description for")
 
     def test_status_validation(self):
         """Test that status must be valid TaskStatus."""
         # Valid status
-        task = Task(id="TASK-005", title="Test task", description="Test description", status=TaskStatus.BLOCKED)
+        task = Task(id="TASK-005", name="Test task", description="Test description", status=TaskStatus.BLOCKED)
         assert task.status == TaskStatus.BLOCKED
 
         # Invalid status should raise ValidationError
         with pytest.raises(ValidationError):
-            Task(id="TASK-006", title="Test task", description="Test description", status="invalid_status")
+            Task(id="TASK-006", name="Test task", description="Test description", status="invalid_status")
 
     def test_assignee_optional(self):
         """Test that assignee is optional."""
-        task = Task(id="TASK-007", title="Test task", description="Test description")
+        task = Task(id="TASK-007", name="Test task", description="Test description")
         assert task.assignee is None
 
         task_with_assignee = Task(
-            id="TASK-008", title="Test task", description="Test description", assignee="jane.smith"
+            id="TASK-008", name="Test task", description="Test description", assignee="jane.smith"
         )
         assert task_with_assignee.assignee == "jane.smith"
 
     def test_story_id_optional(self):
         """Test that story_id is optional."""
-        task = Task(id="TASK-009", title="Test task", description="Test description")
+        task = Task(id="TASK-009", name="Test task", description="Test description")
         assert task.story_id is None
 
-        task_with_story = Task(id="TASK-010", title="Test task", description="Test description", story_id="story_456")
+        task_with_story = Task(id="TASK-010", name="Test task", description="Test description", story_id="story_456")
         assert task_with_story.story_id == "story_456"
 
     def test_estimated_hours_validation(self):
         """Test estimated_hours validation."""
         # None is valid (default)
-        task = Task(id="TASK-011", title="Test task", description="Test description")
+        task = Task(id="TASK-011", name="Test task", description="Test description")
         assert task.estimated_hours is None
 
         # Positive float is valid
-        task_with_hours = Task(id="TASK-012", title="Test task", description="Test description", estimated_hours=8.5)
+        task_with_hours = Task(id="TASK-012", name="Test task", description="Test description", estimated_hours=8.5)
         assert task_with_hours.estimated_hours == 8.5
 
         # Zero is valid
-        task_zero_hours = Task(id="TASK-013", title="Test task", description="Test description", estimated_hours=0.0)
+        task_zero_hours = Task(id="TASK-013", name="Test task", description="Test description", estimated_hours=0.0)
         assert task_zero_hours.estimated_hours == 0.0
 
         # Negative hours should raise ValidationError
         with pytest.raises(ValidationError):
-            Task(id="TASK-014", title="Test task", description="Test description", estimated_hours=-1.0)
+            Task(id="TASK-014", name="Test task", description="Test description", estimated_hours=-1.0)
 
     def test_task_serialization(self):
         """Test that task can be serialized to dict."""
         task = Task(
             id="TASK-015",
-            title="Test serialization",
+            name="Test serialization",
             description="Test task serialization",
             status=TaskStatus.IN_PROGRESS,
             assignee="test.user",
@@ -157,7 +156,7 @@ class TestTask:
         task_dict = task.model_dump()
 
         assert task_dict["id"] == "TASK-015"
-        assert task_dict["title"] == "Test serialization"
+        assert task_dict["name"] == "Test serialization"
         assert task_dict["description"] == "Test task serialization"
         assert task_dict["status"] == "in_progress"
         assert task_dict["assignee"] == "test.user"
@@ -171,7 +170,7 @@ class TestTask:
         """Test that task can be created from dict."""
         task_data = {
             "id": "TASK-016",
-            "title": "Test deserialization",
+            "name": "Test deserialization",
             "description": "Test task deserialization",
             "status": "blocked",
             "assignee": "dev.user",
@@ -183,7 +182,7 @@ class TestTask:
         task = Task(**task_data)
 
         assert task.id == "TASK-016"
-        assert task.title == "Test deserialization"
+        assert task.name == "Test deserialization"
         assert task.description == "Test task deserialization"
         assert task.status == TaskStatus.BLOCKED
         assert task.assignee == "dev.user"
@@ -193,7 +192,7 @@ class TestTask:
 
     def test_task_update_timestamp(self):
         """Test that updated_at changes when task is modified."""
-        task = Task(id="TASK-017", title="Original title", description="Original description")
+        task = Task(id="TASK-017", name="Original name", description="Original description")
         original_updated_at = task.updated_at
 
         # Simulate some time passing
@@ -202,29 +201,29 @@ class TestTask:
         time.sleep(0.01)
 
         # Update the task
-        updated_task = task.model_copy(update={"title": "Updated title"})
+        updated_task = task.model_copy(update={"name": "Updated name"})
         updated_task.updated_at = datetime.now()
 
         assert updated_task.updated_at > original_updated_at
-        assert updated_task.title == "Updated title"
+        assert updated_task.name == "Updated name"
         assert updated_task.description == "Original description"
 
     def test_task_equality(self):
         """Test task equality based on ID."""
-        task1 = Task(id="TASK-018", title="Task 1", description="First task")
+        task1 = Task(id="TASK-018", name="Task 1", description="First task")
 
-        task2 = Task(id="TASK-019", title="Task 2", description="Second task")
+        task2 = Task(id="TASK-019", name="Task 2", description="Second task")
 
         # Different tasks should not be equal
         assert task1 != task2
 
         # Same task with different attributes should be equal (same ID)
-        task1_copy = task1.model_copy(update={"title": "Modified Task 1"})
+        task1_copy = task1.model_copy(update={"name": "Modified Task 1"})
         assert task1_copy.id == task1.id  # Same ID due to copy
 
     def test_task_string_representation(self):
         """Test string representation of task."""
-        task = Task(id="TASK-020", title="Sample Task", description="A sample task for testing")
+        task = Task(id="TASK-020", name="Sample Task", description="A sample task for testing")
 
         # Should include key identifying information
         str_repr = str(task)

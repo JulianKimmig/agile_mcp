@@ -30,29 +30,29 @@ class TestEpicTools:
     def test_create_epic_success(self, mock_agent):
         """Test successful creation of an epic."""
         create_tool = CreateEpicTool(mock_agent)
-        mock_epic = Epic(id="EPIC-1", title="Test Epic", description="A test epic.")
+        mock_epic = Epic(id="EPIC-1", name="Test Epic", description="A test epic.")
         mock_agent.epic_service.create_epic.return_value = mock_epic
 
-        result = create_tool.apply(title="Test Epic", description="A test epic.")
+        result = create_tool.apply(name="Test Epic", description="A test epic.")
 
         assert "Epic 'Test Epic' created successfully with ID EPIC-1" in result.message
         mock_agent.epic_service.create_epic.assert_called_once_with(
-            title="Test Epic", description="A test epic.", status=EpicStatus.PLANNING, tags=[]
+            name="Test Epic", description="A test epic.", status=EpicStatus.PLANNING, tags=[]
         )
 
     def test_create_epic_with_optional_params(self, mock_agent):
         """Test epic creation with all optional parameters."""
         create_tool = CreateEpicTool(mock_agent)
-        mock_epic = Epic(id="EPIC-2", title="Another Epic", description="Another test epic.")
+        mock_epic = Epic(id="EPIC-2", name="Another Epic", description="Another test epic.")
         mock_agent.epic_service.create_epic.return_value = mock_epic
 
         result = create_tool.apply(
-            title="Another Epic", description="Another test epic.", status="in_progress", tags="feature, backend"
+            name="Another Epic", description="Another test epic.", status="in_progress", tags="feature, backend"
         )
 
         assert "Epic 'Another Epic' created successfully with ID EPIC-2" in result.message
         mock_agent.epic_service.create_epic.assert_called_once_with(
-            title="Another Epic",
+            name="Another Epic",
             description="Another test epic.",
             status=EpicStatus.IN_PROGRESS,
             tags=["feature", "backend"],
@@ -63,12 +63,12 @@ class TestEpicTools:
         create_tool = CreateEpicTool(mock_agent)
 
         with pytest.raises(ToolError, match="Invalid status"):
-            create_tool.apply(title="Test", description="Test", status="invalid")
+            create_tool.apply(name="Test", description="Test", status="invalid")
 
     def test_get_epic_success(self, mock_agent):
         """Test successfully retrieving an epic."""
         get_tool = GetEpicTool(mock_agent)
-        mock_epic = Epic(id="EPIC-1", title="Test Epic", description="A test epic.")
+        mock_epic = Epic(id="EPIC-1", name="Test Epic", description="A test epic.")
         mock_agent.epic_service.get_epic.return_value = mock_epic
 
         result = get_tool.apply(epic_id="EPIC-1")
@@ -81,32 +81,32 @@ class TestEpicTools:
         get_tool = GetEpicTool(mock_agent)
         mock_agent.epic_service.get_epic.return_value = None
 
-        with pytest.raises(ToolError, match="Epic with ID NOT-FOUND not found"):
-            get_tool.apply(epic_id="NOT-FOUND")
+        result = get_tool.apply(epic_id="NOT-FOUND")
+        assert not result.success
 
     def test_update_epic_success(self, mock_agent):
         """Test successfully updating an epic."""
         update_tool = UpdateEpicTool(mock_agent)
-        mock_epic = Epic(id="EPIC-1", title="Updated Epic", description="A test epic.")
+        mock_epic = Epic(id="EPIC-1", name="Updated Epic", description="A test epic.")
         mock_agent.epic_service.update_epic.return_value = mock_epic
 
-        result = update_tool.apply(epic_id="EPIC-1", title="Updated Epic")
+        result = update_tool.apply(epic_id="EPIC-1", name="Updated Epic")
 
         assert "Epic 'Updated Epic' updated successfully" in result.message
-        mock_agent.epic_service.update_epic.assert_called_once_with("EPIC-1", title="Updated Epic")
+        mock_agent.epic_service.update_epic.assert_called_once_with("EPIC-1", name="Updated Epic")
 
     def test_update_epic_not_found(self, mock_agent):
         """Test updating an epic that does not exist."""
         update_tool = UpdateEpicTool(mock_agent)
         mock_agent.epic_service.update_epic.return_value = None
 
-        with pytest.raises(ToolError, match="Epic with ID NOT-FOUND not found"):
-            update_tool.apply(epic_id="NOT-FOUND", title="Does not exist")
+        result = update_tool.apply(epic_id="NOT-FOUND", name="Does not exist")
+        assert not result.success
 
     def test_delete_epic_success(self, mock_agent):
         """Test successfully deleting an epic."""
         delete_tool = DeleteEpicTool(mock_agent)
-        mock_agent.epic_service.get_epic.return_value = Epic(id="EPIC-1", title="Test Epic", description="A test epic.")
+        mock_agent.epic_service.get_epic.return_value = Epic(id="EPIC-1", name="Test Epic", description="A test epic.")
         mock_agent.epic_service.delete_epic.return_value = True
 
         result = delete_tool.apply(epic_id="EPIC-1")
@@ -128,12 +128,12 @@ class TestEpicTools:
         mock_agent.epic_service.list_epics.return_value = [
             Epic(
                 id="EPIC-1",
-                title="Epic 1",
+                name="Epic 1",
                 description="A test epic.",
                 status=EpicStatus.PLANNING,
                 story_ids=["STORY-1"],
             ),
-            Epic(id="EPIC-2", title="Epic 2", description="A test epic.", status=EpicStatus.IN_PROGRESS, story_ids=[]),
+            Epic(id="EPIC-2", name="Epic 2", description="A test epic.", status=EpicStatus.IN_PROGRESS, story_ids=[]),
         ]
 
         result = list_tool.apply()
@@ -155,7 +155,7 @@ class TestEpicTools:
         """Test successfully adding a story to an epic."""
         manage_tool = ManageEpicStoriesTool(mock_agent)
         mock_agent.epic_service.add_story_to_epic.return_value = Epic(
-            id="EPIC-1", title="Test Epic", description="A test epic."
+            id="EPIC-1", name="Test Epic", description="A test epic."
         )
 
         result = manage_tool.apply(epic_id="EPIC-1", action="add", story_id="STORY-1")
@@ -167,7 +167,7 @@ class TestEpicTools:
         """Test successfully removing a story from an epic."""
         manage_tool = ManageEpicStoriesTool(mock_agent)
         mock_agent.epic_service.remove_story_from_epic.return_value = Epic(
-            id="EPIC-1", title="Test Epic", description="A test epic."
+            id="EPIC-1", name="Test Epic", description="A test epic."
         )
 
         result = manage_tool.apply(epic_id="EPIC-1", action="remove", story_id="STORY-1")
@@ -187,8 +187,8 @@ class TestEpicTools:
         manage_tool = ManageEpicStoriesTool(mock_agent)
         mock_agent.epic_service.add_story_to_epic.return_value = None
 
-        with pytest.raises(ToolError, match="Epic with ID NOT-FOUND not found"):
-            manage_tool.apply(epic_id="NOT-FOUND", action="add", story_id="STORY-1")
+        result = manage_tool.apply(epic_id="NOT-FOUND", action="add", story_id="STORY-1")
+        assert not result.success
 
     def test_get_product_backlog_success(self, mock_agent):
         """Test successfully retrieving the product backlog."""
@@ -196,7 +196,7 @@ class TestEpicTools:
         mock_agent.story_service.list_stories.return_value = [
             UserStory(
                 id="STORY-1",
-                title="Story 1",
+                name="Story 1",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
@@ -206,7 +206,7 @@ class TestEpicTools:
             ),
             UserStory(
                 id="STORY-3",
-                title="Story 3",
+                name="Story 3",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,
@@ -237,7 +237,7 @@ class TestEpicTools:
         mock_agent.story_service.list_stories.return_value = [
             UserStory(
                 id="STORY-1",
-                title="Story 1",
+                name="Story 1",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
@@ -247,7 +247,7 @@ class TestEpicTools:
             ),
             UserStory(
                 id="STORY-3",
-                title="Story 3",
+                name="Story 3",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,
@@ -269,7 +269,7 @@ class TestEpicTools:
         mock_agent.story_service.list_stories.return_value = [
             UserStory(
                 id="STORY-1",
-                title="Story 1",
+                name="Story 1",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
@@ -280,7 +280,7 @@ class TestEpicTools:
             ),
             UserStory(
                 id="STORY-3",
-                title="Story 3",
+                name="Story 3",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,
@@ -303,7 +303,7 @@ class TestEpicTools:
         mock_agent.story_service.list_stories.return_value = [
             UserStory(
                 id="STORY-1",
-                title="Story 1",
+                name="Story 1",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.HIGH,
@@ -313,7 +313,7 @@ class TestEpicTools:
             ),
             UserStory(
                 id="STORY-3",
-                title="Story 3",
+                name="Story 3",
                 description="A test story.",
                 sprint_id=None,
                 priority=Priority.LOW,

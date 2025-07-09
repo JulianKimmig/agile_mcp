@@ -13,6 +13,7 @@ from mcp.server.fastmcp.tools.base import Tool as MCPTool
 from mcp.server.fastmcp.utilities.func_metadata import FuncMetadata
 
 from .services.config_service import ConfigurationService
+from .services.dependency_service import DependencyService
 from .services.epic_service import EpicService
 from .services.sprint_service import SprintService
 from .services.story_service import StoryService
@@ -20,6 +21,13 @@ from .services.task_service import TaskService
 from .storage.filesystem import AgileProjectManager
 from .tools.base import ToolResult
 from .tools.burndown_chart_tool import GetSprintBurndownChartTool
+from .tools.dependency_tools import (
+    AddDependencyTool,
+    CheckCanStartTool,
+    GetDependenciesTool,
+    GetDependencyGraphTool,
+    RemoveDependencyTool,
+)
 from .tools.documentation_tools import GetAgileDocumentationTool
 from .tools.epic_tools import (
     CreateEpicTool,
@@ -102,6 +110,7 @@ class AgileMCPServer:
         self.task_service: TaskService | None = None
         self.epic_service: EpicService | None = None
         self.config_service: ConfigurationService | None = None
+        self.dependency_service: DependencyService | None = None
         self.mcp_server: FastMCP | None = None
 
         if self.project_path:
@@ -134,6 +143,9 @@ class AgileMCPServer:
 
         # Initialize epic service
         self.epic_service = EpicService(self.project_manager)
+
+        # Initialize dependency service
+        self.dependency_service = DependencyService(self.project_manager)
 
         log.info("Project services initialized successfully")
 
@@ -175,6 +187,15 @@ class AgileMCPServer:
             GetProjectOverviewTool(self),
         ]
 
+        # Dependency tools (always exposed, but will error if no project is set)
+        dependency_tools = [
+            AddDependencyTool(self),
+            RemoveDependencyTool(self),
+            GetDependenciesTool(self),
+            CheckCanStartTool(self),
+            GetDependencyGraphTool(self),
+        ]
+
         # Story, task, epic, and sprint tools (always exposed, but will error if no project is set)
         agile_tools = [
             # Story tools
@@ -208,7 +229,7 @@ class AgileMCPServer:
             GetSprintBurndownChartTool(self),
         ]
 
-        all_tools = project_tools + documentation_tools + overview_tools + agile_tools
+        all_tools = project_tools + documentation_tools + overview_tools + dependency_tools + agile_tools
         log.info(f"Available tools: {[tool.get_name() for tool in all_tools]}")
         yield from all_tools
 
@@ -372,3 +393,4 @@ class AgileAgent:
         self.sprint_service = server.sprint_service
         self.task_service = server.task_service
         self.epic_service = server.epic_service
+        self.dependency_service = server.dependency_service

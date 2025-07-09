@@ -22,7 +22,7 @@ class TaskService:
 
     def create_task(
         self,
-        title: str,
+        name: str,
         description: str,
         story_id: Optional[str] = None,
         priority: TaskPriority = TaskPriority.MEDIUM,
@@ -37,7 +37,7 @@ class TaskService:
         """Create a new task.
 
         Args:
-            title: Task title
+            name: Task name
             description: Task description
             story_id: ID of the parent story (optional)
             priority: Task priority
@@ -77,7 +77,7 @@ class TaskService:
 
         task = Task(
             id=task_id,
-            title=title,
+            name=name,
             description=description,
             story_id=story_id,
             priority=priority,
@@ -108,7 +108,7 @@ class TaskService:
     def update_task(
         self,
         task_id: str,
-        title: Optional[str] = None,
+        name: Optional[str] = None,
         description: Optional[str] = None,
         status: Optional[TaskStatus] = None,
         priority: Optional[TaskPriority] = None,
@@ -123,7 +123,7 @@ class TaskService:
 
         Args:
             task_id: Task ID
-            title: New title
+            name: New name
             description: New description
             status: New status
             priority: New priority
@@ -155,8 +155,8 @@ class TaskService:
                     raise ValueError(f"Dependency task with ID {dep_id} not found")
 
         # Update fields
-        if title:
-            task.title = title
+        if name:
+            task.name = name
         if description:
             task.description = description
         if status:
@@ -364,7 +364,7 @@ class TaskService:
                 dependencies_info.append(
                     {
                         "id": dep_id,
-                        "title": dep_task.title,
+                        "name": dep_task.name,
                         "status": dep_task.status.value,
                         "completed": dep_task.status == TaskStatus.DONE,
                     }
@@ -372,7 +372,7 @@ class TaskService:
 
         return {
             "task_id": task_id,
-            "task_title": task.title,
+            "task_name": task.name,
             "dependencies": dependencies_info,
             "can_start": task.can_start(completed_task_ids),
             "blocking_dependencies": [dep for dep in dependencies_info if not dep["completed"]],

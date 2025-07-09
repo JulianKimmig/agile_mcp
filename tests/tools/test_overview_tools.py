@@ -41,15 +41,17 @@ def test_get_project_overview_empty_project(server_with_project):
 def test_get_project_overview_with_data(server_with_project):
     """Test getting overview of a project with data."""
     # Create some test data
-    epic = server_with_project.epic_service.create_epic(title="Test Epic", description="A test epic")
+    epic = server_with_project.epic_service.create_epic(name="Test Epic", description="A test epic")
 
-    sprint = server_with_project.sprint_service.create_sprint(name="Test Sprint", goal="Test sprint goal")
-
-    story = server_with_project.story_service.create_story(
-        title="Test Story", description="A test story", sprint_id=sprint.id
+    sprint = server_with_project.sprint_service.create_sprint(
+        name="Test Sprint", goal="Test sprint goal", description="Test sprint description"
     )
 
-    task = server_with_project.task_service.create_task(title="Test Task", description="A test task", story_id=story.id)
+    story = server_with_project.story_service.create_story(
+        name="Test Story", description="A test story", sprint_id=sprint.id
+    )
+
+    task = server_with_project.task_service.create_task(name="Test Task", description="A test task", story_id=story.id)
 
     # Update epic to include the actual story ID
     server_with_project.epic_service.add_story_to_epic(epic.id, story.id)
@@ -61,7 +63,7 @@ def test_get_project_overview_with_data(server_with_project):
     tool = GetProjectOverviewTool(server_with_project)
     result = tool.apply()
 
-    assert result.success is True
+    assert result.success is True, f"Failed to get project overview: {result.message}"
     assert "Project Overview" in result.message
     assert result.data is not None
 
@@ -80,7 +82,7 @@ def test_get_project_overview_with_data(server_with_project):
     # Check epic data
     epic_data = data["epics"][0]
     assert epic_data["id"] == epic.id
-    assert epic_data["title"] == "Test Epic"
+    assert epic_data["name"] == "Test Epic"
     assert story.id in epic_data["story_ids"]
 
     # Check sprint data
@@ -92,14 +94,14 @@ def test_get_project_overview_with_data(server_with_project):
     # Check story data
     story_data = data["stories"][0]
     assert story_data["id"] == story.id
-    assert story_data["title"] == "Test Story"
+    assert story_data["name"] == "Test Story"
     assert story_data["epic_id"] == epic.id
     assert story_data["sprint_id"] == sprint.id
 
     # Check task data
     task_data = data["tasks"][0]
     assert task_data["id"] == task.id
-    assert task_data["title"] == "Test Task"
+    assert task_data["name"] == "Test Task"
     assert task_data["story_id"] == story.id
 
     # Check relationships
@@ -113,12 +115,12 @@ def test_get_project_overview_filtering(server_with_project):
     """Test filtering options for the overview tool."""
     # Create completed story
     server_with_project.story_service.create_story(
-        title="Completed Story", description="A completed story", status=StoryStatus.DONE
+        name="Completed Story", description="A completed story", status=StoryStatus.DONE
     )
 
     # Create in-progress story
     story2 = server_with_project.story_service.create_story(
-        title="In Progress Story", description="An in-progress story", status=StoryStatus.IN_PROGRESS
+        name="In Progress Story", description="An in-progress story", status=StoryStatus.IN_PROGRESS
     )
 
     # Test with include_completed=True (default)
@@ -145,11 +147,9 @@ def test_get_project_overview_no_project():
 def test_get_project_overview_status_breakdown(server_with_project):
     """Test status breakdown in overview."""
     # Create stories with different statuses
-    server_with_project.story_service.create_story(title="Story 1", description="Desc 1", status=StoryStatus.TODO)
-    server_with_project.story_service.create_story(
-        title="Story 2", description="Desc 2", status=StoryStatus.IN_PROGRESS
-    )
-    server_with_project.story_service.create_story(title="Story 3", description="Desc 3", status=StoryStatus.DONE)
+    server_with_project.story_service.create_story(name="Story 1", description="Desc 1", status=StoryStatus.TODO)
+    server_with_project.story_service.create_story(name="Story 2", description="Desc 2", status=StoryStatus.IN_PROGRESS)
+    server_with_project.story_service.create_story(name="Story 3", description="Desc 3", status=StoryStatus.DONE)
 
     tool = GetProjectOverviewTool(server_with_project)
     result = tool.apply()
@@ -163,9 +163,9 @@ def test_get_project_overview_status_breakdown(server_with_project):
 def test_get_project_overview_priority_breakdown(server_with_project):
     """Test priority breakdown in overview."""
     # Create stories with different priorities
-    server_with_project.story_service.create_story(title="Story 1", description="Desc 1", priority=Priority.HIGH)
-    server_with_project.story_service.create_story(title="Story 2", description="Desc 2", priority=Priority.MEDIUM)
-    server_with_project.story_service.create_story(title="Story 3", description="Desc 3", priority=Priority.LOW)
+    server_with_project.story_service.create_story(name="Story 1", description="Desc 1", priority=Priority.HIGH)
+    server_with_project.story_service.create_story(name="Story 2", description="Desc 2", priority=Priority.MEDIUM)
+    server_with_project.story_service.create_story(name="Story 3", description="Desc 3", priority=Priority.LOW)
 
     tool = GetProjectOverviewTool(server_with_project)
     result = tool.apply()
