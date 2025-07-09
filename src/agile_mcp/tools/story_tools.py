@@ -180,9 +180,9 @@ class UpdateStoryTool(AgileTool):
             update_data["priority"] = Priority(priority)
         if status:
             update_data["status"] = StoryStatus(status)
-        if points is not None:
+        if points:
             update_data["points"] = int(points) if isinstance(points, str) else points
-        if tags is not None:
+        if tags:
             update_data["tags"] = tags.split(",") if isinstance(tags, str) else tags
 
         # Check if story service is available

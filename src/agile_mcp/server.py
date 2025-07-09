@@ -30,6 +30,7 @@ from .tools.epic_tools import (
     ManageEpicStoriesTool,
     UpdateEpicTool,
 )
+from .tools.overview_tools import GetProjectOverviewTool
 from .tools.project_tools import GetProjectTool, SetProjectTool
 from .tools.sprint_tools import (
     CreateSprintTool,
@@ -169,6 +170,11 @@ class AgileMCPServer:
             GetAgileDocumentationTool(self),
         ]
 
+        # Overview tools (always exposed, but will error if no project is set)
+        overview_tools = [
+            GetProjectOverviewTool(self),
+        ]
+
         # Story, task, epic, and sprint tools (always exposed, but will error if no project is set)
         agile_tools = [
             # Story tools
@@ -202,7 +208,7 @@ class AgileMCPServer:
             GetSprintBurndownChartTool(self),
         ]
 
-        all_tools = project_tools + documentation_tools + agile_tools
+        all_tools = project_tools + documentation_tools + overview_tools + agile_tools
         log.info(f"Available tools: {[tool.get_name() for tool in all_tools]}")
         yield from all_tools
 
