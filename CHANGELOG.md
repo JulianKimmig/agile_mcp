@@ -1,3 +1,9 @@
+## v0.4.0 (2025-07-09)
+
+### Feat
+
+- add GetNextAvailableArtifactTool and update tool registration
+
 ## v0.3.1 (2025-07-09)
 
 ### Refactor
