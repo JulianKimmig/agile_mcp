@@ -1,3 +1,9 @@
+## v0.3.1 (2025-07-09)
+
+### Refactor
+
+- unify title field to name across models and tools
+
 ## v0.3.0 (2025-07-09)
 
 ### Feat
