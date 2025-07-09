@@ -26,6 +26,7 @@ from .tools.dependency_tools import (
     CheckCanStartTool,
     GetDependenciesTool,
     GetDependencyGraphTool,
+    GetNextAvailableArtifactTool,
     RemoveDependencyTool,
 )
 from .tools.documentation_tools import GetAgileDocumentationTool
@@ -194,6 +195,7 @@ class AgileMCPServer:
             GetDependenciesTool(self),
             CheckCanStartTool(self),
             GetDependencyGraphTool(self),
+            GetNextAvailableArtifactTool(self),
         ]
 
         # Story, task, epic, and sprint tools (always exposed, but will error if no project is set)

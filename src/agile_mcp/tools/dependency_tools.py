@@ -2,6 +2,7 @@
 
 from ..models.dependency import ArtifactType, DependencyType
 from .base import AgileTool, ToolResult
+from typing import Optional
 
 
 class AddDependencyTool(AgileTool):
@@ -214,6 +215,41 @@ class CheckCanStartTool(AgileTool):
 
         except Exception as e:
             return self.format_error(f"Failed to check dependencies: {str(e)}")
+
+
+class GetNextAvailableArtifactTool(AgileTool):
+    """Tool for getting the next available artifact of a given type."""
+
+    def validate_input(self, input_data: dict) -> None:
+        """Validate input parameters."""
+        pass
+
+    def apply(self, artifact_type: Optional[str] = None) -> ToolResult:
+        """Get the next available artifact of a given type.
+
+        Args:
+            artifact_type: Type of the artifact to get the next available artifact of (epic/sprint/story/task), if not provided, the next available artifact of any type will be returned
+
+        Returns:
+            Next available artifact.id of the given type
+        """
+
+        # Check if project is initialized
+        self._check_project_initialized()
+        try:
+            if artifact_type:
+                artifact_type_enum = ArtifactType(artifact_type.lower())
+            else:
+                artifact_type_enum = None
+            artifact_id, artifact_type = self.agent.dependency_service.get_next_avaiable_artifact(artifact_type_enum)
+            if not artifact_id:
+                return self.format_error("No next available artifact found")
+            return self.format_result(
+                f"Next available artifact of type {artifact_type}: {artifact_id}",
+                {"artifact_id": artifact_id, "artifact_type": artifact_type},
+            )
+        except Exception as e:
+            return self.format_error(f"Failed to get next available artifact: {str(e)}")
 
 
 class GetDependencyGraphTool(AgileTool):

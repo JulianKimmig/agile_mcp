@@ -145,6 +145,25 @@ class DependencyService:
 
         return {"can_start": len(blocking_dependencies) == 0, "blocking_dependencies": blocking_dependencies}
 
+    def get_next_avaiable_artifact(self, artifact_type: ArtifactType) -> tuple[str, str]:
+        """Get the next available artifact of a given type."""
+        if not artifact_type:
+            for artifact_type in reversed(
+                [ArtifactType.EPIC, ArtifactType.SPRINT, ArtifactType.STORY, ArtifactType.TASK]
+            ):
+                artifact_id, artifact_type = self.get_next_avaiable_artifact(artifact_type)
+                if artifact_id:
+                    return artifact_id, artifact_type
+            return None, None
+
+        artifacts = self._get_all_artifacts_of_type(artifact_type)
+        for artifact in artifacts:
+            if not self._is_artifact_completed(artifact, artifact_type) and self.can_start_artifact(
+                artifact.id, artifact_type
+            ):
+                return artifact.id, artifact_type
+        return None, None
+
     def get_dependency_graph(self) -> Dict[str, Any]:
         """Get the complete dependency graph for the project.
 

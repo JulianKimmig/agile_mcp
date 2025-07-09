@@ -78,8 +78,8 @@ class TestServerIntegration:
         tools = list(server._iter_tools())
 
         assert (
-            len(tools) == 34
-        ), f"Expected 34 tools, got {len(tools)}: {[t.__class__.__name__ for t in tools]}"  # All story, sprint, project, epic, task, and documentation tools
+            len(tools) == 35
+        ), f"Expected 35 tools, got {len(tools)}: {[t.__class__.__name__ for t in tools]}"  # All story, sprint, project, epic, task, and documentation tools
         tool_names = [tool.get_name() for tool in tools]
 
         # Story tools
@@ -116,7 +116,7 @@ class TestServerIntegration:
         # Get tools (should include all tools)
         tools = list(server._iter_tools())
 
-        assert len(tools) == 34  # All tools should be available
+        assert len(tools) == 35  # All tools should be available
         tool_names = [tool.get_name() for tool in tools]
 
         # Project tools should be available
@@ -197,8 +197,8 @@ class TestServerIntegration:
 
             # Should have registered all tools regardless of project status
             assert (
-                len(mcp_server._tool_manager._tools) == 34
-            ), f"Expected 34 tools, got {len(mcp_server._tool_manager._tools)}: {list(mcp_server._tool_manager._tools.keys())}"
+                len(mcp_server._tool_manager._tools) == 35
+            ), f"Expected 35 tools, got {len(mcp_server._tool_manager._tools)}: {list(mcp_server._tool_manager._tools.keys())}"
 
             # Verify specific story tools exist
             assert "create_story" in mcp_server._tool_manager._tools
@@ -233,7 +233,7 @@ class TestServerIntegration:
             assert server.sprint_service is None
 
             # Should still have registered all tools
-            assert len(mcp_server._tool_manager._tools) == 34
+            assert len(mcp_server._tool_manager._tools) == 35
 
             # Verify project tools exist
             assert "set_project" in mcp_server._tool_manager._tools
